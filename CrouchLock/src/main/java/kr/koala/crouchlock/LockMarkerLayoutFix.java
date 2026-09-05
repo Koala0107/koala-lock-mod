@@ -2,7 +2,9 @@ package kr.koala.crouchlock;
 
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
+import net.minecraft.block.BarrelBlock;
 import net.minecraft.block.BlockState;
+import net.minecraft.block.ChestBlock;
 import net.minecraft.block.DoorBlock;
 import net.minecraft.block.TrapdoorBlock;
 import net.minecraft.entity.Entity;
@@ -15,14 +17,17 @@ import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
-/** Keeps lock item displays attached to the block instead of facing the player. */
+/** Final placement pass for lock displays. */
 public final class LockMarkerLayoutFix implements ModInitializer {
-    private static final String LAYOUT_TAG = CrouchLockMod.MOD_ID + ":marker_layout_v3";
+    private static final String LAYOUT_TAG = CrouchLockMod.MOD_ID + ":marker_layout_v4";
+    private static final double SURFACE_GAP = 0.0125;
 
     @Override
     public void onInitialize() {
@@ -34,12 +39,14 @@ public final class LockMarkerLayoutFix implements ModInitializer {
     }
 
     private static void syncMarkerLayout(ServerWorld world) {
-        Map<UUID, BlockPos> targets = new HashMap<>();
+        Map<UUID, List<BlockPos>> targets = new HashMap<>();
         for (var entry : LockState.get(world).entries()) {
             BlockPos pos = BlockPos.fromLong(entry.getKey());
-            if (world.isChunkLoaded(pos)) {
-                targets.putIfAbsent(entry.getValue().lockId(), pos);
+            if (!world.isChunkLoaded(pos)) {
+                continue;
             }
+            targets.computeIfAbsent(entry.getValue().lockId(), ignored -> new ArrayList<>())
+                    .add(pos.toImmutable());
         }
 
         for (Entity entity : world.iterateEntities()) {
@@ -49,12 +56,12 @@ public final class LockMarkerLayoutFix implements ModInitializer {
             }
 
             Optional<UUID> lockId = markerLockId(entity);
-            BlockPos target = lockId.map(targets::get).orElse(null);
-            if (target == null) {
+            List<BlockPos> positions = lockId.map(targets::get).orElse(null);
+            if (positions == null || positions.isEmpty()) {
                 continue;
             }
 
-            MarkerPose pose = markerPose(world, target);
+            MarkerPose pose = markerPose(world, positions);
             NbtCompound settings = new NbtCompound();
             settings.putString("billboard", "fixed");
             marker.readNbt(settings);
@@ -69,17 +76,16 @@ public final class LockMarkerLayoutFix implements ModInitializer {
         }
     }
 
-    private static MarkerPose markerPose(ServerWorld world, BlockPos originalPos) {
-        BlockPos pos = lowerDoorHalf(world, originalPos);
-        BlockState state = world.getBlockState(pos);
+    private static MarkerPose markerPose(ServerWorld world, List<BlockPos> positions) {
+        BlockPos first = lowerDoorHalf(world, positions.get(0));
+        BlockState state = world.getBlockState(first);
 
         if (state.getBlock() instanceof TrapdoorBlock) {
             boolean topHalf = state.contains(Properties.BLOCK_HALF)
                     && "top".equals(state.get(Properties.BLOCK_HALF).asString());
-            // Keep the display on the closed panel center and horizontal, so it reads naturally from above.
-            double surfaceY = topHalf ? 1.015 : 0.2025;
+            double surfaceY = topHalf ? 1.0 + SURFACE_GAP : 0.1875 + SURFACE_GAP;
             return new MarkerPose(
-                    new Vec3d(pos.getX() + 0.5, pos.getY() + surfaceY, pos.getZ() + 0.5),
+                    new Vec3d(first.getX() + 0.5, first.getY() + surfaceY, first.getZ() + 0.5),
                     0.0F,
                     90.0F
             );
@@ -89,28 +95,63 @@ public final class LockMarkerLayoutFix implements ModInitializer {
             BlockState closedState = state.contains(Properties.OPEN)
                     ? state.with(Properties.OPEN, false)
                     : state;
-            Vec3d doorFace = markerNearOutline(world, pos, closedState, 0.76, 0.025);
             Direction facing = state.get(Properties.HORIZONTAL_FACING);
+            Vec3d face = markerNearOutline(world, first, closedState, 0.95, SURFACE_GAP);
+
             boolean leftHinge = state.contains(Properties.DOOR_HINGE)
                     && "left".equals(state.get(Properties.DOOR_HINGE).asString());
             Direction handleSide = leftHinge
                     ? facing.rotateYCounterclockwise()
                     : facing.rotateYClockwise();
-            Vec3d handle = doorFace.add(
-                    handleSide.getOffsetX() * 0.29,
+
+            Vec3d handle = face.add(
+                    handleSide.getOffsetX() * 0.31,
                     0.0,
-                    handleSide.getOffsetZ() * 0.29
+                    handleSide.getOffsetZ() * 0.31
             );
-            return new MarkerPose(handle, horizontalYaw(facing), 0.0F);
+            return new MarkerPose(handle, yawFor(facing), 0.0F);
+        }
+
+        if (state.getBlock() instanceof ChestBlock) {
+            Direction facing = state.get(Properties.HORIZONTAL_FACING);
+            Vec3d center = linkedBlockCenter(positions).add(
+                    facing.getOffsetX() * 0.515,
+                    0.0,
+                    facing.getOffsetZ() * 0.515
+            );
+            return new MarkerPose(center, yawFor(facing), 0.0F);
+        }
+
+        if (state.getBlock() instanceof BarrelBlock) {
+            Direction facing = state.get(Properties.FACING);
+            Vec3d center = Vec3d.ofCenter(first).add(
+                    facing.getOffsetX() * 0.515,
+                    facing.getOffsetY() * 0.515,
+                    facing.getOffsetZ() * 0.515
+            );
+            return new MarkerPose(center, yawFor(facing), pitchFor(facing));
         }
 
         Direction facing = blockFacing(state);
-        Vec3d center = Vec3d.ofCenter(pos).add(
+        Vec3d center = Vec3d.ofCenter(first).add(
                 facing.getOffsetX() * 0.515,
                 facing.getOffsetY() * 0.515,
                 facing.getOffsetZ() * 0.515
         );
         return new MarkerPose(center, yawFor(facing), pitchFor(facing));
+    }
+
+    private static Vec3d linkedBlockCenter(List<BlockPos> positions) {
+        double x = 0.0;
+        double y = 0.0;
+        double z = 0.0;
+        for (BlockPos pos : positions) {
+            x += pos.getX() + 0.5;
+            y += pos.getY() + 0.5;
+            z += pos.getZ() + 0.5;
+        }
+        double count = positions.size();
+        return new Vec3d(x / count, y / count, z / count);
     }
 
     private static Direction blockFacing(BlockState state) {
@@ -130,10 +171,6 @@ public final class LockMarkerLayoutFix implements ModInitializer {
             case WEST -> 90.0F;
             default -> 0.0F;
         };
-    }
-
-    private static float horizontalYaw(Direction facing) {
-        return yawFor(facing.getAxis().isHorizontal() ? facing : Direction.SOUTH);
     }
 
     private static float pitchFor(Direction facing) {
