@@ -14,6 +14,7 @@ public final class KeypadScreen extends HandledScreen<KeypadScreenHandler> {
     private static final int PANEL_HEIGHT = 210;
     private static final int BUTTON_SIZE = 32;
     private static final int BUTTON_GAP = 4;
+    private static final int ERROR_TICKS = 60;
 
     private String input = "";
     private int seenErrorCounter;
@@ -73,7 +74,7 @@ public final class KeypadScreen extends HandledScreen<KeypadScreenHandler> {
         int currentErrorCounter = handler.getErrorCounter();
         if (currentErrorCounter != seenErrorCounter) {
             seenErrorCounter = currentErrorCounter;
-            errorTicks = 40;
+            errorTicks = ERROR_TICKS;
         } else if (errorTicks > 0) {
             errorTicks--;
         }
@@ -123,9 +124,7 @@ public final class KeypadScreen extends HandledScreen<KeypadScreenHandler> {
 
     @Override
     protected void drawForeground(DrawContext context, int mouseX, int mouseY) {
-        // The keypad has no inventory slots, so suppress HandledScreen's default
-        // title and player-inventory ("보관함") labels. The centered title is
-        // already drawn as part of our custom panel above.
+        // The keypad has no inventory slots, so suppress HandledScreen's default labels.
     }
 
     @Override
