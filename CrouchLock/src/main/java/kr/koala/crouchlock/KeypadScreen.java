@@ -68,8 +68,8 @@ public final class KeypadScreen extends HandledScreen<KeypadScreenHandler> {
     }
 
     @Override
-    public void tick() {
-        super.tick();
+    protected void handledScreenTick() {
+        super.handledScreenTick();
         int currentErrorCounter = handler.getErrorCounter();
         if (currentErrorCounter != seenErrorCounter) {
             seenErrorCounter = currentErrorCounter;
