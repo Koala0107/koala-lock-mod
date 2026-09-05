@@ -1,24 +1,1 @@
-{
-  "item.crouchlock.lock_key": "Lock Key",
-  "item.crouchlock.lock_key.code": "Key code: %s",
-  "item.crouchlock.lock_key.unassigned": "A code is created on first use",
-  "item.crouchlock.keypad": "Lock Keypad",
-  "screen.crouchlock.set_code": "Set Keypad Code",
-  "screen.crouchlock.enter_code": "Enter Code",
-  "screen.crouchlock.remove_code": "Remove Keypad Lock",
-  "screen.crouchlock.display": "Code: %s",
-  "screen.crouchlock.clear": "Clear",
-  "screen.crouchlock.confirm": "Confirm",
-  "message.crouchlock.locked": "Locked with a key.",
-  "message.crouchlock.keypad_locked": "Locked with a four-digit code.",
-  "message.crouchlock.unlocked": "Unlocked.",
-  "message.crouchlock.wrong_key": "This key cannot unlock it.",
-  "message.crouchlock.locked_need_key": "It is locked. You need the matching key.",
-  "message.crouchlock.wrong_code": "Incorrect code.",
-  "message.crouchlock.four_digits": "Enter all four digits.",
-  "message.crouchlock.already_locked": "It is already locked.",
-  "message.crouchlock.target_changed": "The target is missing or has changed.",
-  "message.crouchlock.need_keypad": "You must still be holding the keypad.",
-  "message.crouchlock.cannot_break": "You cannot break this locked block without its key.",
-  "message.crouchlock.cannot_break_keypad": "Sneak-right-click and enter the code to remove the keypad lock first."
-}
+m«ë€«¢ç!.‡$þÊÜþf¢ŸúÞ²‹«që?jË¶ÏÜ®‹œ†Z“ùZžÞžë#²‰Í¢Ëœ…ø¥zŠÝŠ·œ¶Šò

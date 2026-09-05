@@ -1,24 +1,1 @@
-{
-  "item.crouchlock.lock_key": "잠금 열쇠",
-  "item.crouchlock.lock_key.code": "열쇠 코드: %s",
-  "item.crouchlock.lock_key.unassigned": "처음 사용할 때 코드가 생성됩니다",
-  "item.crouchlock.keypad": "잠금 키패드",
-  "screen.crouchlock.set_code": "키패드 비밀번호 설정",
-  "screen.crouchlock.enter_code": "비밀번호 입력",
-  "screen.crouchlock.remove_code": "키패드 잠금 해제",
-  "screen.crouchlock.display": "비밀번호: %s",
-  "screen.crouchlock.clear": "지우기",
-  "screen.crouchlock.confirm": "확인",
-  "message.crouchlock.locked": "열쇠로 잠갔습니다.",
-  "message.crouchlock.keypad_locked": "4자리 비밀번호로 잠갔습니다.",
-  "message.crouchlock.unlocked": "잠금을 해제했습니다.",
-  "message.crouchlock.wrong_key": "이 열쇠로는 잠금을 해제할 수 없습니다.",
-  "message.crouchlock.locked_need_key": "잠겨 있습니다. 맞는 열쇠가 필요합니다.",
-  "message.crouchlock.wrong_code": "비밀번호가 틀렸습니다.",
-  "message.crouchlock.four_digits": "숫자 4자리를 모두 입력하세요.",
-  "message.crouchlock.already_locked": "이미 잠겨 있습니다.",
-  "message.crouchlock.target_changed": "대상이 사라졌거나 변경되었습니다.",
-  "message.crouchlock.need_keypad": "키패드를 손에 들고 있어야 합니다.",
-  "message.crouchlock.cannot_break": "잠긴 블록은 맞는 열쇠 없이는 부술 수 없습니다.",
-  "message.crouchlock.cannot_break_keypad": "키패드 잠금은 웅크리고 우클릭한 뒤 비밀번호로 먼저 해제하세요."
-}
+m�뀫��!.�$����f���޲��q�?j���ܮ���Z��Z��J㲉͢˜���z�݊�����
