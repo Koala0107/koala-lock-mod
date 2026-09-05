@@ -11,7 +11,8 @@
   "entrypoints": {
     "main": [
       "kr.koala.crouchlock.CrouchLockMod",
-      "kr.koala.crouchlock.LockMarkerLayoutFix"
+      "kr.koala.crouchlock.LockMarkerLayoutFix",
+      "kr.koala.crouchlock.KeyUnlockSound"
     ],
     "client": ["kr.koala.crouchlock.CrouchLockClient"]
   },
