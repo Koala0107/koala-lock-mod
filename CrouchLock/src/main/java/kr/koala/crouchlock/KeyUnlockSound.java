@@ -32,7 +32,7 @@ public final class KeyUnlockSound implements ModInitializer {
                 return ActionResult.PASS;
             }
 
-            serverWorld.playSound(null, hit.getBlockPos(), SoundEvents.BLOCK_ANVIL_LAND.value(),
+            serverWorld.playSound(null, hit.getBlockPos(), SoundEvents.BLOCK_ANVIL_LAND,
                     SoundCategory.BLOCKS, 0.55F, 1.75F);
             return ActionResult.PASS;
         });
