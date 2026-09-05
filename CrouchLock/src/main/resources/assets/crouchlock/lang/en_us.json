@@ -15,6 +15,7 @@
   "message.crouchlock.keypad_locked": "Locked with the entered 1-8 digit code.",
   "message.crouchlock.unlocked": "Unlocked.",
   "message.crouchlock.wrong_key": "This key cannot unlock it.",
+  "message.crouchlock.key_already_assigned": "This key is already assigned to another lock. Use a new key.",
   "message.crouchlock.locked_need_key": "It is locked. You need the matching key.",
   "message.crouchlock.wrong_code": "Incorrect code.",
   "message.crouchlock.four_digits": "Enter 1-8 digits.",

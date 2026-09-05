@@ -12,16 +12,17 @@ import net.minecraft.block.BlockState;
 import net.minecraft.block.ChestBlock;
 import net.minecraft.block.DoorBlock;
 import net.minecraft.block.TrapdoorBlock;
-import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.enums.ChestType;
-import net.minecraft.entity.ItemEntity;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityType;
+import net.minecraft.entity.decoration.DisplayEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroups;
 import net.minecraft.item.ItemStack;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.screen.ScreenHandlerType;
 import net.minecraft.screen.SimpleNamedScreenHandlerFactory;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -151,8 +152,12 @@ public final class CrouchLockMod implements ModInitializer {
                 return ActionResult.PASS;
             }
 
-            UUID heldKeyId = LockKeyItem.getOrCreateKeyId(heldStack);
             if (existing.isEmpty()) {
+                if (LockKeyItem.getKeyId(heldStack).isPresent()) {
+                    send(player, "message.crouchlock.key_already_assigned");
+                    return ActionResult.FAIL;
+                }
+                UUID heldKeyId = LockKeyItem.getOrCreateKeyId(heldStack);
                 UUID lockId = UUID.randomUUID();
                 putLinkedLock(serverWorld, linkedPositions,
                         new LockState.LockEntry(KEY_LOCK, heldKeyId.toString(), lockId,
@@ -273,7 +278,7 @@ public final class CrouchLockMod implements ModInitializer {
 
     private static ActionResult onAttackEntity(PlayerEntity player, World world, Hand hand,
                                                Entity entity, EntityHitResult hitResult) {
-        if (!(entity instanceof ItemEntity marker) || !marker.getCommandTags().contains(MARKER_TAG)) {
+        if (!entity.getCommandTags().contains(MARKER_TAG)) {
             return ActionResult.PASS;
         }
 
@@ -281,16 +286,14 @@ public final class CrouchLockMod implements ModInitializer {
             return ActionResult.SUCCESS;
         }
 
-        String rawLockId = marker.getStack().getOrCreateNbt().getString("CrouchLockLockId");
-        try {
-            UUID lockId = UUID.fromString(rawLockId);
-            LockState.get(serverWorld).removeLock(lockId);
-            marker.discard();
+        Optional<UUID> lockId = markerLockId(entity);
+        if (lockId.isPresent()) {
+            LockState.get(serverWorld).removeLock(lockId.get());
+            entity.discard();
             send(player, "message.crouchlock.lock_destroyed");
             return ActionResult.SUCCESS;
-        } catch (IllegalArgumentException ignored) {
-            return ActionResult.FAIL;
         }
+        return ActionResult.FAIL;
     }
 
     static boolean isLockable(World world, BlockPos pos, BlockState state) {
@@ -298,8 +301,7 @@ public final class CrouchLockMod implements ModInitializer {
         return block instanceof ChestBlock
                 || block instanceof BarrelBlock
                 || block instanceof DoorBlock
-                || block instanceof TrapdoorBlock
-                ;
+                || block instanceof TrapdoorBlock;
     }
 
     private static List<BlockPos> linkedPositions(ServerWorld world, BlockPos pos, BlockState state) {
@@ -367,15 +369,19 @@ public final class CrouchLockMod implements ModInitializer {
                 ? "item.crouchlock.keypad_lock.marker"
                 : "item.crouchlock.lock_key.marker"));
         stack.getOrCreateNbt().putString("CrouchLockLockId", lock.lockId().toString());
-        ItemEntity marker = new ItemEntity(world, markerPos.x, markerPos.y, markerPos.z, stack);
+        DisplayEntity.ItemDisplayEntity marker = new DisplayEntity.ItemDisplayEntity(EntityType.ITEM_DISPLAY, world);
+        NbtCompound displaySettings = new NbtCompound();
+        displaySettings.putString("billboard", "center");
+        displaySettings.putString("item_display", "fixed");
+        displaySettings.putFloat("width", 0.45F);
+        displaySettings.putFloat("height", 0.65F);
+        marker.readNbt(displaySettings);
+        marker.getStackReference(0).set(stack);
+        marker.refreshPositionAndAngles(markerPos.x, markerPos.y, markerPos.z, 0.0F, 0.0F);
         marker.addCommandTag(MARKER_TAG);
         marker.addCommandTag(markerTag(lock.lockId()));
-        marker.setNoGravity(true);
         marker.setInvulnerable(true);
-        marker.noClip = true;
-        marker.setPickupDelay(32767);
-        marker.setNeverDespawn();
-        marker.setVelocity(Vec3d.ZERO);
+        marker.setCustomName(stack.getName());
         world.spawnEntity(marker);
     }
 
@@ -391,30 +397,27 @@ public final class CrouchLockMod implements ModInitializer {
             targets.putIfAbsent(lock.lockId(), new MarkerTarget(pos, lock));
         }
 
-        List<ItemEntity> existingMarkers = new ArrayList<>();
+        List<Entity> existingMarkers = new ArrayList<>();
         for (Entity entity : world.iterateEntities()) {
-            if (entity instanceof ItemEntity marker
-                    && marker.getCommandTags().contains(MARKER_TAG)) {
-                existingMarkers.add(marker);
+            if (entity.getCommandTags().contains(MARKER_TAG)) {
+                existingMarkers.add(entity);
             }
         }
 
         Set<UUID> positioned = new HashSet<>();
-        for (ItemEntity marker : existingMarkers) {
+        for (Entity marker : existingMarkers) {
             Optional<UUID> lockId = markerLockId(marker);
             MarkerTarget target = lockId.map(targets::get).orElse(null);
-            if (lockId.isEmpty() || target == null || !positioned.add(lockId.get())) {
+            if (!(marker instanceof DisplayEntity.ItemDisplayEntity)
+                    || lockId.isEmpty() || target == null || !positioned.add(lockId.get())) {
                 marker.discard();
                 continue;
             }
 
             Vec3d expectedPosition = markerPosition(world, target.pos());
-            marker.noClip = true;
-            marker.setNoGravity(true);
-            marker.setVelocity(Vec3d.ZERO);
             if (marker.getPos().squaredDistanceTo(expectedPosition) > 0.0025) {
                 marker.refreshPositionAndAngles(expectedPosition.x, expectedPosition.y,
-                        expectedPosition.z, marker.getYaw(), marker.getPitch());
+                        expectedPosition.z, 0.0F, 0.0F);
             }
         }
 
@@ -431,17 +434,17 @@ public final class CrouchLockMod implements ModInitializer {
         BlockState state = world.getBlockState(pos);
 
         if (state.getBlock() instanceof TrapdoorBlock) {
-            boolean open = state.contains(Properties.OPEN) && state.get(Properties.OPEN);
-            if (!open) {
-                boolean topHalf = state.contains(Properties.BLOCK_HALF)
-                        && "top".equals(state.get(Properties.BLOCK_HALF).asString());
-                return Vec3d.ofBottomCenter(pos).add(0.0, topHalf ? 0.70 : 0.32, 0.0);
-            }
-            return markerNearOutline(world, pos, state, 0.50);
+            BlockState fixedAnchorState = state.contains(Properties.OPEN)
+                    ? state.with(Properties.OPEN, true)
+                    : state;
+            return markerNearOutline(world, pos, fixedAnchorState, 0.50);
         }
 
         if (state.getBlock() instanceof DoorBlock) {
-            return markerNearOutline(world, pos, state, 0.58);
+            BlockState fixedAnchorState = state.contains(Properties.OPEN)
+                    ? state.with(Properties.OPEN, false)
+                    : state;
+            return markerNearOutline(world, pos, fixedAnchorState, 0.58);
         }
 
         Direction facing;
@@ -487,19 +490,30 @@ public final class CrouchLockMod implements ModInitializer {
         return pos;
     }
 
-    private static Optional<UUID> markerLockId(ItemEntity marker) {
-        String rawLockId = marker.getStack().getOrCreateNbt().getString("CrouchLockLockId");
-        try {
-            return Optional.of(UUID.fromString(rawLockId));
-        } catch (IllegalArgumentException ignored) {
-            return Optional.empty();
+    private static Optional<UUID> markerLockId(Entity marker) {
+        String prefix = MOD_ID + ":";
+        for (String tag : marker.getCommandTags()) {
+            if (!tag.startsWith(prefix) || MARKER_TAG.equals(tag)) {
+                continue;
+            }
+            try {
+                return Optional.of(UUID.fromString(tag.substring(prefix.length())));
+            } catch (IllegalArgumentException ignored) {
+                // Ignore unrelated command tags and continue looking for the lock UUID.
+            }
         }
+        return Optional.empty();
     }
 
     private static void removeLockMarkers(ServerWorld world, BlockPos pos, UUID lockId) {
-        for (ItemEntity entity : world.getEntitiesByClass(ItemEntity.class, new Box(pos).expand(3),
-                candidate -> candidate.getCommandTags().contains(MARKER_TAG)
-                        && candidate.getCommandTags().contains(markerTag(lockId)))) {
+        List<Entity> matchingMarkers = new ArrayList<>();
+        for (Entity entity : world.iterateEntities()) {
+            if (entity.getCommandTags().contains(MARKER_TAG)
+                    && entity.getCommandTags().contains(markerTag(lockId))) {
+                matchingMarkers.add(entity);
+            }
+        }
+        for (Entity entity : matchingMarkers) {
             entity.discard();
         }
     }

@@ -15,6 +15,7 @@
   "message.crouchlock.keypad_locked": "입력한 1~8자리 비밀번호로 잠갔습니다.",
   "message.crouchlock.unlocked": "잠금을 해제했습니다.",
   "message.crouchlock.wrong_key": "이 열쇠로는 잠금을 해제할 수 없습니다.",
+  "message.crouchlock.key_already_assigned": "이미 다른 잠금에 등록된 열쇠입니다. 새 열쇠를 사용하세요.",
   "message.crouchlock.locked_need_key": "잠겨 있습니다. 맞는 열쇠가 필요합니다.",
   "message.crouchlock.wrong_code": "비밀번호가 틀렸습니다.",
   "message.crouchlock.four_digits": "숫자 1~8자리를 입력하세요.",
