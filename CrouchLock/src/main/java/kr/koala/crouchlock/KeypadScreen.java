@@ -122,6 +122,13 @@ public final class KeypadScreen extends HandledScreen<KeypadScreenHandler> {
     }
 
     @Override
+    protected void drawForeground(DrawContext context, int mouseX, int mouseY) {
+        // The keypad has no inventory slots, so suppress HandledScreen's default
+        // title and player-inventory ("보관함") labels. The centered title is
+        // already drawn as part of our custom panel above.
+    }
+
+    @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         super.render(context, mouseX, mouseY, delta);
         drawMouseoverTooltip(context, mouseX, mouseY);

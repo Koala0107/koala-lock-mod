@@ -5,10 +5,10 @@
   "item.crouchlock.lock_key.marker": "Key Lock",
   "item.crouchlock.keypad": "Lock Keypad",
   "item.crouchlock.keypad_lock.marker": "Keypad Lock",
-  "screen.crouchlock.set_code": "Set Keypad Code",
+  "screen.crouchlock.set_code": "Register New Code",
   "screen.crouchlock.enter_code": "Enter Code",
   "screen.crouchlock.remove_code": "Remove Keypad Lock",
-  "screen.crouchlock.length_hint": "Enter a 1-8 digit code",
+  "screen.crouchlock.length_hint": "Enter 1-8 digits, then press Confirm",
   "screen.crouchlock.clear": "Clear",
   "screen.crouchlock.confirm": "Confirm",
   "message.crouchlock.locked": "Locked with a key.",
@@ -21,6 +21,5 @@
   "message.crouchlock.already_locked": "It is already locked.",
   "message.crouchlock.target_changed": "The target is missing or has changed.",
   "message.crouchlock.need_keypad": "You must still be holding the keypad.",
-  "message.crouchlock.cannot_break": "Lock devices can only be broken with a diamond sword.",
-  "message.crouchlock.lock_destroyed": "The lock device was removed with a diamond sword."
+  "message.crouchlock.lock_destroyed": "The lock device was removed."
 }

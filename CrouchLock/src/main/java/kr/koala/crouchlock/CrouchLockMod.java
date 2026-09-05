@@ -19,7 +19,6 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroups;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
 import net.minecraft.screen.ScreenHandlerType;
@@ -87,7 +86,6 @@ public final class CrouchLockMod implements ModInitializer {
         });
         UseBlockCallback.EVENT.register(CrouchLockMod::onUseBlock);
         AttackEntityCallback.EVENT.register(CrouchLockMod::onAttackEntity);
-        PlayerBlockBreakEvents.BEFORE.register(CrouchLockMod::beforeBlockBreak);
         PlayerBlockBreakEvents.AFTER.register((world, player, pos, state, blockEntity) -> {
             if (world instanceof ServerWorld serverWorld) {
                 LockState lockState = LockState.get(serverWorld);
@@ -269,40 +267,10 @@ public final class CrouchLockMod implements ModInitializer {
         }
     }
 
-    private static boolean beforeBlockBreak(World world, PlayerEntity player, BlockPos pos,
-                                            BlockState blockState, BlockEntity blockEntity) {
-        if (world.isClient || !(world instanceof ServerWorld serverWorld)) {
-            return true;
-        }
-
-        LockState state = LockState.get(serverWorld);
-        Optional<LockState.LockEntry> existing = findExistingLock(
-                state,
-                linkedPositions(serverWorld, pos, blockState)
-        );
-        if (existing.isEmpty()) {
-            return true;
-        }
-
-        if (isDiamondSword(player.getMainHandStack()) || isDiamondSword(player.getOffHandStack())) {
-            return true;
-        }
-
-        send(player, "message.crouchlock.cannot_break");
-        return false;
-    }
-
     private static ActionResult onAttackEntity(PlayerEntity player, World world, Hand hand,
                                                Entity entity, EntityHitResult hitResult) {
         if (!(entity instanceof ItemEntity marker) || !marker.getCommandTags().contains(MARKER_TAG)) {
             return ActionResult.PASS;
-        }
-
-        if (!isDiamondSword(player.getStackInHand(hand))) {
-            if (!world.isClient) {
-                send(player, "message.crouchlock.cannot_break");
-            }
-            return ActionResult.FAIL;
         }
 
         if (world.isClient || !(world instanceof ServerWorld serverWorld)) {
@@ -319,10 +287,6 @@ public final class CrouchLockMod implements ModInitializer {
         } catch (IllegalArgumentException ignored) {
             return ActionResult.FAIL;
         }
-    }
-
-    private static boolean isDiamondSword(ItemStack stack) {
-        return stack.isOf(Items.DIAMOND_SWORD);
     }
 
     static boolean isLockable(World world, BlockPos pos, BlockState state) {

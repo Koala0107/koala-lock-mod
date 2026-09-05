@@ -54,12 +54,15 @@ public final class KeypadScreenHandler extends ScreenHandler {
         if (id == CONFIRM_BUTTON
                 && input.length() >= MIN_DIGITS
                 && input.length() <= MAX_DIGITS) {
-            boolean close = confirmAction.test(input.toString());
-            if (!close) {
+            boolean success = confirmAction.test(input.toString());
+            if (success) {
+                input.setLength(0);
+                player.closeHandledScreen();
+            } else {
                 input.setLength(0);
                 properties.set(0, properties.get(0) + 1);
             }
-            return close;
+            return true;
         }
 
         return false;
