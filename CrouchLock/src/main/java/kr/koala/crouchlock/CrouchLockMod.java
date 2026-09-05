@@ -17,6 +17,7 @@ import net.minecraft.item.ItemGroups;
 import net.minecraft.item.ItemStack;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
+import net.minecraft.screen.SimpleNamedScreenHandlerFactory;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.state.property.Properties;
@@ -29,24 +30,42 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.world.World;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.HexFormat;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 public final class CrouchLockMod implements ModInitializer {
     public static final String MOD_ID = "crouchlock";
+    public static final String KEY_LOCK = "key";
+    public static final String KEYPAD_LOCK = "keypad";
+    private static final ConcurrentLinkedQueue<Runnable> END_OF_TICK_ACTIONS = new ConcurrentLinkedQueue<>();
+
     public static final Item LOCK_KEY = Registry.register(
             Registries.ITEM,
             new Identifier(MOD_ID, "lock_key"),
             new LockKeyItem(new Item.Settings().maxCount(1))
     );
 
+    public static final Item KEYPAD = Registry.register(
+            Registries.ITEM,
+            new Identifier(MOD_ID, "keypad"),
+            new Item(new Item.Settings().maxCount(16))
+    );
+
     @Override
     public void onInitialize() {
-        ItemGroupEvents.modifyEntriesEvent(ItemGroups.TOOLS).register(entries -> entries.add(LOCK_KEY));
+        ItemGroupEvents.modifyEntriesEvent(ItemGroups.TOOLS).register(entries -> {
+            entries.add(LOCK_KEY);
+            entries.add(KEYPAD);
+        });
         UseBlockCallback.EVENT.register(CrouchLockMod::onUseBlock);
         PlayerBlockBreakEvents.BEFORE.register(CrouchLockMod::beforeBlockBreak);
         PlayerBlockBreakEvents.AFTER.register((world, player, pos, state, blockEntity) -> {
@@ -61,10 +80,17 @@ public final class CrouchLockMod implements ModInitializer {
                 LockState.get(world).pruneInvalid(world);
             }
         });
+        ServerTickEvents.END_SERVER_TICK.register(server -> {
+            Runnable action;
+            while ((action = END_OF_TICK_ACTIONS.poll()) != null) {
+                action.run();
+            }
+        });
     }
 
     private static ActionResult onUseBlock(PlayerEntity player, World world, Hand hand, BlockHitResult hit) {
-        if (world.isClient || !(world instanceof ServerWorld serverWorld)) {
+        if (world.isClient || !(world instanceof ServerWorld serverWorld)
+                || !(player instanceof ServerPlayerEntity serverPlayer)) {
             return ActionResult.PASS;
         }
 
@@ -79,6 +105,16 @@ public final class CrouchLockMod implements ModInitializer {
         Optional<LockState.LockEntry> existing = findExistingLock(lockState, linkedPositions);
         ItemStack heldStack = player.getStackInHand(hand);
 
+        if (existing.isPresent() && KEYPAD_LOCK.equals(existing.get().type())) {
+            openKeypadUnlock(serverPlayer, serverWorld, hand, hit, existing.get(), player.isSneaking());
+            return ActionResult.SUCCESS;
+        }
+
+        if (player.isSneaking() && existing.isEmpty() && heldStack.isOf(KEYPAD)) {
+            openKeypadSetup(serverPlayer, serverWorld, hand, linkedPositions);
+            return ActionResult.SUCCESS;
+        }
+
         if (player.isSneaking()) {
             if (!heldStack.isOf(LOCK_KEY)) {
                 if (existing.isPresent()) {
@@ -91,16 +127,14 @@ public final class CrouchLockMod implements ModInitializer {
             UUID heldKeyId = LockKeyItem.getOrCreateKeyId(heldStack);
             if (existing.isEmpty()) {
                 UUID lockId = UUID.randomUUID();
-                for (BlockPos pos : linkedPositions) {
-                    Block block = serverWorld.getBlockState(pos).getBlock();
-                    String blockId = Registries.BLOCK.getId(block).toString();
-                    lockState.put(pos, new LockState.LockEntry(heldKeyId, lockId, player.getUuid(), blockId));
-                }
+                putLinkedLock(serverWorld, linkedPositions,
+                        new LockState.LockEntry(KEY_LOCK, heldKeyId.toString(), lockId,
+                                player.getUuid(), ""));
                 send(player, "message.crouchlock.locked");
                 return ActionResult.SUCCESS;
             }
 
-            if (existing.get().keyId().equals(heldKeyId) || canBypass(player)) {
+            if (keyMatches(heldStack, existing.get())) {
                 lockState.removeLock(existing.get().lockId());
                 send(player, "message.crouchlock.unlocked");
                 return ActionResult.SUCCESS;
@@ -110,12 +144,99 @@ public final class CrouchLockMod implements ModInitializer {
             return ActionResult.FAIL;
         }
 
-        if (existing.isEmpty() || canBypass(player) || keyMatches(heldStack, existing.get())) {
+        if (existing.isEmpty() || keyMatches(heldStack, existing.get())) {
             return ActionResult.PASS;
         }
 
         send(player, "message.crouchlock.locked_need_key");
         return ActionResult.FAIL;
+    }
+
+    private static void openKeypadSetup(ServerPlayerEntity player, ServerWorld world, Hand hand,
+                                        List<BlockPos> linkedPositions) {
+        player.openHandledScreen(new SimpleNamedScreenHandlerFactory(
+                (syncId, inventory, ignored) -> new KeypadScreenHandler(syncId, inventory, code -> {
+                    LockState lockState = LockState.get(world);
+                    if (findExistingLock(lockState, linkedPositions).isPresent()) {
+                        send(player, "message.crouchlock.already_locked");
+                        return false;
+                    }
+
+                    for (BlockPos pos : linkedPositions) {
+                        BlockState state = world.getBlockState(pos);
+                        if (!isLockable(world, pos, state)) {
+                            send(player, "message.crouchlock.target_changed");
+                            return false;
+                        }
+                    }
+
+                    ItemStack keypadStack = player.getStackInHand(hand);
+                    if (!keypadStack.isOf(KEYPAD) && !player.getAbilities().creativeMode) {
+                        send(player, "message.crouchlock.need_keypad");
+                        return false;
+                    }
+
+                    UUID lockId = UUID.randomUUID();
+                    putLinkedLock(world, linkedPositions,
+                            new LockState.LockEntry(KEYPAD_LOCK, hashCode(lockId, code), lockId,
+                                    player.getUuid(), ""));
+                    if (!player.getAbilities().creativeMode) {
+                        keypadStack.decrement(1);
+                    }
+                    send(player, "message.crouchlock.keypad_locked");
+                    return true;
+                }),
+                Text.translatable("screen.crouchlock.set_code")
+        ));
+    }
+
+    private static void openKeypadUnlock(ServerPlayerEntity player, ServerWorld world, Hand hand,
+                                         BlockHitResult hit, LockState.LockEntry originalLock,
+                                         boolean removeLock) {
+        player.openHandledScreen(new SimpleNamedScreenHandlerFactory(
+                (syncId, inventory, ignored) -> new KeypadScreenHandler(syncId, inventory, code -> {
+                    LockState lockState = LockState.get(world);
+                    Optional<LockState.LockEntry> current = lockState.get(hit.getBlockPos());
+                    if (current.isEmpty() || !current.get().lockId().equals(originalLock.lockId())) {
+                        send(player, "message.crouchlock.target_changed");
+                        return true;
+                    }
+
+                    if (!current.get().credential().equals(hashCode(current.get().lockId(), code))) {
+                        send(player, "message.crouchlock.wrong_code");
+                        return false;
+                    }
+
+                    if (removeLock) {
+                        lockState.removeLock(current.get().lockId());
+                        send(player, "message.crouchlock.unlocked");
+                    } else {
+                        END_OF_TICK_ACTIONS.add(() -> {
+                            if (player.isRemoved()) {
+                                return;
+                            }
+                            BlockState targetState = world.getBlockState(hit.getBlockPos());
+                            if (isLockable(world, hit.getBlockPos(), targetState)) {
+                                targetState.onUse(world, player, hand, hit);
+                            }
+                        });
+                    }
+                    return true;
+                }),
+                Text.translatable(removeLock
+                        ? "screen.crouchlock.remove_code"
+                        : "screen.crouchlock.enter_code")
+        ));
+    }
+
+    private static void putLinkedLock(ServerWorld world, List<BlockPos> positions, LockState.LockEntry prototype) {
+        LockState state = LockState.get(world);
+        for (BlockPos pos : positions) {
+            Block block = world.getBlockState(pos).getBlock();
+            String blockId = Registries.BLOCK.getId(block).toString();
+            state.put(pos, new LockState.LockEntry(prototype.type(), prototype.credential(),
+                    prototype.lockId(), prototype.ownerId(), blockId));
+        }
     }
 
     private static boolean beforeBlockBreak(World world, PlayerEntity player, BlockPos pos,
@@ -133,13 +254,14 @@ public final class CrouchLockMod implements ModInitializer {
             return true;
         }
 
-        if (canBypass(player)
-                || keyMatches(player.getMainHandStack(), existing.get())
+        if (keyMatches(player.getMainHandStack(), existing.get())
                 || keyMatches(player.getOffHandStack(), existing.get())) {
             return true;
         }
 
-        send(player, "message.crouchlock.cannot_break");
+        send(player, KEYPAD_LOCK.equals(existing.get().type())
+                ? "message.crouchlock.cannot_break_keypad"
+                : "message.crouchlock.cannot_break");
         return false;
     }
 
@@ -190,11 +312,22 @@ public final class CrouchLockMod implements ModInitializer {
     }
 
     private static boolean keyMatches(ItemStack stack, LockState.LockEntry lock) {
-        return LockKeyItem.getKeyId(stack).map(lock.keyId()::equals).orElse(false);
+        if (!KEY_LOCK.equals(lock.type())) {
+            return false;
+        }
+        return LockKeyItem.getKeyId(stack)
+                .map(id -> id.toString().equals(lock.credential()))
+                .orElse(false);
     }
 
-    private static boolean canBypass(PlayerEntity player) {
-        return player instanceof ServerPlayerEntity serverPlayer && serverPlayer.hasPermissionLevel(2);
+    private static String hashCode(UUID lockId, String code) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hashed = digest.digest((lockId + ":" + code).getBytes(StandardCharsets.UTF_8));
+            return HexFormat.of().formatHex(hashed);
+        } catch (NoSuchAlgorithmException exception) {
+            throw new IllegalStateException("SHA-256 is not available", exception);
+        }
     }
 
     private static void send(PlayerEntity player, String translationKey) {

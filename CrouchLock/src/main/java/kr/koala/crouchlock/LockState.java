@@ -72,7 +72,8 @@ public final class LockState extends PersistentState {
         locks.forEach((packedPos, entry) -> {
             NbtCompound value = new NbtCompound();
             value.putLong("Pos", packedPos);
-            value.putString("Key", entry.keyId().toString());
+            value.putString("Type", entry.type());
+            value.putString("Credential", entry.credential());
             value.putString("Lock", entry.lockId().toString());
             value.putString("Owner", entry.ownerId().toString());
             value.putString("Block", entry.blockId());
@@ -90,11 +91,18 @@ public final class LockState extends PersistentState {
             NbtCompound value = list.getCompound(index);
             try {
                 long pos = value.getLong("Pos");
-                UUID keyId = UUID.fromString(value.getString("Key"));
+                String type = value.contains("Type", NbtElement.STRING_TYPE)
+                        ? value.getString("Type")
+                        : CrouchLockMod.KEY_LOCK;
+                String credential = value.contains("Credential", NbtElement.STRING_TYPE)
+                        ? value.getString("Credential")
+                        : value.getString("Key");
                 UUID lockId = UUID.fromString(value.getString("Lock"));
                 UUID ownerId = UUID.fromString(value.getString("Owner"));
                 String blockId = value.getString("Block");
-                state.locks.put(pos, new LockEntry(keyId, lockId, ownerId, blockId));
+                if (!credential.isBlank()) {
+                    state.locks.put(pos, new LockEntry(type, credential, lockId, ownerId, blockId));
+                }
             } catch (IllegalArgumentException ignored) {
                 // Skip malformed entries instead of preventing the world from loading.
             }
@@ -102,6 +110,6 @@ public final class LockState extends PersistentState {
         return state;
     }
 
-    public record LockEntry(UUID keyId, UUID lockId, UUID ownerId, String blockId) {
+    public record LockEntry(String type, String credential, UUID lockId, UUID ownerId, String blockId) {
     }
 }

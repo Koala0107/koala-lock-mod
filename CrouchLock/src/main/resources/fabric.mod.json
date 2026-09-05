@@ -3,7 +3,7 @@
   "id": "crouchlock",
   "version": "${version}",
   "name": "CrouchLock",
-  "description": "웅크리고 열쇠로 클릭해 상자, 문, 통 등을 잠그는 Fabric 모드입니다.",
+  "description": "열쇠 또는 4자리 키패드로 상자, 문, 덫문, 통 등을 잠그는 Fabric 모드입니다.",
   "authors": [
     "Koala"
   ],
