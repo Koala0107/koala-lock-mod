@@ -29,5 +29,6 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: crouchlock-1.0.0
-          path: CrouchLock/build/libs/crouchlock-1.0.0.jar
+          name: crouchlock-1.1.0
+          path: CrouchLock/build/libs/crouchlock-*.jar
+          if-no-files-found: error

@@ -4,6 +4,7 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.gui.widget.ButtonWidget;
+import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 
@@ -40,6 +41,7 @@ public final class KeypadScreen extends HandledScreen<KeypadScreenHandler> {
                 .build());
         addDrawableChild(ButtonWidget.builder(Text.translatable("screen.crouchlock.clear"), button -> {
                     input = "";
+                    playKeySound(0.65F);
                     click(KeypadScreenHandler.CLEAR_BUTTON);
                 })
                 .dimensions(left, top + 3 * (size + gap), size, size)
@@ -47,6 +49,7 @@ public final class KeypadScreen extends HandledScreen<KeypadScreenHandler> {
         addDrawableChild(ButtonWidget.builder(Text.translatable("screen.crouchlock.confirm"), button -> {
                     if (input.length() >= KeypadScreenHandler.MIN_DIGITS
                             && input.length() <= KeypadScreenHandler.MAX_DIGITS) {
+                        playKeySound(1.55F);
                         click(KeypadScreenHandler.CONFIRM_BUTTON);
                         input = "";
                     }
@@ -58,7 +61,15 @@ public final class KeypadScreen extends HandledScreen<KeypadScreenHandler> {
     private void press(int digit) {
         if (input.length() < KeypadScreenHandler.MAX_DIGITS) {
             input += digit;
+            playKeySound(0.8F + digit * 0.06F);
             click(digit);
+        }
+    }
+
+    private void playKeySound(float pitch) {
+        MinecraftClient client = MinecraftClient.getInstance();
+        if (client.player != null) {
+            client.player.playSound(SoundEvents.BLOCK_NOTE_BLOCK_HARP.value(), 0.55F, pitch);
         }
     }
 
