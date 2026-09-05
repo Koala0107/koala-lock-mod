@@ -2,6 +2,7 @@ package kr.koala.crouchlock;
 
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
+import net.fabricmc.fabric.api.event.player.AttackEntityCallback;
 import net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
 import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
@@ -13,6 +14,7 @@ import net.minecraft.block.TrapdoorBlock;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.enums.ChestType;
 import net.minecraft.entity.ItemEntity;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroups;
@@ -30,6 +32,7 @@ import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.hit.BlockHitResult;
+import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Direction;
@@ -83,6 +86,7 @@ public final class CrouchLockMod implements ModInitializer {
             entries.add(KEYPAD);
         });
         UseBlockCallback.EVENT.register(CrouchLockMod::onUseBlock);
+        AttackEntityCallback.EVENT.register(CrouchLockMod::onAttackEntity);
         PlayerBlockBreakEvents.BEFORE.register(CrouchLockMod::beforeBlockBreak);
         PlayerBlockBreakEvents.AFTER.register((world, player, pos, state, blockEntity) -> {
             if (world instanceof ServerWorld serverWorld) {
@@ -286,6 +290,35 @@ public final class CrouchLockMod implements ModInitializer {
 
         send(player, "message.crouchlock.cannot_break");
         return false;
+    }
+
+    private static ActionResult onAttackEntity(PlayerEntity player, World world, Hand hand,
+                                               Entity entity, EntityHitResult hitResult) {
+        if (!(entity instanceof ItemEntity marker) || !marker.getCommandTags().contains(MARKER_TAG)) {
+            return ActionResult.PASS;
+        }
+
+        if (!isDiamondSword(player.getStackInHand(hand))) {
+            if (!world.isClient) {
+                send(player, "message.crouchlock.cannot_break");
+            }
+            return ActionResult.FAIL;
+        }
+
+        if (world.isClient || !(world instanceof ServerWorld serverWorld)) {
+            return ActionResult.SUCCESS;
+        }
+
+        String rawLockId = marker.getStack().getOrCreateNbt().getString("CrouchLockLockId");
+        try {
+            UUID lockId = UUID.fromString(rawLockId);
+            LockState.get(serverWorld).removeLock(lockId);
+            marker.discard();
+            send(player, "message.crouchlock.lock_destroyed");
+            return ActionResult.SUCCESS;
+        } catch (IllegalArgumentException ignored) {
+            return ActionResult.FAIL;
+        }
     }
 
     private static boolean isDiamondSword(ItemStack stack) {

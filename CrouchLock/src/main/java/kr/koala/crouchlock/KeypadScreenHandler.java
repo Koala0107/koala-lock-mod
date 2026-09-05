@@ -3,6 +3,8 @@ package kr.koala.crouchlock;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.ItemStack;
+import net.minecraft.screen.ArrayPropertyDelegate;
+import net.minecraft.screen.PropertyDelegate;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.slot.SlotActionType;
 
@@ -17,14 +19,22 @@ public final class KeypadScreenHandler extends ScreenHandler {
 
     private final Predicate<String> confirmAction;
     private final StringBuilder input = new StringBuilder(MAX_DIGITS);
+    private final PropertyDelegate properties;
 
     public KeypadScreenHandler(int syncId, PlayerInventory inventory) {
-        this(syncId, inventory, code -> true);
+        this(syncId, inventory, code -> true, new ArrayPropertyDelegate(1));
     }
 
     public KeypadScreenHandler(int syncId, PlayerInventory inventory, Predicate<String> confirmAction) {
+        this(syncId, inventory, confirmAction, new ArrayPropertyDelegate(1));
+    }
+
+    private KeypadScreenHandler(int syncId, PlayerInventory inventory, Predicate<String> confirmAction,
+                                PropertyDelegate properties) {
         super(CrouchLockMod.KEYPAD_SCREEN_HANDLER, syncId);
         this.confirmAction = confirmAction;
+        this.properties = properties;
+        addProperties(properties);
     }
 
     @Override
@@ -47,6 +57,7 @@ public final class KeypadScreenHandler extends ScreenHandler {
             boolean close = confirmAction.test(input.toString());
             if (!close) {
                 input.setLength(0);
+                properties.set(0, properties.get(0) + 1);
             }
             return close;
         }
@@ -67,5 +78,9 @@ public final class KeypadScreenHandler extends ScreenHandler {
     @Override
     public ItemStack quickMove(PlayerEntity player, int slot) {
         return ItemStack.EMPTY;
+    }
+
+    public int getErrorCounter() {
+        return properties.get(0);
     }
 }

@@ -21,5 +21,6 @@
   "message.crouchlock.already_locked": "It is already locked.",
   "message.crouchlock.target_changed": "The target is missing or has changed.",
   "message.crouchlock.need_keypad": "You must still be holding the keypad.",
-  "message.crouchlock.cannot_break": "Locked blocks can only be broken with a diamond sword."
+  "message.crouchlock.cannot_break": "Lock devices can only be broken with a diamond sword.",
+  "message.crouchlock.lock_destroyed": "The lock device was removed with a diamond sword."
 }

@@ -21,5 +21,6 @@
   "message.crouchlock.already_locked": "이미 잠겨 있습니다.",
   "message.crouchlock.target_changed": "대상이 사라졌거나 변경되었습니다.",
   "message.crouchlock.need_keypad": "키패드를 손에 들고 있어야 합니다.",
-  "message.crouchlock.cannot_break": "잠긴 블록은 다이아몬드 칼로만 부술 수 있습니다."
+  "message.crouchlock.cannot_break": "잠금 장치는 다이아몬드 칼로만 부술 수 있습니다.",
+  "message.crouchlock.lock_destroyed": "다이아몬드 칼로 잠금 장치를 제거했습니다."
 }

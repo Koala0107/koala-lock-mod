@@ -10,41 +10,49 @@ import net.minecraft.util.Formatting;
 
 /** A real button UI: no fake item stacks or chest slots are used. */
 public final class KeypadScreen extends HandledScreen<KeypadScreenHandler> {
+    private static final int PANEL_WIDTH = 180;
+    private static final int PANEL_HEIGHT = 210;
+    private static final int BUTTON_SIZE = 32;
+    private static final int BUTTON_GAP = 4;
+
     private String input = "";
+    private int seenErrorCounter;
+    private int errorTicks;
 
     public KeypadScreen(KeypadScreenHandler handler, net.minecraft.entity.player.PlayerInventory inventory,
                         Text title) {
         super(handler, inventory, title);
-        backgroundWidth = 220;
-        backgroundHeight = 230;
+        backgroundWidth = PANEL_WIDTH;
+        backgroundHeight = PANEL_HEIGHT;
     }
 
     @Override
     protected void init() {
         super.init();
-        int left = x + 35;
-        int top = y + 62;
-        int size = 45;
-        int gap = 5;
+        int gridWidth = BUTTON_SIZE * 3 + BUTTON_GAP * 2;
+        int left = (width - gridWidth) / 2;
+        int top = (height - PANEL_HEIGHT) / 2 + 62;
 
         for (int digit = 1; digit <= 9; digit++) {
             int value = digit;
             int column = (digit - 1) % 3;
             int row = (digit - 1) / 3;
             addDrawableChild(ButtonWidget.builder(Text.literal(Integer.toString(digit)), button -> press(value))
-                    .dimensions(left + column * (size + gap), top + row * (size + gap), size, size)
+                    .dimensions(left + column * (BUTTON_SIZE + BUTTON_GAP),
+                            top + row * (BUTTON_SIZE + BUTTON_GAP), BUTTON_SIZE, BUTTON_SIZE)
                     .build());
         }
 
         addDrawableChild(ButtonWidget.builder(Text.literal("0"), button -> press(0))
-                .dimensions(left + size + gap, top + 3 * (size + gap), size, size)
+                .dimensions(left + BUTTON_SIZE + BUTTON_GAP,
+                        top + 3 * (BUTTON_SIZE + BUTTON_GAP), BUTTON_SIZE, BUTTON_SIZE)
                 .build());
         addDrawableChild(ButtonWidget.builder(Text.translatable("screen.crouchlock.clear"), button -> {
                     input = "";
                     playKeySound(0.65F);
                     click(KeypadScreenHandler.CLEAR_BUTTON);
                 })
-                .dimensions(left, top + 3 * (size + gap), size, size)
+                .dimensions(left, top + 3 * (BUTTON_SIZE + BUTTON_GAP), BUTTON_SIZE, BUTTON_SIZE)
                 .build());
         addDrawableChild(ButtonWidget.builder(Text.translatable("screen.crouchlock.confirm"), button -> {
                     if (input.length() >= KeypadScreenHandler.MIN_DIGITS
@@ -54,8 +62,21 @@ public final class KeypadScreen extends HandledScreen<KeypadScreenHandler> {
                         input = "";
                     }
                 })
-                .dimensions(left + 2 * (size + gap), top + 3 * (size + gap), size, size)
+                .dimensions(left + 2 * (BUTTON_SIZE + BUTTON_GAP),
+                        top + 3 * (BUTTON_SIZE + BUTTON_GAP), BUTTON_SIZE, BUTTON_SIZE)
                 .build());
+    }
+
+    @Override
+    public void tick() {
+        super.tick();
+        int currentErrorCounter = handler.getErrorCounter();
+        if (currentErrorCounter != seenErrorCounter) {
+            seenErrorCounter = currentErrorCounter;
+            errorTicks = 40;
+        } else if (errorTicks > 0) {
+            errorTicks--;
+        }
     }
 
     private void press(int digit) {
@@ -82,19 +103,22 @@ public final class KeypadScreen extends HandledScreen<KeypadScreenHandler> {
 
     @Override
     protected void drawBackground(DrawContext context, float delta, int mouseX, int mouseY) {
-        int left = x;
-        int top = y;
-        context.fill(left, top, left + backgroundWidth, top + backgroundHeight, 0xF0181822);
-        context.fill(left + 4, top + 4, left + backgroundWidth - 4, top + backgroundHeight - 4, 0xFF303544);
-        context.drawCenteredTextWithShadow(textRenderer, title, left + backgroundWidth / 2, top + 12, 0xFFFFFF);
+        int left = (width - PANEL_WIDTH) / 2;
+        int top = (height - PANEL_HEIGHT) / 2;
+        int center = width / 2;
+        context.fill(left, top, left + PANEL_WIDTH, top + PANEL_HEIGHT, 0xF0181822);
+        context.fill(left + 4, top + 4, left + PANEL_WIDTH - 4, top + PANEL_HEIGHT - 4, 0xFF303544);
+        context.drawCenteredTextWithShadow(textRenderer, title, center, top + 11, 0xFFFFFF);
+        context.fill(left + 25, top + 25, left + PANEL_WIDTH - 25, top + 43,
+                errorTicks > 0 ? 0xFF9B2525 : 0xFF171B24);
         context.drawCenteredTextWithShadow(textRenderer,
                 Text.literal("*".repeat(input.length())
                                 + "_".repeat(KeypadScreenHandler.MAX_DIGITS - input.length()))
                         .formatted(Formatting.AQUA),
-                left + backgroundWidth / 2, top + 35, 0xFFFFFF);
+                center, top + 30, errorTicks > 0 ? 0xFFFFD0D0 : 0xFFFFFF);
         context.drawCenteredTextWithShadow(textRenderer,
                 Text.translatable("screen.crouchlock.length_hint").formatted(Formatting.GRAY),
-                left + backgroundWidth / 2, top + 48, 0xFFFFFF);
+                center, top + 48, 0xFFFFFF);
     }
 
     @Override
