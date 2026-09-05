@@ -7,6 +7,7 @@ import net.minecraft.screen.ArrayPropertyDelegate;
 import net.minecraft.screen.PropertyDelegate;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.slot.SlotActionType;
+import net.minecraft.server.network.ServerPlayerEntity;
 
 import java.util.function.Predicate;
 
@@ -57,7 +58,9 @@ public final class KeypadScreenHandler extends ScreenHandler {
             boolean success = confirmAction.test(input.toString());
             if (success) {
                 input.setLength(0);
-                player.closeHandledScreen();
+                if (player instanceof ServerPlayerEntity serverPlayer) {
+                    serverPlayer.closeHandledScreen();
+                }
             } else {
                 input.setLength(0);
                 properties.set(0, properties.get(0) + 1);
