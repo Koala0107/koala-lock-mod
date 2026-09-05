@@ -45,7 +45,8 @@ public final class KeypadScreen extends HandledScreen<KeypadScreenHandler> {
                 .dimensions(left, top + 3 * (size + gap), size, size)
                 .build());
         addDrawableChild(ButtonWidget.builder(Text.translatable("screen.crouchlock.confirm"), button -> {
-                    if (input.length() == 4) {
+                    if (input.length() >= KeypadScreenHandler.MIN_DIGITS
+                            && input.length() <= KeypadScreenHandler.MAX_DIGITS) {
                         click(KeypadScreenHandler.CONFIRM_BUTTON);
                         input = "";
                     }
@@ -55,7 +56,7 @@ public final class KeypadScreen extends HandledScreen<KeypadScreenHandler> {
     }
 
     private void press(int digit) {
-        if (input.length() < 4) {
+        if (input.length() < KeypadScreenHandler.MAX_DIGITS) {
             input += digit;
             click(digit);
         }
@@ -76,9 +77,13 @@ public final class KeypadScreen extends HandledScreen<KeypadScreenHandler> {
         context.fill(left + 4, top + 4, left + backgroundWidth - 4, top + backgroundHeight - 4, 0xFF303544);
         context.drawCenteredTextWithShadow(textRenderer, title, left + backgroundWidth / 2, top + 12, 0xFFFFFF);
         context.drawCenteredTextWithShadow(textRenderer,
-                Text.literal(input.isEmpty() ? "----" : "*".repeat(input.length()) + "_".repeat(4 - input.length()))
+                Text.literal("*".repeat(input.length())
+                                + "_".repeat(KeypadScreenHandler.MAX_DIGITS - input.length()))
                         .formatted(Formatting.AQUA),
                 left + backgroundWidth / 2, top + 35, 0xFFFFFF);
+        context.drawCenteredTextWithShadow(textRenderer,
+                Text.translatable("screen.crouchlock.length_hint").formatted(Formatting.GRAY),
+                left + backgroundWidth / 2, top + 48, 0xFFFFFF);
     }
 
     @Override

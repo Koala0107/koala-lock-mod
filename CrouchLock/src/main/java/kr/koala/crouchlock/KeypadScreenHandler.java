@@ -10,11 +10,13 @@ import java.util.function.Predicate;
 
 /** Server-side state for the button-based keypad screen. */
 public final class KeypadScreenHandler extends ScreenHandler {
+    public static final int MIN_DIGITS = 1;
+    public static final int MAX_DIGITS = 8;
     public static final int CLEAR_BUTTON = 10;
     public static final int CONFIRM_BUTTON = 11;
 
     private final Predicate<String> confirmAction;
-    private final StringBuilder input = new StringBuilder(4);
+    private final StringBuilder input = new StringBuilder(MAX_DIGITS);
 
     public KeypadScreenHandler(int syncId, PlayerInventory inventory) {
         this(syncId, inventory, code -> true);
@@ -28,7 +30,7 @@ public final class KeypadScreenHandler extends ScreenHandler {
     @Override
     public boolean onButtonClick(PlayerEntity player, int id) {
         if (id >= 0 && id <= 9) {
-            if (input.length() < 4) {
+            if (input.length() < MAX_DIGITS) {
                 input.append(id);
             }
             return true;
@@ -39,7 +41,9 @@ public final class KeypadScreenHandler extends ScreenHandler {
             return true;
         }
 
-        if (id == CONFIRM_BUTTON && input.length() == 4) {
+        if (id == CONFIRM_BUTTON
+                && input.length() >= MIN_DIGITS
+                && input.length() <= MAX_DIGITS) {
             boolean close = confirmAction.test(input.toString());
             if (!close) {
                 input.setLength(0);
