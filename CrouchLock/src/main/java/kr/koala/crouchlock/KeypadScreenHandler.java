@@ -8,6 +8,7 @@ import net.minecraft.item.Items;
 import net.minecraft.screen.GenericContainerScreenHandler;
 import net.minecraft.screen.ScreenHandlerType;
 import net.minecraft.screen.slot.SlotActionType;
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 
@@ -69,8 +70,8 @@ public final class KeypadScreenHandler extends GenericContainerScreenHandler {
             }
 
             boolean close = confirmAction.test(input.toString());
-            if (close) {
-                player.closeHandledScreen();
+            if (close && player instanceof ServerPlayerEntity serverPlayer) {
+                serverPlayer.closeHandledScreen();
             } else {
                 input.setLength(0);
                 refreshButtons();
