@@ -10,12 +10,14 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.text.Text;
 import net.minecraft.util.Hand;
+import net.minecraft.util.math.MathHelper;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public final class SmartphoneScreen extends Screen {
-    private static final int PAGE_SIZE = 4;
+    private static final int PAGE_SIZE = 5;
+    private static final int ROW_HEIGHT = 25;
 
     private final Hand hand;
     private final List<SmartphoneData.PhoneRecord> calls;
@@ -30,10 +32,12 @@ public final class SmartphoneScreen extends Screen {
     private int panelY;
     private int panelWidth;
     private int panelHeight;
+    private int listX;
+    private int listY;
+    private int listWidth;
 
     private ButtonWidget callsTab;
     private ButtonWidget messagesTab;
-    private final ButtonWidget[] rowButtons = new ButtonWidget[PAGE_SIZE];
     private ButtonWidget previousPage;
     private ButtonWidget nextPage;
     private ButtonWidget addButton;
@@ -55,52 +59,47 @@ public final class SmartphoneScreen extends Screen {
     @Override
     protected void init() {
         panelWidth = Math.min(300, width - 12);
-        panelHeight = Math.min(236, height - 8);
+        panelHeight = Math.min(252, height - 8);
         panelX = (width - panelWidth) / 2;
         panelY = (height - panelHeight) / 2;
 
         int innerX = panelX + 15;
         int innerWidth = panelWidth - 30;
+        listX = innerX;
+        listY = panelY + 58;
+        listWidth = innerWidth;
 
         callsTab = addDrawableChild(ButtonWidget.builder(
                         Text.translatable("screen.crouchlock.smartphone.calls"),
                         button -> switchMode(true))
-                .dimensions(innerX, panelY + 36, (innerWidth - 4) / 2, 18)
+                .dimensions(innerX, panelY + 35, (innerWidth - 4) / 2, 18)
                 .build());
         messagesTab = addDrawableChild(ButtonWidget.builder(
                         Text.translatable("screen.crouchlock.smartphone.messages"),
                         button -> switchMode(false))
-                .dimensions(innerX + (innerWidth + 4) / 2, panelY + 36,
+                .dimensions(innerX + (innerWidth + 4) / 2, panelY + 35,
                         (innerWidth - 4) / 2, 18)
                 .build());
 
-        for (int i = 0; i < PAGE_SIZE; i++) {
-            final int row = i;
-            rowButtons[i] = addDrawableChild(ButtonWidget.builder(Text.empty(),
-                            button -> selectRow(row))
-                    .dimensions(innerX, panelY + 60 + i * 21, innerWidth, 19)
-                    .build());
-        }
-
         previousPage = addDrawableChild(ButtonWidget.builder(Text.literal("‹"), button -> changePage(-1))
-                .dimensions(innerX, panelY + 147, 28, 18)
+                .dimensions(innerX, panelY + 187, 28, 18)
                 .build());
         nextPage = addDrawableChild(ButtonWidget.builder(Text.literal("›"), button -> changePage(1))
-                .dimensions(innerX + innerWidth - 28, panelY + 147, 28, 18)
+                .dimensions(innerX + innerWidth - 28, panelY + 187, 28, 18)
                 .build());
 
         nameField = addDrawableChild(new TextFieldWidget(textRenderer,
-                innerX, panelY + 172, 94, 18, Text.translatable("screen.crouchlock.smartphone.name")));
+                innerX, panelY + 211, 94, 18, Text.translatable("screen.crouchlock.smartphone.name")));
         nameField.setMaxLength(SmartphoneData.MAX_NAME_LENGTH);
         nameField.setPlaceholder(Text.translatable("screen.crouchlock.smartphone.name"));
 
         timeField = addDrawableChild(new TextFieldWidget(textRenderer,
-                innerX + 98, panelY + 172, 58, 18, Text.translatable("screen.crouchlock.smartphone.time")));
+                innerX + 98, panelY + 211, 58, 18, Text.translatable("screen.crouchlock.smartphone.time")));
         timeField.setMaxLength(SmartphoneData.MAX_TIME_LENGTH);
         timeField.setPlaceholder(Text.translatable("screen.crouchlock.smartphone.time"));
 
         detailField = addDrawableChild(new TextFieldWidget(textRenderer,
-                innerX + 160, panelY + 172, innerWidth - 160, 18,
+                innerX + 160, panelY + 211, innerWidth - 160, 18,
                 Text.translatable("screen.crouchlock.smartphone.detail")));
         detailField.setMaxLength(SmartphoneData.MAX_DETAIL_LENGTH);
         detailField.setPlaceholder(Text.translatable("screen.crouchlock.smartphone.detail"));
@@ -109,20 +108,15 @@ public final class SmartphoneScreen extends Screen {
         int actionWidth = (innerWidth - actionGap * 2) / 3;
         addButton = addDrawableChild(ButtonWidget.builder(
                         Text.translatable("screen.crouchlock.smartphone.add"), button -> addRecord())
-                .dimensions(innerX, panelY + 195, actionWidth, 18)
+                .dimensions(innerX, panelY + 232, actionWidth, 16)
                 .build());
         applyButton = addDrawableChild(ButtonWidget.builder(
                         Text.translatable("screen.crouchlock.smartphone.apply"), button -> applyRecord())
-                .dimensions(innerX + actionWidth + actionGap, panelY + 195, actionWidth, 18)
+                .dimensions(innerX + actionWidth + actionGap, panelY + 232, actionWidth, 16)
                 .build());
         deleteButton = addDrawableChild(ButtonWidget.builder(
                         Text.translatable("screen.crouchlock.smartphone.delete"), button -> deleteRecord())
-                .dimensions(innerX + (actionWidth + actionGap) * 2, panelY + 195, actionWidth, 18)
-                .build());
-
-        addDrawableChild(ButtonWidget.builder(
-                        Text.translatable("screen.crouchlock.smartphone.save_close"), button -> close())
-                .dimensions(innerX, panelY + 217, innerWidth, 15)
+                .dimensions(innerX + (actionWidth + actionGap) * 2, panelY + 232, actionWidth, 16)
                 .build());
 
         loadSelectedIntoFields();
@@ -133,50 +127,130 @@ public final class SmartphoneScreen extends Screen {
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         renderBackground(context, mouseX, mouseY, delta);
         drawPhoneChrome(context);
+        drawRecordList(context, mouseX, mouseY);
 
         List<SmartphoneData.PhoneRecord> records = activeRecords();
         int totalPages = Math.max(1, (records.size() + PAGE_SIZE - 1) / PAGE_SIZE);
         Text status = Text.translatable("screen.crouchlock.smartphone.page",
                 page + 1, totalPages, records.size());
         context.drawCenteredTextWithShadow(textRenderer, status,
-                panelX + panelWidth / 2, panelY + 151, 0xFFB9C8D6);
+                panelX + panelWidth / 2, panelY + 192, 0xFFB9C8D6);
 
         super.render(context, mouseX, mouseY, delta);
     }
 
     private void drawPhoneChrome(DrawContext context) {
-        // Shadow and outer shell.
         context.fill(panelX - 5, panelY - 4, panelX + panelWidth + 5, panelY + panelHeight + 5, 0x66000000);
         context.fill(panelX - 3, panelY - 3, panelX + panelWidth + 3, panelY + panelHeight + 3, 0xFF050709);
         context.fill(panelX, panelY, panelX + panelWidth, panelY + panelHeight, 0xFF171D22);
+        context.fill(panelX + 7, panelY + 7, panelX + panelWidth - 7, panelY + panelHeight - 7, 0xFFF3F3F3);
 
-        // Screen and subtle sunset-inspired header strip.
-        context.fill(panelX + 7, panelY + 7, panelX + panelWidth - 7, panelY + panelHeight - 7, 0xFF0E151C);
-        context.fill(panelX + 8, panelY + 8, panelX + panelWidth - 8, panelY + 31, 0xFF273A55);
-        context.fill(panelX + 8, panelY + 23, panelX + panelWidth - 8, panelY + 31, 0xFF5A3D58);
-
-        // Speaker / camera details.
-        context.fill(panelX + panelWidth / 2 - 23, panelY + 5,
+        context.fill(panelX + 8, panelY + 8, panelX + panelWidth - 8, panelY + 31, 0xFF28333D);
+        context.fill(panelX + panelWidth / 2 - 24, panelY + 5,
                 panelX + panelWidth / 2 + 18, panelY + 7, 0xFF050709);
         context.fill(panelX + panelWidth / 2 + 22, panelY + 5,
                 panelX + panelWidth / 2 + 25, panelY + 8, 0xFF0A0D10);
 
-        // App icon and title.
-        context.fill(panelX + 14, panelY + 13, panelX + 22, panelY + 21, 0xFF2BA65A);
+        int iconColor = showingCalls ? 0xFF2FB55D : 0xFF318BEA;
+        context.fill(panelX + 14, panelY + 13, panelX + 24, panelY + 23, iconColor);
         context.drawTextWithShadow(textRenderer, showingCalls ? Text.literal("☎") : Text.literal("✉"),
-                panelX + 15, panelY + 12, 0xFFFFFFFF);
-        context.drawTextWithShadow(textRenderer, title, panelX + 28, panelY + 12, 0xFFFFFFFF);
-
-        // Status area, divider and home indicator.
+                panelX + 15, panelY + 13, 0xFFFFFFFF);
+        context.drawTextWithShadow(textRenderer,
+                showingCalls
+                        ? Text.translatable("screen.crouchlock.smartphone.calls")
+                        : Text.translatable("screen.crouchlock.smartphone.messages"),
+                panelX + 30, panelY + 14, 0xFFFFFFFF);
         context.drawTextWithShadow(textRenderer, Text.literal("10:24"),
-                panelX + panelWidth - 47, panelY + 12, 0xFFE7EDF3);
-        context.fill(panelX + 12, panelY + 56, panelX + panelWidth - 12, panelY + 57, 0xFF26333F);
-        context.fill(panelX + panelWidth / 2 - 23, panelY + panelHeight - 4,
-                panelX + panelWidth / 2 + 23, panelY + panelHeight - 2, 0xFFB7C2CC);
+                panelX + panelWidth - 45, panelY + 14, 0xFFE7EDF3);
 
-        // Editor card behind fields / action buttons.
-        context.fill(panelX + 11, panelY + 168, panelX + panelWidth - 11, panelY + 215, 0xFF121B24);
-        context.fill(panelX + 11, panelY + 168, panelX + panelWidth - 11, panelY + 169, 0xFF2A3C4B);
+        context.fill(panelX + 10, panelY + 55, panelX + panelWidth - 10, panelY + 184, 0xFFFFFFFF);
+        context.fill(panelX + 10, panelY + 55, panelX + panelWidth - 10, panelY + 56, 0xFFD0D4D8);
+        context.fill(panelX + 10, panelY + 184, panelX + panelWidth - 10, panelY + 185, 0xFFD0D4D8);
+
+        context.fill(panelX + 11, panelY + 207, panelX + panelWidth - 11, panelY + 231, 0xFFE8EBEE);
+        context.fill(panelX + panelWidth / 2 - 23, panelY + panelHeight - 4,
+                panelX + panelWidth / 2 + 23, panelY + panelHeight - 2, 0xFF8B949C);
+    }
+
+    private void drawRecordList(DrawContext context, int mouseX, int mouseY) {
+        List<SmartphoneData.PhoneRecord> records = activeRecords();
+
+        for (int row = 0; row < PAGE_SIZE; row++) {
+            int index = page * PAGE_SIZE + row;
+            int y = listY + row * ROW_HEIGHT;
+            boolean hovered = mouseX >= listX && mouseX < listX + listWidth
+                    && mouseY >= y && mouseY < y + ROW_HEIGHT;
+            boolean isSelected = index == selected;
+
+            if (hovered || isSelected) {
+                context.fill(listX, y, listX + listWidth, y + ROW_HEIGHT, isSelected ? 0xFFE6F1FB : 0xFFF1F4F6);
+            }
+            if (row > 0) {
+                context.fill(listX + 34, y, listX + listWidth, y + 1, 0xFFE1E4E7);
+            }
+
+            if (index >= records.size()) {
+                continue;
+            }
+
+            SmartphoneData.PhoneRecord record = records.get(index);
+            String name = record.name().isBlank()
+                    ? Text.translatable("screen.crouchlock.smartphone.unnamed").getString()
+                    : record.name();
+            String time = record.time().isBlank() ? "--:--" : record.time();
+            String detail = record.detail().isBlank() ? "..." : record.detail();
+
+            drawAvatar(context, listX + 4, y + 4, index, showingCalls);
+
+            context.drawText(textRenderer, Text.literal(textRenderer.trimToWidth(name, listWidth - 96)),
+                    listX + 38, y + 4, 0xFF1F252B, false);
+            int timeWidth = textRenderer.getWidth(time);
+            context.drawText(textRenderer, Text.literal(time), listX + listWidth - timeWidth - 5,
+                    y + 4, 0xFF6C747B, false);
+
+            String secondary = showingCalls
+                    ? callSecondaryText(detail)
+                    : textRenderer.trimToWidth(detail, listWidth - 52);
+            int secondaryColor = showingCalls && isMissedCall(detail) ? 0xFFD83A3A : 0xFF707980;
+            context.drawText(textRenderer, Text.literal(secondary), listX + 38, y + 14, secondaryColor, false);
+        }
+    }
+
+    private void drawAvatar(DrawContext context, int x, int y, int index, boolean callMode) {
+        int[] palette = {0xFFBA704A, 0xFF6AA6D8, 0xFF63A875, 0xFF9A7AC2, 0xFFC09048, 0xFF70767C};
+        int color = palette[Math.floorMod(index, palette.length)];
+        context.fill(x, y, x + 26, y + 17, color);
+        context.fill(x + 3, y + 3, x + 23, y + 14, 0x33000000);
+        context.drawCenteredTextWithShadow(textRenderer,
+                callMode ? Text.literal("☎") : Text.literal("✉"), x + 13, y + 4, 0xFFFFFFFF);
+    }
+
+    private String callSecondaryText(String detail) {
+        if (detail.isBlank()) {
+            return "☎  " + Text.translatable("screen.crouchlock.smartphone.calls").getString();
+        }
+        String prefix = isMissedCall(detail) ? "↙  " : "↗  ";
+        return prefix + textRenderer.trimToWidth(detail, listWidth - 58);
+    }
+
+    private boolean isMissedCall(String detail) {
+        String normalized = detail.toLowerCase();
+        return normalized.contains("miss") || normalized.contains("부재") || normalized.contains("실패")
+                || normalized.contains("못") || normalized.contains("끊");
+    }
+
+    @Override
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if (button == 0 && mouseX >= listX && mouseX < listX + listWidth
+                && mouseY >= listY && mouseY < listY + PAGE_SIZE * ROW_HEIGHT) {
+            int row = MathHelper.floor((mouseY - listY) / ROW_HEIGHT);
+            int index = page * PAGE_SIZE + row;
+            if (index < activeRecords().size()) {
+                selectIndex(index);
+                return true;
+            }
+        }
+        return super.mouseClicked(mouseX, mouseY, button);
     }
 
     @Override
@@ -206,12 +280,8 @@ public final class SmartphoneScreen extends Screen {
         refreshWidgets();
     }
 
-    private void selectRow(int row) {
+    private void selectIndex(int index) {
         commitFields();
-        int index = page * PAGE_SIZE + row;
-        if (index >= activeRecords().size()) {
-            return;
-        }
         selected = index;
         loadSelectedIntoFields();
         refreshWidgets();
@@ -311,26 +381,6 @@ public final class SmartphoneScreen extends Screen {
         nameField.setEditable(hasSelection);
         timeField.setEditable(hasSelection);
         detailField.setEditable(hasSelection);
-
-        for (int i = 0; i < PAGE_SIZE; i++) {
-            int index = page * PAGE_SIZE + i;
-            ButtonWidget button = rowButtons[i];
-            if (index < records.size()) {
-                SmartphoneData.PhoneRecord record = records.get(index);
-                String name = record.name().isBlank()
-                        ? Text.translatable("screen.crouchlock.smartphone.unnamed").getString()
-                        : record.name();
-                String time = record.time().isBlank() ? "--:--" : record.time();
-                String detail = record.detail().isBlank() ? "..." : record.detail();
-                String marker = index == selected ? "▸ " : "  ";
-                String line = marker + name + "   " + time + "   " + detail;
-                button.setMessage(Text.literal(textRenderer.trimToWidth(line, button.getWidth() - 12)));
-                button.active = true;
-            } else {
-                button.setMessage(Text.literal("· · ·"));
-                button.active = false;
-            }
-        }
     }
 
     private void syncToServer() {
