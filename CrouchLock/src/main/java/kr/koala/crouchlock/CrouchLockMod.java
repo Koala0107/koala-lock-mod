@@ -7,9 +7,10 @@ import net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
 import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
 import net.minecraft.block.Block;
+import net.minecraft.block.BarrelBlock;
 import net.minecraft.block.BlockState;
+import net.minecraft.block.ChestBlock;
 import net.minecraft.block.DoorBlock;
-import net.minecraft.block.FenceGateBlock;
 import net.minecraft.block.TrapdoorBlock;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.enums.ChestType;
@@ -44,9 +45,11 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.HashMap;
 import java.util.HexFormat;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -96,10 +99,11 @@ public final class CrouchLockMod implements ModInitializer {
             }
         });
         ServerTickEvents.END_WORLD_TICK.register(world -> {
-            if (world.getTime() % 200 == 0) {
-                LockState.get(world).pruneInvalid(world);
-            }
             if (world.getTime() % 20 == 0) {
+                LockState lockState = LockState.get(world);
+                for (LockState.RemovedLock removed : lockState.pruneInvalid(world)) {
+                    removeLockMarkers(world, removed.pos(), removed.lockId());
+                }
                 syncLockMarkers(world);
             }
         });
@@ -291,10 +295,11 @@ public final class CrouchLockMod implements ModInitializer {
 
     static boolean isLockable(World world, BlockPos pos, BlockState state) {
         Block block = state.getBlock();
-        return block instanceof DoorBlock
+        return block instanceof ChestBlock
+                || block instanceof BarrelBlock
+                || block instanceof DoorBlock
                 || block instanceof TrapdoorBlock
-                || block instanceof FenceGateBlock
-                || state.createScreenHandlerFactory(world, pos) != null;
+                ;
     }
 
     private static List<BlockPos> linkedPositions(ServerWorld world, BlockPos pos, BlockState state) {
@@ -356,15 +361,7 @@ public final class CrouchLockMod implements ModInitializer {
 
     private static void spawnLockMarker(ServerWorld world, BlockPos pos, LockState.LockEntry lock) {
         removeLockMarkers(world, pos, lock.lockId());
-        BlockState state = world.getBlockState(pos);
-        Direction facing = state.contains(Properties.HORIZONTAL_FACING)
-                ? state.get(Properties.HORIZONTAL_FACING)
-                : Direction.SOUTH;
-        Vec3d markerPos = Vec3d.ofBottomCenter(pos).add(
-                facing.getOffsetX() * 0.58,
-                0.48,
-                facing.getOffsetZ() * 0.58
-        );
+        Vec3d markerPos = markerPosition(world, pos);
         ItemStack stack = new ItemStack(KEYPAD_LOCK.equals(lock.type()) ? KEYPAD : LOCK_KEY);
         stack.setCustomName(Text.translatable(KEYPAD_LOCK.equals(lock.type())
                 ? "item.crouchlock.keypad_lock.marker"
@@ -375,6 +372,7 @@ public final class CrouchLockMod implements ModInitializer {
         marker.addCommandTag(markerTag(lock.lockId()));
         marker.setNoGravity(true);
         marker.setInvulnerable(true);
+        marker.noClip = true;
         marker.setPickupDelay(32767);
         marker.setNeverDespawn();
         marker.setVelocity(Vec3d.ZERO);
@@ -383,22 +381,118 @@ public final class CrouchLockMod implements ModInitializer {
 
     private static void syncLockMarkers(ServerWorld world) {
         LockState state = LockState.get(world);
-        Set<UUID> seen = new HashSet<>();
+        Map<UUID, MarkerTarget> targets = new HashMap<>();
         for (var entry : state.entries()) {
-            if (!seen.add(entry.getValue().lockId())) {
-                continue;
-            }
             BlockPos pos = BlockPos.fromLong(entry.getKey());
             if (!world.isChunkLoaded(pos)) {
                 continue;
             }
             LockState.LockEntry lock = entry.getValue();
-            boolean markerExists = !world.getEntitiesByClass(ItemEntity.class, new Box(pos).expand(2.5),
-                    entity -> entity.getCommandTags().contains(MARKER_TAG)
-                            && entity.getCommandTags().contains(markerTag(lock.lockId()))).isEmpty();
-            if (!markerExists) {
-                spawnLockMarker(world, pos, lock);
+            targets.putIfAbsent(lock.lockId(), new MarkerTarget(pos, lock));
+        }
+
+        List<ItemEntity> existingMarkers = new ArrayList<>();
+        for (Entity entity : world.iterateEntities()) {
+            if (entity instanceof ItemEntity marker
+                    && marker.getCommandTags().contains(MARKER_TAG)) {
+                existingMarkers.add(marker);
             }
+        }
+
+        Set<UUID> positioned = new HashSet<>();
+        for (ItemEntity marker : existingMarkers) {
+            Optional<UUID> lockId = markerLockId(marker);
+            MarkerTarget target = lockId.map(targets::get).orElse(null);
+            if (lockId.isEmpty() || target == null || !positioned.add(lockId.get())) {
+                marker.discard();
+                continue;
+            }
+
+            Vec3d expectedPosition = markerPosition(world, target.pos());
+            marker.noClip = true;
+            marker.setNoGravity(true);
+            marker.setVelocity(Vec3d.ZERO);
+            if (marker.getPos().squaredDistanceTo(expectedPosition) > 0.0025) {
+                marker.refreshPositionAndAngles(expectedPosition.x, expectedPosition.y,
+                        expectedPosition.z, marker.getYaw(), marker.getPitch());
+            }
+        }
+
+        for (Map.Entry<UUID, MarkerTarget> entry : targets.entrySet()) {
+            if (!positioned.contains(entry.getKey())) {
+                MarkerTarget target = entry.getValue();
+                spawnLockMarker(world, target.pos(), target.lock());
+            }
+        }
+    }
+
+    private static Vec3d markerPosition(ServerWorld world, BlockPos originalPos) {
+        BlockPos pos = lowerDoorHalf(world, originalPos);
+        BlockState state = world.getBlockState(pos);
+
+        if (state.getBlock() instanceof TrapdoorBlock) {
+            boolean open = state.contains(Properties.OPEN) && state.get(Properties.OPEN);
+            if (!open) {
+                boolean topHalf = state.contains(Properties.BLOCK_HALF)
+                        && "top".equals(state.get(Properties.BLOCK_HALF).asString());
+                return Vec3d.ofBottomCenter(pos).add(0.0, topHalf ? 0.70 : 0.32, 0.0);
+            }
+            return markerNearOutline(world, pos, state, 0.50);
+        }
+
+        if (state.getBlock() instanceof DoorBlock) {
+            return markerNearOutline(world, pos, state, 0.58);
+        }
+
+        Direction facing;
+        if (state.contains(Properties.FACING)) {
+            facing = state.get(Properties.FACING);
+        } else if (state.contains(Properties.HORIZONTAL_FACING)) {
+            facing = state.get(Properties.HORIZONTAL_FACING);
+        } else {
+            facing = Direction.SOUTH;
+        }
+        return Vec3d.ofCenter(pos).add(
+                facing.getOffsetX() * 0.66,
+                facing.getOffsetY() * 0.66,
+                facing.getOffsetZ() * 0.66
+        );
+    }
+
+    private static Vec3d markerNearOutline(ServerWorld world, BlockPos pos, BlockState state,
+                                           double height) {
+        Box bounds = state.getOutlineShape(world, pos).getBoundingBox();
+        double localX = (bounds.minX + bounds.maxX) * 0.5;
+        double localZ = (bounds.minZ + bounds.maxZ) * 0.5;
+        double fromCenterX = localX - 0.5;
+        double fromCenterZ = localZ - 0.5;
+        double horizontalLength = Math.sqrt(fromCenterX * fromCenterX + fromCenterZ * fromCenterZ);
+        if (horizontalLength > 0.001) {
+            localX += fromCenterX / horizontalLength * 0.12;
+            localZ += fromCenterZ / horizontalLength * 0.12;
+        }
+        return new Vec3d(pos.getX() + localX, pos.getY() + height, pos.getZ() + localZ);
+    }
+
+    private static BlockPos lowerDoorHalf(ServerWorld world, BlockPos pos) {
+        BlockState state = world.getBlockState(pos);
+        if (state.getBlock() instanceof DoorBlock
+                && state.contains(Properties.DOUBLE_BLOCK_HALF)
+                && "upper".equals(state.get(Properties.DOUBLE_BLOCK_HALF).asString())) {
+            BlockPos lower = pos.down();
+            if (world.getBlockState(lower).isOf(state.getBlock())) {
+                return lower;
+            }
+        }
+        return pos;
+    }
+
+    private static Optional<UUID> markerLockId(ItemEntity marker) {
+        String rawLockId = marker.getStack().getOrCreateNbt().getString("CrouchLockLockId");
+        try {
+            return Optional.of(UUID.fromString(rawLockId));
+        } catch (IllegalArgumentException ignored) {
+            return Optional.empty();
         }
     }
 
@@ -412,6 +506,9 @@ public final class CrouchLockMod implements ModInitializer {
 
     private static String markerTag(UUID lockId) {
         return MOD_ID + ":" + lockId;
+    }
+
+    private record MarkerTarget(BlockPos pos, LockState.LockEntry lock) {
     }
 
     private static void send(PlayerEntity player, String translationKey) {

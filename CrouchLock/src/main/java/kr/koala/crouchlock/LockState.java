@@ -10,7 +10,9 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.PersistentState;
 
 import java.util.Collection;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -45,8 +47,9 @@ public final class LockState extends PersistentState {
         }
     }
 
-    public void pruneInvalid(ServerWorld world) {
+    public List<RemovedLock> pruneInvalid(ServerWorld world) {
         boolean changed = false;
+        List<RemovedLock> removedLocks = new ArrayList<>();
         var iterator = locks.entrySet().iterator();
 
         while (iterator.hasNext()) {
@@ -62,6 +65,7 @@ public final class LockState extends PersistentState {
 
             if (!currentBlockId.equals(lock.blockId()) || !CrouchLockMod.isLockable(world, pos, current)) {
                 iterator.remove();
+                removedLocks.add(new RemovedLock(pos.toImmutable(), lock.lockId()));
                 changed = true;
             }
         }
@@ -69,6 +73,7 @@ public final class LockState extends PersistentState {
         if (changed) {
             markDirty();
         }
+        return removedLocks;
     }
 
     @Override
@@ -116,5 +121,8 @@ public final class LockState extends PersistentState {
     }
 
     public record LockEntry(String type, String credential, UUID lockId, UUID ownerId, String blockId) {
+    }
+
+    public record RemovedLock(BlockPos pos, UUID lockId) {
     }
 }
