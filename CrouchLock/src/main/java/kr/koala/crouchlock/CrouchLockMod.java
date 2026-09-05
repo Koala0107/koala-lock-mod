@@ -23,6 +23,8 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
 import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtFloat;
+import net.minecraft.nbt.NbtList;
 import net.minecraft.screen.ScreenHandlerType;
 import net.minecraft.screen.SimpleNamedScreenHandlerFactory;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -61,6 +63,7 @@ public final class CrouchLockMod implements ModInitializer {
     public static final String KEY_LOCK = "key";
     public static final String KEYPAD_LOCK = "keypad";
     public static final String MARKER_TAG = MOD_ID + ":marker";
+    public static final String MARKER_LAYOUT_TAG = MOD_ID + ":marker_layout_v2";
 
     private static final ConcurrentLinkedQueue<Runnable> END_OF_TICK_ACTIONS = new ConcurrentLinkedQueue<>();
 
@@ -373,12 +376,14 @@ public final class CrouchLockMod implements ModInitializer {
         NbtCompound displaySettings = new NbtCompound();
         displaySettings.putString("billboard", "center");
         displaySettings.putString("item_display", "fixed");
-        displaySettings.putFloat("width", 0.45F);
-        displaySettings.putFloat("height", 0.65F);
+        displaySettings.putFloat("width", 0.30F);
+        displaySettings.putFloat("height", 0.38F);
+        displaySettings.put("transformation", displayScale(0.30F));
         marker.readNbt(displaySettings);
         marker.getStackReference(0).set(stack);
         marker.refreshPositionAndAngles(markerPos.x, markerPos.y, markerPos.z, 0.0F, 0.0F);
         marker.addCommandTag(MARKER_TAG);
+        marker.addCommandTag(MARKER_LAYOUT_TAG);
         marker.addCommandTag(markerTag(lock.lockId()));
         marker.setInvulnerable(true);
         marker.setCustomName(stack.getName());
@@ -409,6 +414,7 @@ public final class CrouchLockMod implements ModInitializer {
             Optional<UUID> lockId = markerLockId(marker);
             MarkerTarget target = lockId.map(targets::get).orElse(null);
             if (!(marker instanceof DisplayEntity.ItemDisplayEntity)
+                    || !marker.getCommandTags().contains(MARKER_LAYOUT_TAG)
                     || lockId.isEmpty() || target == null || !positioned.add(lockId.get())) {
                 marker.discard();
                 continue;
@@ -434,17 +440,25 @@ public final class CrouchLockMod implements ModInitializer {
         BlockState state = world.getBlockState(pos);
 
         if (state.getBlock() instanceof TrapdoorBlock) {
-            BlockState fixedAnchorState = state.contains(Properties.OPEN)
-                    ? state.with(Properties.OPEN, true)
-                    : state;
-            return markerNearOutline(world, pos, fixedAnchorState, 0.50);
+            // Anchor to the closed panel center, independently of its open state.
+            double panelHeight = state.contains(Properties.BLOCK_HALF)
+                    && "top".equals(state.get(Properties.BLOCK_HALF).asString()) ? 0.875 : 0.125;
+            return Vec3d.ofBottomCenter(pos).add(0.0, panelHeight, 0.0);
         }
 
         if (state.getBlock() instanceof DoorBlock) {
             BlockState fixedAnchorState = state.contains(Properties.OPEN)
                     ? state.with(Properties.OPEN, false)
                     : state;
-            return markerNearOutline(world, pos, fixedAnchorState, 0.58);
+            Vec3d doorFace = markerNearOutline(world, pos, fixedAnchorState, 0.76, 0.035);
+            Direction facing = state.get(Properties.HORIZONTAL_FACING);
+            boolean leftHinge = state.contains(Properties.DOOR_HINGE)
+                    && "left".equals(state.get(Properties.DOOR_HINGE).asString());
+            Direction handleSide = leftHinge
+                    ? facing.rotateYCounterclockwise()
+                    : facing.rotateYClockwise();
+            return doorFace.add(handleSide.getOffsetX() * 0.29, 0.0,
+                    handleSide.getOffsetZ() * 0.29);
         }
 
         Direction facing;
@@ -456,14 +470,14 @@ public final class CrouchLockMod implements ModInitializer {
             facing = Direction.SOUTH;
         }
         return Vec3d.ofCenter(pos).add(
-                facing.getOffsetX() * 0.66,
-                facing.getOffsetY() * 0.66,
-                facing.getOffsetZ() * 0.66
+                facing.getOffsetX() * 0.515,
+                facing.getOffsetY() * 0.515,
+                facing.getOffsetZ() * 0.515
         );
     }
 
     private static Vec3d markerNearOutline(ServerWorld world, BlockPos pos, BlockState state,
-                                           double height) {
+                                           double height, double outwardOffset) {
         Box bounds = state.getOutlineShape(world, pos).getBoundingBox();
         double localX = (bounds.minX + bounds.maxX) * 0.5;
         double localZ = (bounds.minZ + bounds.maxZ) * 0.5;
@@ -471,10 +485,24 @@ public final class CrouchLockMod implements ModInitializer {
         double fromCenterZ = localZ - 0.5;
         double horizontalLength = Math.sqrt(fromCenterX * fromCenterX + fromCenterZ * fromCenterZ);
         if (horizontalLength > 0.001) {
-            localX += fromCenterX / horizontalLength * 0.12;
-            localZ += fromCenterZ / horizontalLength * 0.12;
+            localX += fromCenterX / horizontalLength * outwardOffset;
+            localZ += fromCenterZ / horizontalLength * outwardOffset;
         }
         return new Vec3d(pos.getX() + localX, pos.getY() + height, pos.getZ() + localZ);
+    }
+
+    private static NbtList displayScale(float scale) {
+        NbtList matrix = new NbtList();
+        float[] values = {
+                scale, 0.0F, 0.0F, 0.0F,
+                0.0F, scale, 0.0F, 0.0F,
+                0.0F, 0.0F, scale, 0.0F,
+                0.0F, 0.0F, 0.0F, 1.0F
+        };
+        for (float value : values) {
+            matrix.add(NbtFloat.of(value));
+        }
+        return matrix;
     }
 
     private static BlockPos lowerDoorHalf(ServerWorld world, BlockPos pos) {
