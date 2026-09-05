@@ -1,1 +1,6 @@
-m«ë€«¢ç!.‡$şÊÜşf¢ŸúŞ²‹«që?jË¶ÏÜ®‹œ†Z“ù¨uélş+^›ùhrIÊ;(œÚ,¹È_ŠW¨­Ø«yËh¯
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "crouchlock:item/lock_key"
+  }
+}

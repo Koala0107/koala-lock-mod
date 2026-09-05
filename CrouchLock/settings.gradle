@@ -1,2 +1,8 @@
-m«ë€«¢ç!.‡$şÇ­¶)à²
-ÚvW¢Ëœ…ø¥zŠİŠ·œ¶Šò
+pluginManagement {
+    repositories {
+        maven { url = 'https://maven.fabricmc.net/' }
+        gradlePluginPortal()
+    }
+}
+
+rootProject.name = 'CrouchLock'
