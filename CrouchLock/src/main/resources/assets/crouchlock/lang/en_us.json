@@ -1,0 +1,10 @@
+{
+  "item.crouchlock.lock_key": "Lock Key",
+  "item.crouchlock.lock_key.code": "Key code: %s",
+  "item.crouchlock.lock_key.unassigned": "A code is created on first use",
+  "message.crouchlock.locked": "Locked.",
+  "message.crouchlock.unlocked": "Unlocked.",
+  "message.crouchlock.wrong_key": "This key cannot unlock it.",
+  "message.crouchlock.locked_need_key": "It is locked. You need the matching key.",
+  "message.crouchlock.cannot_break": "You cannot break this locked block without its key."
+}

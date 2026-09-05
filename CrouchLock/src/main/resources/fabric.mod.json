@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "id": "crouchlock",
+  "version": "${version}",
+  "name": "CrouchLock",
+  "description": "웅크리고 열쇠로 클릭해 상자, 문, 통 등을 잠그는 Fabric 모드입니다.",
+  "authors": [
+    "Koala"
+  ],
+  "contact": {},
+  "license": "MIT",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "kr.koala.crouchlock.CrouchLockMod"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.15.11",
+    "minecraft": "~1.20.4",
+    "java": ">=17",
+    "fabric-api": ">=0.97.2+1.20.4"
+  }
+}
