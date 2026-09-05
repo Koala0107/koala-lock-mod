@@ -8,6 +8,7 @@ import net.minecraft.block.ChestBlock;
 import net.minecraft.block.DoorBlock;
 import net.minecraft.block.TrapdoorBlock;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityType;
 import net.minecraft.entity.decoration.DisplayEntity;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtFloat;
@@ -26,16 +27,13 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
-/**
- * Stable visual placement for lock displays.
- *
- * The main mod remains the owner of the display entity position. This class only changes
- * the render transform, so the two tick handlers no longer fight over the entity position.
- */
+/** Stable visual placement for lock displays. */
 public final class LockMarkerLayoutFix implements ModInitializer {
-    private static final String LAYOUT_TAG = CrouchLockMod.MOD_ID + ":marker_layout_v5";
+    private static final String LAYOUT_TAG = CrouchLockMod.MOD_ID + ":marker_layout_v7";
+    private static final String SECONDARY_TAG = CrouchLockMod.MOD_ID + ":secondary_marker_v7";
+    private static final String SECONDARY_LOCK_PREFIX = CrouchLockMod.MOD_ID + ":secondary_lock:";
     private static final float DISPLAY_SCALE = 0.30F;
-    private static final double SURFACE_GAP = 0.075;
+    private static final double SURFACE_GAP = 0.125;
 
     @Override
     public void onInitialize() {
@@ -47,6 +45,67 @@ public final class LockMarkerLayoutFix implements ModInitializer {
     }
 
     private static void syncMarkerLayout(ServerWorld world) {
+        Map<UUID, List<BlockPos>> targets = collectTargets(world);
+        Map<UUID, DisplayEntity.ItemDisplayEntity> primaryMarkers = new HashMap<>();
+        Map<UUID, DisplayEntity.ItemDisplayEntity> secondaryMarkers = new HashMap<>();
+        List<DisplayEntity.ItemDisplayEntity> duplicateSecondaries = new ArrayList<>();
+
+        for (Entity entity : world.iterateEntities()) {
+            if (!(entity instanceof DisplayEntity.ItemDisplayEntity marker)) {
+                continue;
+            }
+
+            if (marker.getCommandTags().contains(CrouchLockMod.MARKER_TAG)) {
+                markerLockId(marker).ifPresent(lockId -> primaryMarkers.put(lockId, marker));
+                continue;
+            }
+
+            if (marker.getCommandTags().contains(SECONDARY_TAG)) {
+                Optional<UUID> lockId = secondaryLockId(marker);
+                if (lockId.isEmpty()) {
+                    duplicateSecondaries.add(marker);
+                    continue;
+                }
+                DisplayEntity.ItemDisplayEntity previous = secondaryMarkers.putIfAbsent(lockId.get(), marker);
+                if (previous != null) {
+                    duplicateSecondaries.add(marker);
+                }
+            }
+        }
+
+        for (DisplayEntity.ItemDisplayEntity duplicate : duplicateSecondaries) {
+            duplicate.discard();
+        }
+
+        for (Map.Entry<UUID, DisplayEntity.ItemDisplayEntity> entry : primaryMarkers.entrySet()) {
+            UUID lockId = entry.getKey();
+            List<BlockPos> positions = targets.get(lockId);
+            if (positions == null || positions.isEmpty()) {
+                continue;
+            }
+
+            PosePair poses = markerPoses(world, positions);
+            applyPose(entry.getValue(), poses.primary());
+
+            DisplayEntity.ItemDisplayEntity secondary = secondaryMarkers.remove(lockId);
+            if (poses.secondary() != null) {
+                if (secondary == null || secondary.isRemoved()) {
+                    secondary = createSecondary(world, entry.getValue(), lockId);
+                }
+                applyPose(secondary, poses.secondary());
+            } else if (secondary != null) {
+                secondary.discard();
+            }
+        }
+
+        for (Map.Entry<UUID, DisplayEntity.ItemDisplayEntity> entry : secondaryMarkers.entrySet()) {
+            if (!targets.containsKey(entry.getKey()) || !needsTwoSides(world, targets.get(entry.getKey()))) {
+                entry.getValue().discard();
+            }
+        }
+    }
+
+    private static Map<UUID, List<BlockPos>> collectTargets(ServerWorld world) {
         Map<UUID, List<BlockPos>> targets = new HashMap<>();
         for (var entry : LockState.get(world).entries()) {
             BlockPos pos = BlockPos.fromLong(entry.getKey());
@@ -56,95 +115,69 @@ public final class LockMarkerLayoutFix implements ModInitializer {
             targets.computeIfAbsent(entry.getValue().lockId(), ignored -> new ArrayList<>())
                     .add(pos.toImmutable());
         }
-
-        for (Entity entity : world.iterateEntities()) {
-            if (!(entity instanceof DisplayEntity.ItemDisplayEntity marker)
-                    || !entity.getCommandTags().contains(CrouchLockMod.MARKER_TAG)) {
-                continue;
-            }
-
-            Optional<UUID> lockId = markerLockId(entity);
-            List<BlockPos> positions = lockId.map(targets::get).orElse(null);
-            if (positions == null || positions.isEmpty()) {
-                continue;
-            }
-
-            // Apply a layout version only once. Existing v2-v4 markers are migrated automatically.
-            if (!marker.getCommandTags().contains(LAYOUT_TAG)) {
-                applyLayout(world, marker, positions);
-            }
-        }
+        return targets;
     }
 
-    private static void applyLayout(ServerWorld world, DisplayEntity.ItemDisplayEntity marker,
-                                    List<BlockPos> positions) {
-        // This is the exact anchor used by CrouchLockMod. Keep the entity here so its own
-        // synchronizer never tries to pull the marker back to another position.
-        Vec3d anchor = baseMarkerPosition(world, positions.get(0));
-        MarkerPose desired = markerPose(world, positions);
-        Vec3d worldOffset = desired.position().subtract(anchor);
-        Vec3d localOffset = worldToLocal(worldOffset, desired.yaw(), desired.pitch());
+    private static boolean needsTwoSides(ServerWorld world, List<BlockPos> positions) {
+        if (positions == null || positions.isEmpty()) {
+            return false;
+        }
+        BlockPos first = lowerDoorHalf(world, positions.get(0));
+        BlockState state = world.getBlockState(first);
+        return state.getBlock() instanceof DoorBlock || state.getBlock() instanceof TrapdoorBlock;
+    }
 
-        // IMPORTANT: preserve the complete existing NBT, including the displayed ItemStack.
-        // Reading a partial NBT compound into an existing ItemDisplay can clear display data.
+    private static DisplayEntity.ItemDisplayEntity createSecondary(ServerWorld world,
+                                                                    DisplayEntity.ItemDisplayEntity primary,
+                                                                    UUID lockId) {
+        NbtCompound copied = new NbtCompound();
+        primary.writeNbt(copied);
+        copied.remove("UUID");
+        copied.remove("Pos");
+        copied.remove("Motion");
+        copied.remove("Rotation");
+        copied.remove("Tags");
+
+        DisplayEntity.ItemDisplayEntity secondary =
+                new DisplayEntity.ItemDisplayEntity(EntityType.ITEM_DISPLAY, world);
+        secondary.readNbt(copied);
+        secondary.addCommandTag(SECONDARY_TAG);
+        secondary.addCommandTag(SECONDARY_LOCK_PREFIX + lockId);
+        secondary.setInvulnerable(true);
+        world.spawnEntity(secondary);
+        return secondary;
+    }
+
+    private static void applyPose(DisplayEntity.ItemDisplayEntity marker, MarkerPose pose) {
         NbtCompound settings = new NbtCompound();
         marker.writeNbt(settings);
         settings.putString("billboard", "fixed");
         settings.putString("item_display", "fixed");
-
-        // A larger render-culling box prevents translated double-chest markers from vanishing
-        // when their visible model is away from the entity anchor.
-        settings.putFloat("width", 1.50F);
-        settings.putFloat("height", 1.50F);
-        settings.put("transformation", translatedScale(localOffset, DISPLAY_SCALE));
+        settings.putFloat("width", 0.60F);
+        settings.putFloat("height", 0.60F);
+        settings.put("transformation", displayScale(DISPLAY_SCALE));
         marker.readNbt(settings);
-
-        marker.refreshPositionAndAngles(anchor.x, anchor.y, anchor.z,
-                desired.yaw(), desired.pitch());
+        marker.refreshPositionAndAngles(
+                pose.position().x,
+                pose.position().y,
+                pose.position().z,
+                pose.yaw(),
+                pose.pitch()
+        );
         marker.setInvulnerable(true);
         marker.addCommandTag(LAYOUT_TAG);
     }
 
-    private static MarkerPose markerPose(ServerWorld world, List<BlockPos> positions) {
+    private static PosePair markerPoses(ServerWorld world, List<BlockPos> positions) {
         BlockPos first = lowerDoorHalf(world, positions.get(0));
         BlockState state = world.getBlockState(first);
 
         if (state.getBlock() instanceof TrapdoorBlock) {
-            boolean topHalf = state.contains(Properties.BLOCK_HALF)
-                    && "top".equals(state.get(Properties.BLOCK_HALF).asString());
-
-            // Closed trapdoor thickness is 3/16 block. Keep the marker horizontal and
-            // slightly above the top surface, independent of whether the trapdoor is open.
-            double surfaceY = topHalf ? 1.0 : 0.1875;
-            return new MarkerPose(
-                    new Vec3d(first.getX() + 0.5,
-                            first.getY() + surfaceY + SURFACE_GAP,
-                            first.getZ() + 0.5),
-                    0.0F,
-                    -90.0F
-            );
+            return trapdoorPoses(world, first, state);
         }
 
         if (state.getBlock() instanceof DoorBlock) {
-            BlockState closedState = state.contains(Properties.OPEN)
-                    ? state.with(Properties.OPEN, false)
-                    : state;
-            Direction facing = state.get(Properties.HORIZONTAL_FACING);
-            Vec3d face = markerNearOutline(world, first, closedState, 0.95, SURFACE_GAP);
-
-            // Hinge LEFT means the handle is on the viewer's right, and vice versa.
-            boolean leftHinge = state.contains(Properties.DOOR_HINGE)
-                    && "left".equals(state.get(Properties.DOOR_HINGE).asString());
-            Direction handleSide = leftHinge
-                    ? facing.rotateYClockwise()
-                    : facing.rotateYCounterclockwise();
-
-            Vec3d handle = face.add(
-                    handleSide.getOffsetX() * 0.30,
-                    0.0,
-                    handleSide.getOffsetZ() * 0.30
-            );
-            return new MarkerPose(handle, yawFor(facing), 0.0F);
+            return doorPoses(world, first, state);
         }
 
         if (state.getBlock() instanceof ChestBlock) {
@@ -154,64 +187,137 @@ public final class LockMarkerLayoutFix implements ModInitializer {
                     0.0,
                     facing.getOffsetZ() * (0.5 + SURFACE_GAP)
             );
-            return new MarkerPose(center, yawFor(facing), 0.0F);
+            return new PosePair(new MarkerPose(center, yawFor(facing), 0.0F), null);
         }
 
         if (state.getBlock() instanceof BarrelBlock) {
             Direction facing = state.get(Properties.FACING);
-            // For a downward-facing barrel the base anchor is already outside the lower face;
-            // avoid translating below its culling origin while keeping every other face clear.
-            double outward = facing == Direction.DOWN ? 0.515 : 0.5 + SURFACE_GAP;
+            double outward = 0.5 + SURFACE_GAP;
             Vec3d center = Vec3d.ofCenter(first).add(
                     facing.getOffsetX() * outward,
                     facing.getOffsetY() * outward,
                     facing.getOffsetZ() * outward
             );
-            return new MarkerPose(center, yawFor(facing), pitchFor(facing));
+            return new PosePair(new MarkerPose(center, yawFor(facing), pitchFor(facing)), null);
         }
 
         Direction facing = blockFacing(state);
-        double outward = facing == Direction.DOWN ? 0.515 : 0.5 + SURFACE_GAP;
+        double outward = 0.5 + SURFACE_GAP;
         Vec3d center = Vec3d.ofCenter(first).add(
                 facing.getOffsetX() * outward,
                 facing.getOffsetY() * outward,
                 facing.getOffsetZ() * outward
         );
-        return new MarkerPose(center, yawFor(facing), pitchFor(facing));
+        return new PosePair(new MarkerPose(center, yawFor(facing), pitchFor(facing)), null);
     }
 
-    /** Duplicates the main mod's current marker anchor so its synchronizer sees no position drift. */
-    private static Vec3d baseMarkerPosition(ServerWorld world, BlockPos originalPos) {
-        BlockPos pos = lowerDoorHalf(world, originalPos);
-        BlockState state = world.getBlockState(pos);
+    private static PosePair trapdoorPoses(ServerWorld world, BlockPos pos, BlockState state) {
+        Box bounds = state.getOutlineShape(world, pos).getBoundingBox();
+        boolean open = state.contains(Properties.OPEN) && state.get(Properties.OPEN);
 
-        if (state.getBlock() instanceof TrapdoorBlock) {
-            double panelHeight = state.contains(Properties.BLOCK_HALF)
-                    && "top".equals(state.get(Properties.BLOCK_HALF).asString()) ? 0.875 : 0.125;
-            return Vec3d.ofBottomCenter(pos).add(0.0, panelHeight, 0.0);
+        if (!open) {
+            Direction facing = state.contains(Properties.HORIZONTAL_FACING)
+                    ? state.get(Properties.HORIZONTAL_FACING)
+                    : Direction.SOUTH;
+            double x = pos.getX() + (bounds.minX + bounds.maxX) * 0.5;
+            double z = pos.getZ() + (bounds.minZ + bounds.maxZ) * 0.5;
+            MarkerPose top = new MarkerPose(
+                    new Vec3d(x, pos.getY() + bounds.maxY + SURFACE_GAP, z),
+                    yawFor(facing),
+                    -90.0F
+            );
+            MarkerPose bottom = new MarkerPose(
+                    new Vec3d(x, pos.getY() + bounds.minY - SURFACE_GAP, z),
+                    yawFor(facing.getOpposite()),
+                    90.0F
+            );
+            return new PosePair(top, bottom);
         }
 
-        if (state.getBlock() instanceof DoorBlock) {
-            BlockState fixedAnchorState = state.contains(Properties.OPEN)
-                    ? state.with(Properties.OPEN, false)
-                    : state;
-            Vec3d doorFace = markerNearOutline(world, pos, fixedAnchorState, 0.76, 0.035);
-            Direction facing = state.get(Properties.HORIZONTAL_FACING);
-            boolean leftHinge = state.contains(Properties.DOOR_HINGE)
-                    && "left".equals(state.get(Properties.DOOR_HINGE).asString());
-            Direction handleSide = leftHinge
-                    ? facing.rotateYCounterclockwise()
-                    : facing.rotateYClockwise();
-            return doorFace.add(handleSide.getOffsetX() * 0.29, 0.0,
-                    handleSide.getOffsetZ() * 0.29);
-        }
-
-        Direction facing = blockFacing(state);
-        return Vec3d.ofCenter(pos).add(
-                facing.getOffsetX() * 0.515,
-                facing.getOffsetY() * 0.515,
-                facing.getOffsetZ() * 0.515
+        Direction normal = horizontalNormalFromBounds(bounds);
+        Vec3d panelCenter = new Vec3d(
+                pos.getX() + (bounds.minX + bounds.maxX) * 0.5,
+                pos.getY() + (bounds.minY + bounds.maxY) * 0.5,
+                pos.getZ() + (bounds.minZ + bounds.maxZ) * 0.5
         );
+        double halfThickness = halfThickness(bounds, normal);
+        Vec3d offset = directionVector(normal).multiply(halfThickness + SURFACE_GAP);
+
+        MarkerPose front = new MarkerPose(
+                panelCenter.add(offset),
+                yawFor(normal),
+                0.0F
+        );
+        MarkerPose back = new MarkerPose(
+                panelCenter.subtract(offset),
+                yawFor(normal.getOpposite()),
+                0.0F
+        );
+        return new PosePair(front, back);
+    }
+
+    private static PosePair doorPoses(ServerWorld world, BlockPos pos, BlockState state) {
+        BlockState closedState = state.contains(Properties.OPEN)
+                ? state.with(Properties.OPEN, false)
+                : state;
+        Box bounds = closedState.getOutlineShape(world, pos).getBoundingBox();
+        Direction normal = horizontalNormalFromBounds(bounds);
+        Direction facing = state.get(Properties.HORIZONTAL_FACING);
+
+        boolean leftHinge = state.contains(Properties.DOOR_HINGE)
+                && "left".equals(state.get(Properties.DOOR_HINGE).asString());
+        Direction handleSide = leftHinge
+                ? facing.rotateYClockwise()
+                : facing.rotateYCounterclockwise();
+
+        Vec3d panelCenter = new Vec3d(
+                pos.getX() + (bounds.minX + bounds.maxX) * 0.5,
+                pos.getY() + 0.95,
+                pos.getZ() + (bounds.minZ + bounds.maxZ) * 0.5
+        ).add(
+                handleSide.getOffsetX() * 0.30,
+                0.0,
+                handleSide.getOffsetZ() * 0.30
+        );
+
+        double halfThickness = halfThickness(bounds, normal);
+        Vec3d offset = directionVector(normal).multiply(halfThickness + SURFACE_GAP);
+
+        MarkerPose front = new MarkerPose(
+                panelCenter.add(offset),
+                yawFor(normal),
+                0.0F
+        );
+        MarkerPose back = new MarkerPose(
+                panelCenter.subtract(offset),
+                yawFor(normal.getOpposite()),
+                0.0F
+        );
+        return new PosePair(front, back);
+    }
+
+    private static Direction horizontalNormalFromBounds(Box bounds) {
+        double centerX = (bounds.minX + bounds.maxX) * 0.5 - 0.5;
+        double centerZ = (bounds.minZ + bounds.maxZ) * 0.5 - 0.5;
+        if (Math.abs(centerX) >= Math.abs(centerZ) && Math.abs(centerX) > 0.001) {
+            return centerX > 0.0 ? Direction.EAST : Direction.WEST;
+        }
+        if (Math.abs(centerZ) > 0.001) {
+            return centerZ > 0.0 ? Direction.SOUTH : Direction.NORTH;
+        }
+        return Direction.SOUTH;
+    }
+
+    private static double halfThickness(Box bounds, Direction normal) {
+        return switch (normal.getAxis()) {
+            case X -> (bounds.maxX - bounds.minX) * 0.5;
+            case Z -> (bounds.maxZ - bounds.minZ) * 0.5;
+            default -> (bounds.maxY - bounds.minY) * 0.5;
+        };
+    }
+
+    private static Vec3d directionVector(Direction direction) {
+        return new Vec3d(direction.getOffsetX(), direction.getOffsetY(), direction.getOffsetZ());
     }
 
     private static Vec3d linkedBlockCenter(List<BlockPos> positions) {
@@ -254,33 +360,12 @@ public final class LockMarkerLayoutFix implements ModInitializer {
         };
     }
 
-    /** Converts a world-space visual offset to the display's local coordinates. */
-    private static Vec3d worldToLocal(Vec3d offset, float yaw, float pitch) {
-        Vec3d local = offset.rotateY((float) Math.toRadians(yaw));
-        return local.rotateX((float) Math.toRadians(-pitch));
-    }
-
-    private static Vec3d markerNearOutline(ServerWorld world, BlockPos pos, BlockState state,
-                                           double height, double outwardOffset) {
-        Box bounds = state.getOutlineShape(world, pos).getBoundingBox();
-        double localX = (bounds.minX + bounds.maxX) * 0.5;
-        double localZ = (bounds.minZ + bounds.maxZ) * 0.5;
-        double fromCenterX = localX - 0.5;
-        double fromCenterZ = localZ - 0.5;
-        double horizontalLength = Math.sqrt(fromCenterX * fromCenterX + fromCenterZ * fromCenterZ);
-        if (horizontalLength > 0.001) {
-            localX += fromCenterX / horizontalLength * outwardOffset;
-            localZ += fromCenterZ / horizontalLength * outwardOffset;
-        }
-        return new Vec3d(pos.getX() + localX, pos.getY() + height, pos.getZ() + localZ);
-    }
-
-    private static NbtList translatedScale(Vec3d translation, float scale) {
+    private static NbtList displayScale(float scale) {
         NbtList matrix = new NbtList();
         float[] values = {
-                scale, 0.0F, 0.0F, (float) translation.x,
-                0.0F, scale, 0.0F, (float) translation.y,
-                0.0F, 0.0F, scale, (float) translation.z,
+                scale, 0.0F, 0.0F, 0.0F,
+                0.0F, scale, 0.0F, 0.0F,
+                0.0F, 0.0F, scale, 0.0F,
                 0.0F, 0.0F, 0.0F, 1.0F
         };
         for (float value : values) {
@@ -319,6 +404,23 @@ public final class LockMarkerLayoutFix implements ModInitializer {
         return Optional.empty();
     }
 
+    private static Optional<UUID> secondaryLockId(Entity marker) {
+        for (String tag : marker.getCommandTags()) {
+            if (!tag.startsWith(SECONDARY_LOCK_PREFIX)) {
+                continue;
+            }
+            try {
+                return Optional.of(UUID.fromString(tag.substring(SECONDARY_LOCK_PREFIX.length())));
+            } catch (IllegalArgumentException ignored) {
+                return Optional.empty();
+            }
+        }
+        return Optional.empty();
+    }
+
     private record MarkerPose(Vec3d position, float yaw, float pitch) {
+    }
+
+    private record PosePair(MarkerPose primary, MarkerPose secondary) {
     }
 }
