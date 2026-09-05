@@ -157,7 +157,7 @@ public final class LockMarkerLayoutFix implements ModInitializer {
                 case 1 -> 1.25F;
                 default -> 1.50F;
             };
-            world.playSound(null, sequence.pos(), SoundEvents.BLOCK_NOTE_BLOCK_BELL,
+            world.playSound(null, sequence.pos(), SoundEvents.BLOCK_NOTE_BLOCK_BELL.value(),
                     SoundCategory.BLOCKS, 0.75F, pitch);
 
             if (sequence.step() >= 2) {
