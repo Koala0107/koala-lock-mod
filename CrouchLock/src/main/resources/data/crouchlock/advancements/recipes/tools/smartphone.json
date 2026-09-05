@@ -1,0 +1,32 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_redstone": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": ["minecraft:redstone"]
+          }
+        ]
+      }
+    },
+    "has_quartz": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": ["minecraft:quartz"]
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    ["has_redstone"],
+    ["has_quartz"]
+  ],
+  "rewards": {
+    "recipes": ["crouchlock:smartphone"]
+  }
+}

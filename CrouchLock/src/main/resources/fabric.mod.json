@@ -9,8 +9,14 @@
   "license": "MIT",
   "environment": "*",
   "entrypoints": {
-    "main": ["kr.koala.crouchlock.CrouchLockMod"],
-    "client": ["kr.koala.crouchlock.CrouchLockClient"]
+    "main": [
+      "kr.koala.crouchlock.CrouchLockMod",
+      "kr.koala.crouchlock.SmartphoneMod"
+    ],
+    "client": [
+      "kr.koala.crouchlock.CrouchLockClient",
+      "kr.koala.crouchlock.SmartphoneClient"
+    ]
   },
   "depends": {
     "fabricloader": ">=0.15.11",
