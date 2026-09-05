@@ -14,8 +14,6 @@ import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtFloat;
 import net.minecraft.nbt.NbtList;
 import net.minecraft.server.world.ServerWorld;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvents;
 import net.minecraft.state.property.Properties;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
@@ -24,12 +22,9 @@ import net.minecraft.util.math.Vec3d;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 
 /** Stable visual placement for lock displays. */
@@ -40,13 +35,9 @@ public final class LockMarkerLayoutFix implements ModInitializer {
     private static final float DISPLAY_SCALE = 0.30F;
     private static final double SURFACE_GAP = 0.125;
 
-    private static final Map<UUID, Boolean> OPEN_STATES = new HashMap<>();
-    private static final Map<UUID, ChimeSequence> CHIMES = new HashMap<>();
-
     @Override
     public void onInitialize() {
         ServerTickEvents.END_WORLD_TICK.register(world -> {
-            updateChimes(world);
             if (world.getTime() % 2 == 0) {
                 syncMarkerLayout(world);
             }
@@ -86,8 +77,6 @@ public final class LockMarkerLayoutFix implements ModInitializer {
             duplicate.discard();
         }
 
-        Set<UUID> activeOpenableLocks = new HashSet<>();
-
         for (Map.Entry<UUID, DisplayEntity.ItemDisplayEntity> entry : primaryMarkers.entrySet()) {
             UUID lockId = entry.getKey();
             List<BlockPos> positions = targets.get(lockId);
@@ -107,68 +96,11 @@ public final class LockMarkerLayoutFix implements ModInitializer {
             } else if (secondary != null) {
                 secondary.discard();
             }
-
-            updateOpenState(world, lockId, positions, activeOpenableLocks);
         }
 
         for (Map.Entry<UUID, DisplayEntity.ItemDisplayEntity> entry : secondaryMarkers.entrySet()) {
             if (!targets.containsKey(entry.getKey()) || !needsTwoSides(world, targets.get(entry.getKey()))) {
                 entry.getValue().discard();
-            }
-        }
-
-        OPEN_STATES.keySet().removeIf(lockId -> !targets.containsKey(lockId) && !CHIMES.containsKey(lockId));
-    }
-
-    private static void updateOpenState(ServerWorld world, UUID lockId, List<BlockPos> positions,
-                                        Set<UUID> activeOpenableLocks) {
-        BlockPos first = lowerDoorHalf(world, positions.get(0));
-        BlockState state = world.getBlockState(first);
-        if (!(state.getBlock() instanceof DoorBlock) && !(state.getBlock() instanceof TrapdoorBlock)) {
-            return;
-        }
-        if (!state.contains(Properties.OPEN)) {
-            return;
-        }
-
-        activeOpenableLocks.add(lockId);
-        boolean open = state.get(Properties.OPEN);
-        Boolean previous = OPEN_STATES.put(lockId, open);
-        if (previous != null && !previous && open) {
-            startChime(world, lockId, first);
-        }
-    }
-
-    private static void startChime(ServerWorld world, UUID lockId, BlockPos pos) {
-        CHIMES.put(lockId, new ChimeSequence(world, pos.toImmutable(), 0, world.getTime()));
-    }
-
-    private static void updateChimes(ServerWorld world) {
-        Iterator<Map.Entry<UUID, ChimeSequence>> iterator = CHIMES.entrySet().iterator();
-        while (iterator.hasNext()) {
-            Map.Entry<UUID, ChimeSequence> entry = iterator.next();
-            ChimeSequence sequence = entry.getValue();
-            if (sequence.world() != world || world.getTime() < sequence.nextTick()) {
-                continue;
-            }
-
-            float pitch = switch (sequence.step()) {
-                case 0 -> 1.00F;
-                case 1 -> 1.25F;
-                default -> 1.50F;
-            };
-            world.playSound(null, sequence.pos(), SoundEvents.BLOCK_NOTE_BLOCK_BELL.value(),
-                    SoundCategory.BLOCKS, 0.75F, pitch);
-
-            if (sequence.step() >= 2) {
-                iterator.remove();
-            } else {
-                entry.setValue(new ChimeSequence(
-                        world,
-                        sequence.pos(),
-                        sequence.step() + 1,
-                        world.getTime() + 3
-                ));
             }
         }
     }
@@ -503,8 +435,5 @@ public final class LockMarkerLayoutFix implements ModInitializer {
     }
 
     private record PosePair(MarkerPose primary, MarkerPose secondary) {
-    }
-
-    private record ChimeSequence(ServerWorld world, BlockPos pos, int step, long nextTick) {
     }
 }
