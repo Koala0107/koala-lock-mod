@@ -9,7 +9,10 @@
   "license": "MIT",
   "environment": "*",
   "entrypoints": {
-    "main": ["kr.koala.crouchlock.CrouchLockMod"],
+    "main": [
+      "kr.koala.crouchlock.CrouchLockMod",
+      "kr.koala.crouchlock.LockMarkerLayoutFix"
+    ],
     "client": ["kr.koala.crouchlock.CrouchLockClient"]
   },
   "depends": {
