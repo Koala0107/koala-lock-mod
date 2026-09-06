@@ -1,14 +1,9 @@
 package kr.koala.crouchlock;
 
-import net.minecraft.client.item.TooltipContext;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtElement;
-import net.minecraft.text.Text;
-import net.minecraft.world.World;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -45,13 +40,5 @@ public final class LockKeyItem extends Item {
         } catch (IllegalArgumentException ignored) {
             return Optional.empty();
         }
-    }
-
-    @Override
-    public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
-        getKeyId(stack).ifPresentOrElse(
-                id -> tooltip.add(Text.translatable("item.crouchlock.lock_key.code", id.toString().substring(0, 8))),
-                () -> tooltip.add(Text.translatable("item.crouchlock.lock_key.unassigned"))
-        );
     }
 }

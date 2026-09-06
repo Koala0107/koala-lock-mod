@@ -35,14 +35,11 @@ public final class SmartphoneBlock extends HorizontalFacingBlock implements Bloc
         setDefaultState(getStateManager().getDefaultState().with(FACING, Direction.NORTH));
     }
 
-    @Override
-    protected MapCodec<? extends HorizontalFacingBlock> getCodec() {
-        return CODEC;
-    }
+    @Override protected MapCodec<? extends HorizontalFacingBlock> getCodec() { return CODEC; }
 
     @Override
     public BlockState getPlacementState(ItemPlacementContext context) {
-        return getDefaultState().with(FACING, context.getHorizontalPlayerFacing().getOpposite());
+        return getDefaultState().with(FACING, context.getHorizontalPlayerFacing());
     }
 
     @Override
@@ -50,56 +47,31 @@ public final class SmartphoneBlock extends HorizontalFacingBlock implements Bloc
         return state.get(FACING).getAxis() == Direction.Axis.X ? EAST_WEST : NORTH_SOUTH;
     }
 
-    @Override
-    public @Nullable BlockEntity createBlockEntity(BlockPos pos, BlockState state) {
-        return new SmartphoneBlockEntity(pos, state);
-    }
+    @Override public @Nullable BlockEntity createBlockEntity(BlockPos pos, BlockState state) { return new SmartphoneBlockEntity(pos, state); }
 
     @Override
     public void onPlaced(World world, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack itemStack) {
         super.onPlaced(world, pos, state, placer, itemStack);
-        if (!world.isClient && world.getBlockEntity(pos) instanceof SmartphoneBlockEntity phone) {
-            phone.setData(SmartphoneData.fromStack(itemStack));
-        }
+        if (!world.isClient && world.getBlockEntity(pos) instanceof SmartphoneBlockEntity phone) phone.setData(SmartphoneData.fromStack(itemStack));
     }
 
     @Override
     public BlockState onBreak(World world, BlockPos pos, BlockState state, PlayerEntity player) {
-        if (!world.isClient && !player.getAbilities().creativeMode) {
-            BlockEntity blockEntity = world.getBlockEntity(pos);
-            if (blockEntity instanceof SmartphoneBlockEntity phone) {
-                Block.dropStack(world, pos, phone.createPhoneStack());
-            }
+        if (!world.isClient && !player.getAbilities().creativeMode && world.getBlockEntity(pos) instanceof SmartphoneBlockEntity phone) {
+            Block.dropStack(world, pos, phone.createPhoneStack());
         }
         return super.onBreak(world, pos, state, player);
     }
 
-    @Override
-    public ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockHitResult hit) {
-        return ActionResult.SUCCESS;
-    }
+    @Override public ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockHitResult hit) { return ActionResult.SUCCESS; }
 
     @Override
     public ItemStack getPickStack(WorldView world, BlockPos pos, BlockState state) {
         BlockEntity blockEntity = world.getBlockEntity(pos);
-        if (blockEntity instanceof SmartphoneBlockEntity phone) {
-            return phone.createPhoneStack();
-        }
-        return new ItemStack(SmartphoneMod.SMARTPHONE);
+        return blockEntity instanceof SmartphoneBlockEntity phone ? phone.createPhoneStack() : new ItemStack(SmartphoneMod.SMARTPHONE);
     }
 
-    @Override
-    public BlockState rotate(BlockState state, BlockRotation rotation) {
-        return state.with(FACING, rotation.rotate(state.get(FACING)));
-    }
-
-    @Override
-    public BlockState mirror(BlockState state, BlockMirror mirror) {
-        return state.rotate(mirror.getRotation(state.get(FACING)));
-    }
-
-    @Override
-    protected void appendProperties(StateManager.Builder<Block, BlockState> builder) {
-        builder.add(FACING);
-    }
+    @Override public BlockState rotate(BlockState state, BlockRotation rotation) { return state.with(FACING, rotation.rotate(state.get(FACING))); }
+    @Override public BlockState mirror(BlockState state, BlockMirror mirror) { return state.rotate(mirror.getRotation(state.get(FACING))); }
+    @Override protected void appendProperties(StateManager.Builder<Block, BlockState> builder) { builder.add(FACING); }
 }

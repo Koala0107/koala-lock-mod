@@ -27,6 +27,7 @@ public final class SmartphoneData {
     private static final String NAME_KEY = "Name";
     private static final String DETAIL_KEY = "Detail";
     private static final String TIME_KEY = "Time";
+    private static final String OUTGOING_KEY = "Outgoing";
 
     private final List<PhoneRecord> calls;
     private final List<PhoneRecord> messages;
@@ -57,39 +58,19 @@ public final class SmartphoneData {
 
     public static SmartphoneData fromStack(ItemStack stack) {
         NbtCompound stackNbt = stack.getNbt();
-        if (stackNbt == null || !stackNbt.contains(ROOT_KEY, NbtElement.COMPOUND_TYPE)) {
-            return empty();
-        }
-
+        if (stackNbt == null || !stackNbt.contains(ROOT_KEY, NbtElement.COMPOUND_TYPE)) return empty();
         NbtCompound phone = stackNbt.getCompound(ROOT_KEY);
         return new SmartphoneData(
                 readNbtList(phone.getList(CALLS_KEY, NbtElement.COMPOUND_TYPE)),
                 readNbtList(phone.getList(MESSAGES_KEY, NbtElement.COMPOUND_TYPE)),
-                phone.getBoolean(FINALIZED_KEY),
-                phone.getString(TITLE_KEY),
-                phone.getString(SUBTITLE_KEY)
-        );
+                phone.getBoolean(FINALIZED_KEY), phone.getString(TITLE_KEY), phone.getString(SUBTITLE_KEY));
     }
 
-    public List<PhoneRecord> calls() {
-        return List.copyOf(calls);
-    }
-
-    public List<PhoneRecord> messages() {
-        return List.copyOf(messages);
-    }
-
-    public boolean finalized() {
-        return finalized;
-    }
-
-    public String title() {
-        return title;
-    }
-
-    public String subtitle() {
-        return subtitle;
-    }
+    public List<PhoneRecord> calls() { return List.copyOf(calls); }
+    public List<PhoneRecord> messages() { return List.copyOf(messages); }
+    public boolean finalized() { return finalized; }
+    public String title() { return title; }
+    public String subtitle() { return subtitle; }
 
     public void writeTo(ItemStack stack) {
         NbtCompound phone = new NbtCompound();
@@ -118,27 +99,23 @@ public final class SmartphoneData {
 
     private static List<PhoneRecord> readNbtList(NbtList list) {
         List<PhoneRecord> records = new ArrayList<>();
-        int count = Math.min(list.size(), MAX_RECORDS);
-        for (int i = 0; i < count; i++) {
+        for (int i = 0; i < Math.min(list.size(), MAX_RECORDS); i++) {
             NbtCompound record = list.getCompound(i);
-            records.add(new PhoneRecord(
-                    record.getString(NAME_KEY),
-                    record.getString(DETAIL_KEY),
-                    record.getString(TIME_KEY)
-            ));
+            records.add(new PhoneRecord(record.getString(NAME_KEY), record.getString(DETAIL_KEY),
+                    record.getString(TIME_KEY), record.getBoolean(OUTGOING_KEY)));
         }
         return records;
     }
 
     private static NbtList writeNbtList(List<PhoneRecord> records) {
         NbtList list = new NbtList();
-        int count = Math.min(records.size(), MAX_RECORDS);
-        for (int i = 0; i < count; i++) {
+        for (int i = 0; i < Math.min(records.size(), MAX_RECORDS); i++) {
             PhoneRecord record = records.get(i);
             NbtCompound tag = new NbtCompound();
             tag.putString(NAME_KEY, record.name());
             tag.putString(DETAIL_KEY, record.detail());
             tag.putString(TIME_KEY, record.time());
+            tag.putBoolean(OUTGOING_KEY, record.outgoing());
             list.add(tag);
         }
         return list;
@@ -152,45 +129,38 @@ public final class SmartphoneData {
             buf.writeString(record.name(), MAX_NAME_LENGTH);
             buf.writeString(record.detail(), MAX_DETAIL_LENGTH);
             buf.writeString(record.time(), MAX_TIME_LENGTH);
+            buf.writeBoolean(record.outgoing());
         }
     }
 
     private static List<PhoneRecord> readPacketList(PacketByteBuf buf) {
         int count = buf.readVarInt();
-        if (count < 0 || count > MAX_RECORDS) {
-            throw new IllegalArgumentException("Invalid smartphone record count: " + count);
-        }
-
+        if (count < 0 || count > MAX_RECORDS) throw new IllegalArgumentException("Invalid smartphone record count: " + count);
         List<PhoneRecord> records = new ArrayList<>(count);
         for (int i = 0; i < count; i++) {
-            records.add(new PhoneRecord(
-                    buf.readString(MAX_NAME_LENGTH),
-                    buf.readString(MAX_DETAIL_LENGTH),
-                    buf.readString(MAX_TIME_LENGTH)
-            ));
+            records.add(new PhoneRecord(buf.readString(MAX_NAME_LENGTH), buf.readString(MAX_DETAIL_LENGTH),
+                    buf.readString(MAX_TIME_LENGTH), buf.readBoolean()));
         }
         return records;
     }
 
     private static List<PhoneRecord> copyAndLimit(List<PhoneRecord> source) {
         List<PhoneRecord> result = new ArrayList<>();
-        int count = Math.min(source.size(), MAX_RECORDS);
-        for (int i = 0; i < count; i++) {
+        for (int i = 0; i < Math.min(source.size(), MAX_RECORDS); i++) {
             PhoneRecord record = source.get(i);
-            result.add(new PhoneRecord(record.name(), record.detail(), record.time()));
+            result.add(new PhoneRecord(record.name(), record.detail(), record.time(), record.outgoing()));
         }
         return result;
     }
 
     private static String sanitize(String value, int maxLength) {
-        if (value == null) {
-            return "";
-        }
+        if (value == null) return "";
         String cleaned = value.replace('\n', ' ').replace('\r', ' ');
         return cleaned.length() <= maxLength ? cleaned : cleaned.substring(0, maxLength);
     }
 
-    public record PhoneRecord(String name, String detail, String time) {
+    public record PhoneRecord(String name, String detail, String time, boolean outgoing) {
+        public PhoneRecord(String name, String detail, String time) { this(name, detail, time, false); }
         public PhoneRecord {
             name = sanitize(name, MAX_NAME_LENGTH);
             detail = sanitize(detail, MAX_DETAIL_LENGTH);
