@@ -15,11 +15,15 @@ public final class SmartphoneData {
     public static final int MAX_NAME_LENGTH = 32;
     public static final int MAX_DETAIL_LENGTH = 160;
     public static final int MAX_TIME_LENGTH = 16;
+    public static final int MAX_TITLE_LENGTH = 48;
+    public static final int MAX_SUBTITLE_LENGTH = 120;
 
     private static final String ROOT_KEY = "CrouchLockSmartphone";
     private static final String CALLS_KEY = "Calls";
     private static final String MESSAGES_KEY = "Messages";
     private static final String FINALIZED_KEY = "Finalized";
+    private static final String TITLE_KEY = "EvidenceTitle";
+    private static final String SUBTITLE_KEY = "EvidenceSubtitle";
     private static final String NAME_KEY = "Name";
     private static final String DETAIL_KEY = "Detail";
     private static final String TIME_KEY = "Time";
@@ -27,20 +31,28 @@ public final class SmartphoneData {
     private final List<PhoneRecord> calls;
     private final List<PhoneRecord> messages;
     private final boolean finalized;
+    private final String title;
+    private final String subtitle;
 
-    /** Creating data from the editor means the phone is being permanently saved. */
     public SmartphoneData(List<PhoneRecord> calls, List<PhoneRecord> messages) {
-        this(calls, messages, true);
+        this(calls, messages, true, "", "");
     }
 
     public SmartphoneData(List<PhoneRecord> calls, List<PhoneRecord> messages, boolean finalized) {
+        this(calls, messages, finalized, "", "");
+    }
+
+    public SmartphoneData(List<PhoneRecord> calls, List<PhoneRecord> messages, boolean finalized,
+                          String title, String subtitle) {
         this.calls = copyAndLimit(calls);
         this.messages = copyAndLimit(messages);
         this.finalized = finalized;
+        this.title = sanitize(title, MAX_TITLE_LENGTH);
+        this.subtitle = sanitize(subtitle, MAX_SUBTITLE_LENGTH);
     }
 
     public static SmartphoneData empty() {
-        return new SmartphoneData(List.of(), List.of(), false);
+        return new SmartphoneData(List.of(), List.of(), false, "", "");
     }
 
     public static SmartphoneData fromStack(ItemStack stack) {
@@ -53,7 +65,9 @@ public final class SmartphoneData {
         return new SmartphoneData(
                 readNbtList(phone.getList(CALLS_KEY, NbtElement.COMPOUND_TYPE)),
                 readNbtList(phone.getList(MESSAGES_KEY, NbtElement.COMPOUND_TYPE)),
-                phone.getBoolean(FINALIZED_KEY)
+                phone.getBoolean(FINALIZED_KEY),
+                phone.getString(TITLE_KEY),
+                phone.getString(SUBTITLE_KEY)
         );
     }
 
@@ -69,23 +83,37 @@ public final class SmartphoneData {
         return finalized;
     }
 
+    public String title() {
+        return title;
+    }
+
+    public String subtitle() {
+        return subtitle;
+    }
+
     public void writeTo(ItemStack stack) {
         NbtCompound phone = new NbtCompound();
         phone.put(CALLS_KEY, writeNbtList(calls));
         phone.put(MESSAGES_KEY, writeNbtList(messages));
         phone.putBoolean(FINALIZED_KEY, finalized);
+        phone.putString(TITLE_KEY, title);
+        phone.putString(SUBTITLE_KEY, subtitle);
         stack.getOrCreateNbt().put(ROOT_KEY, phone);
     }
 
     public void writePacket(PacketByteBuf buf) {
         buf.writeBoolean(finalized);
+        buf.writeString(title, MAX_TITLE_LENGTH);
+        buf.writeString(subtitle, MAX_SUBTITLE_LENGTH);
         writePacketList(buf, calls);
         writePacketList(buf, messages);
     }
 
     public static SmartphoneData readPacket(PacketByteBuf buf) {
         boolean finalized = buf.readBoolean();
-        return new SmartphoneData(readPacketList(buf), readPacketList(buf), finalized);
+        String title = buf.readString(MAX_TITLE_LENGTH);
+        String subtitle = buf.readString(MAX_SUBTITLE_LENGTH);
+        return new SmartphoneData(readPacketList(buf), readPacketList(buf), finalized, title, subtitle);
     }
 
     private static List<PhoneRecord> readNbtList(NbtList list) {
@@ -154,19 +182,19 @@ public final class SmartphoneData {
         return result;
     }
 
+    private static String sanitize(String value, int maxLength) {
+        if (value == null) {
+            return "";
+        }
+        String cleaned = value.replace('\n', ' ').replace('\r', ' ');
+        return cleaned.length() <= maxLength ? cleaned : cleaned.substring(0, maxLength);
+    }
+
     public record PhoneRecord(String name, String detail, String time) {
         public PhoneRecord {
             name = sanitize(name, MAX_NAME_LENGTH);
             detail = sanitize(detail, MAX_DETAIL_LENGTH);
             time = sanitize(time, MAX_TIME_LENGTH);
-        }
-
-        private static String sanitize(String value, int maxLength) {
-            if (value == null) {
-                return "";
-            }
-            String cleaned = value.replace('\n', ' ').replace('\r', ' ');
-            return cleaned.length() <= maxLength ? cleaned : cleaned.substring(0, maxLength);
         }
     }
 }
