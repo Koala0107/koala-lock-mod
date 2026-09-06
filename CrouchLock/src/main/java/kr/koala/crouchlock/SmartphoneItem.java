@@ -43,7 +43,7 @@ public final class SmartphoneItem extends BlockItem {
             Text status = data.subtitle().isBlank()
                     ? Text.translatable("item.crouchlock.smartphone.finalized")
                     : Text.literal(data.subtitle());
-            tooltip.add(status.formatted(Formatting.GOLD));
+            tooltip.add(status.copy().formatted(Formatting.GOLD));
         } else {
             tooltip.add(Text.translatable("item.crouchlock.smartphone.hint").formatted(Formatting.GRAY));
         }
