@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "crouchlock:block/smartphone"
+    },
+    "facing=east": {
+      "model": "crouchlock:block/smartphone",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "crouchlock:block/smartphone",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "crouchlock:block/smartphone",
+      "y": 270
+    }
+  }
+}
