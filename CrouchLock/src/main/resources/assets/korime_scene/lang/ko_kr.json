@@ -4,8 +4,10 @@
   "item.korime_scene.keypad": "키패드",
   "item.korime_scene.smartphone": "스마트폰",
   "block.korime_scene.smartphone": "스마트폰",
-  "item.korime_scene.detective_hat": "탐정 모자 (동그란 안경)",
-  "item.korime_scene.detective_robe": "탐정 로브",
+  "item.korime_scene.detective_helmet": "탐정 헬멧",
+  "item.korime_scene.detective_chestplate": "탐정 흉갑",
+  "item.korime_scene.detective_leggings": "탐정 레깅스",
+  "item.korime_scene.detective_boots": "탐정 부츠",
   "item.korime_scene.magnifying_glass": "돋보기",
   "block.korime_scene.magnifying_glass": "돋보기",
 
