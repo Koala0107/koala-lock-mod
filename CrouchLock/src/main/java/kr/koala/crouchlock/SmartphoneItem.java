@@ -30,24 +30,15 @@ public final class SmartphoneItem extends BlockItem {
         if (data.finalized() && !data.title().isBlank()) {
             return Text.literal(data.title());
         }
-        return Text.translatable(data.finalized()
-                ? "item.crouchlock.smartphone.finalized_name"
-                : "item.crouchlock.smartphone");
+        return Text.translatable("item.korime_scene.smartphone");
     }
 
     @Override
     public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip,
                               TooltipContext context) {
         SmartphoneData data = SmartphoneData.fromStack(stack);
-        if (data.finalized()) {
-            Text status = data.subtitle().isBlank()
-                    ? Text.translatable("item.crouchlock.smartphone.finalized")
-                    : Text.literal(data.subtitle());
-            tooltip.add(status.copy().formatted(Formatting.GOLD));
-        } else {
-            tooltip.add(Text.translatable("item.crouchlock.smartphone.hint").formatted(Formatting.GRAY));
+        if (data.finalized() && !data.subtitle().isBlank()) {
+            tooltip.add(Text.literal(data.subtitle()).formatted(Formatting.GOLD));
         }
-        tooltip.add(Text.translatable("item.crouchlock.smartphone.counts",
-                data.calls().size(), data.messages().size()).formatted(Formatting.DARK_GRAY));
     }
 }
