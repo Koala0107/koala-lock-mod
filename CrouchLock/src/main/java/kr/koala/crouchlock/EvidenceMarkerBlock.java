@@ -17,8 +17,7 @@ import net.minecraft.world.BlockView;
 
 public final class EvidenceMarkerBlock extends HorizontalFacingBlock {
     public static final MapCodec<EvidenceMarkerBlock> CODEC = createCodec(EvidenceMarkerBlock::new);
-    private static final VoxelShape NORTH_SOUTH = Block.createCuboidShape(2.0, 0.0, 4.0, 14.0, 10.0, 12.0);
-    private static final VoxelShape EAST_WEST = Block.createCuboidShape(4.0, 0.0, 2.0, 12.0, 10.0, 14.0);
+    private static final VoxelShape SHAPE = Block.createCuboidShape(5.0, 0.0, 5.0, 11.0, 5.0, 11.0);
 
     public EvidenceMarkerBlock(Settings settings) {
         super(settings);
@@ -32,12 +31,12 @@ public final class EvidenceMarkerBlock extends HorizontalFacingBlock {
 
     @Override
     public BlockState getPlacementState(ItemPlacementContext context) {
-        return getDefaultState().with(FACING, context.getHorizontalPlayerFacing().getOpposite());
+        return getDefaultState().with(FACING, context.getHorizontalPlayerFacing());
     }
 
     @Override
     public VoxelShape getOutlineShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context) {
-        return state.get(FACING).getAxis() == Direction.Axis.X ? EAST_WEST : NORTH_SOUTH;
+        return SHAPE;
     }
 
     @Override

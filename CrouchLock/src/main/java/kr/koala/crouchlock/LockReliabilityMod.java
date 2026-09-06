@@ -17,6 +17,8 @@ import java.util.Set;
 import java.util.UUID;
 
 public final class LockReliabilityMod implements ModInitializer {
+    private static final String SECONDARY_LOCK_PREFIX = CrouchLockMod.MOD_ID + ":secondary_lock:";
+
     @Override
     public void onInitialize() {
         PlayerBlockBreakEvents.AFTER.register((world, player, pos, state, blockEntity) -> {
@@ -53,11 +55,14 @@ public final class LockReliabilityMod implements ModInitializer {
     }
 
     private static void removeMarkers(ServerWorld world, UUID lockId) {
-        String lockTag = CrouchLockMod.MOD_ID + ":" + lockId;
+        String primaryLockTag = CrouchLockMod.MOD_ID + ":" + lockId;
+        String secondaryLockTag = SECONDARY_LOCK_PREFIX + lockId;
         List<Entity> remove = new ArrayList<>();
         for (Entity entity : world.iterateEntities()) {
-            if (entity.getCommandTags().contains(CrouchLockMod.MARKER_TAG)
-                    && entity.getCommandTags().contains(lockTag)) remove.add(entity);
+            boolean primary = entity.getCommandTags().contains(CrouchLockMod.MARKER_TAG)
+                    && entity.getCommandTags().contains(primaryLockTag);
+            boolean secondary = entity.getCommandTags().contains(secondaryLockTag);
+            if (primary || secondary) remove.add(entity);
         }
         for (Entity entity : remove) entity.discard();
     }
