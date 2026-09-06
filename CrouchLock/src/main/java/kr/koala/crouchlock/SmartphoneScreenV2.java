@@ -18,12 +18,15 @@ import java.util.List;
 /** Compact phone UI. Finalized phones are view-only, like a signed written book. */
 public final class SmartphoneScreenV2 extends Screen {
     private static final int PAGE_SIZE = 4;
-    private static final int ROW_HEIGHT = 23;
+    private static final int ROW_HEIGHT = 21;
+    private static final int LIST_ICON_SIZE = 16;
 
     private final Hand hand;
     private final boolean editable;
     private final List<SmartphoneData.PhoneRecord> calls;
     private final List<SmartphoneData.PhoneRecord> messages;
+    private final String savedTitle;
+    private final String savedSubtitle;
 
     private boolean showingCalls = true;
     private int page;
@@ -65,60 +68,62 @@ public final class SmartphoneScreenV2 extends Screen {
         this.editable = allowEditing && !data.finalized();
         this.calls = new ArrayList<>(data.calls());
         this.messages = new ArrayList<>(data.messages());
+        this.savedTitle = data.title();
+        this.savedSubtitle = data.subtitle();
     }
 
     @Override
     protected void init() {
-        panelWidth = Math.min(286, width - 12);
-        panelHeight = editable ? Math.min(214, height - 8) : Math.min(174, height - 8);
+        panelWidth = Math.min(278, width - 12);
+        panelHeight = editable ? Math.min(202, height - 8) : Math.min(160, height - 8);
         panelX = (width - panelWidth) / 2;
         panelY = (height - panelHeight) / 2;
 
         int innerX = panelX + 13;
         int innerWidth = panelWidth - 26;
         listX = innerX;
-        listY = panelY + 54;
+        listY = panelY + 51;
         listWidth = innerWidth;
 
         callsTab = addDrawableChild(ButtonWidget.builder(
                         Text.translatable("screen.crouchlock.smartphone.calls"),
                         button -> switchMode(true))
-                .dimensions(innerX, panelY + 32, (innerWidth - 4) / 2, 18)
+                .dimensions(innerX, panelY + 31, (innerWidth - 4) / 2, 17)
                 .build());
         messagesTab = addDrawableChild(ButtonWidget.builder(
                         Text.translatable("screen.crouchlock.smartphone.messages"),
                         button -> switchMode(false))
-                .dimensions(innerX + (innerWidth + 4) / 2, panelY + 32,
-                        (innerWidth - 4) / 2, 18)
+                .dimensions(innerX + (innerWidth + 4) / 2, panelY + 31,
+                        (innerWidth - 4) / 2, 17)
                 .build());
 
-        int pageY = panelY + 149;
+        int pageY = panelY + 137;
         previousPage = addDrawableChild(ButtonWidget.builder(Text.literal("‹"), button -> changePage(-1))
-                .dimensions(innerX, pageY, 26, 16)
+                .dimensions(innerX, pageY, 24, 16)
                 .build());
         nextPage = addDrawableChild(ButtonWidget.builder(Text.literal("›"), button -> changePage(1))
-                .dimensions(innerX + innerWidth - 26, pageY, 26, 16)
+                .dimensions(innerX + innerWidth - 24, pageY, 24, 16)
                 .build());
 
         if (editable) {
-            int fieldsY = panelY + 169;
+            int fieldsY = panelY + 157;
             nameField = addDrawableChild(new TextFieldWidget(textRenderer,
-                    innerX, fieldsY, 88, 18, Text.translatable("screen.crouchlock.smartphone.name")));
+                    innerX, fieldsY, 86, 18, Text.translatable("screen.crouchlock.smartphone.name")));
             nameField.setMaxLength(SmartphoneData.MAX_NAME_LENGTH);
             nameField.setPlaceholder(Text.translatable("screen.crouchlock.smartphone.name"));
 
             timeField = addDrawableChild(new TextFieldWidget(textRenderer,
-                    innerX + 92, fieldsY, 54, 18, Text.translatable("screen.crouchlock.smartphone.time")));
+                    innerX + 90, fieldsY, 52, 18, Text.translatable("screen.crouchlock.smartphone.time")));
             timeField.setMaxLength(SmartphoneData.MAX_TIME_LENGTH);
             timeField.setPlaceholder(Text.translatable("screen.crouchlock.smartphone.time"));
 
             detailField = addDrawableChild(new TextFieldWidget(textRenderer,
-                    innerX + 150, fieldsY, innerWidth - 150, 18,
+                    innerX + 146, fieldsY, innerWidth - 146, 18,
                     Text.translatable("screen.crouchlock.smartphone.detail")));
             detailField.setMaxLength(SmartphoneData.MAX_DETAIL_LENGTH);
             detailField.setPlaceholder(Text.translatable("screen.crouchlock.smartphone.detail"));
 
-            int buttonY = panelY + 191;
+            int buttonY = panelY + 180;
             int gap = 3;
             int buttonWidth = (innerWidth - gap * 3) / 4;
             addButton = addDrawableChild(ButtonWidget.builder(
@@ -151,16 +156,12 @@ public final class SmartphoneScreenV2 extends Screen {
         Text status = Text.translatable("screen.crouchlock.smartphone.page",
                 page + 1, totalPages, records.size());
         context.drawCenteredTextWithShadow(textRenderer, status,
-                panelX + panelWidth / 2, panelY + 153, 0xFF58616A);
+                panelX + panelWidth / 2, panelY + 141, 0xFF58616A);
 
-        if (editable) {
-            context.drawText(textRenderer,
-                    Text.translatable("screen.crouchlock.smartphone.finalize_hint"),
-                    panelX + 14, panelY + 160, 0xFF8A6D00, false);
-        } else {
+        if (!editable) {
             context.drawCenteredTextWithShadow(textRenderer,
                     Text.translatable("screen.crouchlock.smartphone.read_only"),
-                    panelX + panelWidth / 2, panelY + 164, 0xFF6C747B);
+                    panelX + panelWidth / 2, panelY + 151, 0xFF6C747B);
         }
 
         super.render(context, mouseX, mouseY, delta);
@@ -172,26 +173,24 @@ public final class SmartphoneScreenV2 extends Screen {
         context.fill(panelX, panelY, panelX + panelWidth, panelY + panelHeight, 0xFF171D22);
         context.fill(panelX + 6, panelY + 6, panelX + panelWidth - 6, panelY + panelHeight - 6, 0xFFF4F4F4);
 
-        context.fill(panelX + 7, panelY + 7, panelX + panelWidth - 7, panelY + 29, 0xFF28333D);
+        context.fill(panelX + 7, panelY + 7, panelX + panelWidth - 7, panelY + 28, 0xFF28333D);
         context.fill(panelX + panelWidth / 2 - 22, panelY + 4,
                 panelX + panelWidth / 2 + 17, panelY + 7, 0xFF050709);
 
         int iconColor = showingCalls ? 0xFF2FB55D : 0xFF318BEA;
-        context.fill(panelX + 13, panelY + 12, panelX + 23, panelY + 22, iconColor);
-        context.drawTextWithShadow(textRenderer, showingCalls ? Text.literal("☎") : Text.literal("✉"),
-                panelX + 14, panelY + 12, 0xFFFFFFFF);
+        drawModeIcon(context, panelX + 13, panelY + 11, 12, showingCalls, iconColor);
         context.drawTextWithShadow(textRenderer,
                 showingCalls
                         ? Text.translatable("screen.crouchlock.smartphone.calls")
                         : Text.translatable("screen.crouchlock.smartphone.messages"),
-                panelX + 29, panelY + 13, 0xFFFFFFFF);
+                panelX + 31, panelY + 12, 0xFFFFFFFF);
         context.drawTextWithShadow(textRenderer, Text.literal("10:24"),
-                panelX + panelWidth - 44, panelY + 13, 0xFFE7EDF3);
+                panelX + panelWidth - 44, panelY + 12, 0xFFE7EDF3);
 
-        context.fill(panelX + 9, panelY + 52, panelX + panelWidth - 9,
-                panelY + 147, 0xFFFFFFFF);
-        context.fill(panelX + 9, panelY + 52, panelX + panelWidth - 9, panelY + 53, 0xFFD0D4D8);
-        context.fill(panelX + 9, panelY + 146, panelX + panelWidth - 9, panelY + 147, 0xFFD0D4D8);
+        context.fill(panelX + 9, panelY + 49, panelX + panelWidth - 9,
+                panelY + 136, 0xFFFFFFFF);
+        context.fill(panelX + 9, panelY + 49, panelX + panelWidth - 9, panelY + 50, 0xFFD0D4D8);
+        context.fill(panelX + 9, panelY + 135, panelX + panelWidth - 9, panelY + 136, 0xFFD0D4D8);
 
         context.fill(panelX + panelWidth / 2 - 21, panelY + panelHeight - 4,
                 panelX + panelWidth / 2 + 21, panelY + panelHeight - 2, 0xFF8B949C);
@@ -211,7 +210,7 @@ public final class SmartphoneScreenV2 extends Screen {
                         isSelected ? 0xFFE3F0FB : 0xFFF1F4F6);
             }
             if (row > 0) {
-                context.fill(listX + 31, y, listX + listWidth, y + 1, 0xFFE1E4E7);
+                context.fill(listX + 25, y, listX + listWidth, y + 1, 0xFFE1E4E7);
             }
             if (index >= records.size()) {
                 continue;
@@ -224,32 +223,55 @@ public final class SmartphoneScreenV2 extends Screen {
             String time = record.time().isBlank() ? "--:--" : record.time();
             String detail = record.detail().isBlank() ? "..." : record.detail();
 
-            drawAvatar(context, listX + 4, y + 4, index);
+            drawAvatar(context, listX + 4, y + 2, index);
+            int textX = listX + 25;
             int timeWidth = textRenderer.getWidth(time);
             context.drawText(textRenderer,
-                    Text.literal(textRenderer.trimToWidth(name, listWidth - 90)),
-                    listX + 34, y + 3, 0xFF1F252B, false);
+                    Text.literal(textRenderer.trimToWidth(name, listWidth - 82)),
+                    textX, y + 2, 0xFF1F252B, false);
             context.drawText(textRenderer, Text.literal(time),
-                    listX + listWidth - timeWidth - 4, y + 3, 0xFF6C747B, false);
+                    listX + listWidth - timeWidth - 4, y + 2, 0xFF6C747B, false);
 
             String secondary = showingCalls ? callSecondaryText(detail)
-                    : textRenderer.trimToWidth(detail, listWidth - 42);
+                    : textRenderer.trimToWidth(detail, listWidth - 34);
             int color = showingCalls && isMissedCall(detail) ? 0xFFD83A3A : 0xFF707980;
-            context.drawText(textRenderer, Text.literal(secondary), listX + 34, y + 13, color, false);
+            context.drawText(textRenderer, Text.literal(secondary), textX, y + 11, color, false);
         }
     }
 
     private void drawAvatar(DrawContext context, int x, int y, int index) {
         int[] palette = {0xFFBA704A, 0xFF6AA6D8, 0xFF63A875, 0xFF9A7AC2, 0xFFC09048, 0xFF70767C};
         int color = palette[Math.floorMod(index, palette.length)];
-        context.fill(x, y, x + 23, y + 15, color);
-        context.drawCenteredTextWithShadow(textRenderer,
-                showingCalls ? Text.literal("☎") : Text.literal("✉"), x + 11, y + 3, 0xFFFFFFFF);
+        drawModeIcon(context, x, y, LIST_ICON_SIZE, showingCalls, color);
+    }
+
+    private void drawModeIcon(DrawContext context, int x, int y, int size, boolean callMode, int background) {
+        context.fill(x, y, x + size, y + size, background);
+        int white = 0xFFFFFFFF;
+        if (callMode) {
+            int left = x + Math.max(2, size / 5);
+            int top = y + Math.max(2, size / 5);
+            int thick = Math.max(2, size / 6);
+            context.fill(left, top, left + thick, top + thick * 2, white);
+            context.fill(left + thick, top + thick, x + size - thick - 1, top + thick * 2, white);
+            context.fill(x + size - thick * 2 - 1, top + thick, x + size - thick - 1, top + thick * 3, white);
+        } else {
+            int pad = Math.max(2, size / 5);
+            context.fill(x + pad, y + pad, x + size - pad, y + size - pad - 1, white);
+            context.fill(x + pad + 2, y + size - pad - 1,
+                    x + pad + 5, y + size - pad + 2, white);
+            int dotY = y + size / 2;
+            context.fill(x + pad + 2, dotY, x + pad + 3, dotY + 1, background);
+            context.fill(x + size / 2, dotY, x + size / 2 + 1, dotY + 1, background);
+            context.fill(x + size - pad - 3, dotY, x + size - pad - 2, dotY + 1, background);
+        }
     }
 
     private String callSecondaryText(String detail) {
         String prefix = isMissedCall(detail) ? "↙  " : "↗  ";
-        return prefix + textRenderer.trimToWidth(detail.isBlank() ? "통화" : detail, listWidth - 50);
+        return prefix + textRenderer.trimToWidth(detail.isBlank()
+                ? Text.translatable("screen.crouchlock.smartphone.call_default").getString()
+                : detail, listWidth - 42);
     }
 
     private boolean isMissedCall(String detail) {
@@ -274,7 +296,7 @@ public final class SmartphoneScreenV2 extends Screen {
 
     @Override
     public void close() {
-        // Esc simply abandons draft changes. Only the explicit finalize button permanently writes data.
+        // Esc abandons the draft. Only the explicit save flow writes/finalizes the phone.
         super.close();
     }
 
@@ -347,9 +369,21 @@ public final class SmartphoneScreenV2 extends Screen {
     }
 
     private void finalizePhone() {
+        if (!editable || synced || hand == null || client == null) return;
+        commitFields();
+        String title = savedTitle.isBlank()
+                ? Text.translatable("screen.crouchlock.smartphone.save.default_name").getString()
+                : savedTitle;
+        String subtitle = savedSubtitle.isBlank()
+                ? Text.translatable("screen.crouchlock.smartphone.save.default_subtitle").getString()
+                : savedSubtitle;
+        client.setScreen(new SmartphoneFinalizeScreen(this, title, subtitle));
+    }
+
+    void finalizeWithMetadata(String title, String subtitle) {
         if (!editable || synced || hand == null) return;
         commitFields();
-        SmartphoneData data = new SmartphoneData(calls, messages, true);
+        SmartphoneData data = new SmartphoneData(calls, messages, true, title, subtitle);
 
         if (client != null && client.player != null) {
             ItemStack held = client.player.getStackInHand(hand);
@@ -365,7 +399,9 @@ public final class SmartphoneScreenV2 extends Screen {
             ClientPlayNetworking.send(SmartphoneMod.SAVE_PACKET, buf);
         }
         synced = true;
-        super.close();
+        if (client != null) {
+            client.setScreen(null);
+        }
     }
 
     private void commitFields() {
