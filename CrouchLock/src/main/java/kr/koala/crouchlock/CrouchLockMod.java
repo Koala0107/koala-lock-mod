@@ -59,7 +59,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public final class CrouchLockMod implements ModInitializer {
-    public static final String MOD_ID = "crouchlock";
+    public static final String MOD_ID = "korime_scene";
     public static final String KEY_LOCK = "key";
     public static final String KEYPAD_LOCK = "keypad";
     public static final String MARKER_TAG = MOD_ID + ":marker";
