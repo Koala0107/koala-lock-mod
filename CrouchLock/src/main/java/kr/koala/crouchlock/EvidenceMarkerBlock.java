@@ -3,6 +3,8 @@ package kr.koala.crouchlock;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.HorizontalFacingBlock;
+import net.minecraft.block.ShapeContext;
+import net.minecraft.entity.ai.pathing.NavigationType;
 import net.minecraft.item.ItemPlacementContext;
 import net.minecraft.state.StateManager;
 import net.minecraft.util.BlockMirror;
@@ -11,9 +13,6 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.shape.VoxelShape;
 import net.minecraft.world.BlockView;
-import net.minecraft.entity.ai.pathing.NavigationType;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.util.shape.ShapeContext;
 
 public final class EvidenceMarkerBlock extends HorizontalFacingBlock {
     private static final VoxelShape NORTH_SOUTH = Block.createCuboidShape(2.0, 0.0, 4.0, 14.0, 10.0, 12.0);
