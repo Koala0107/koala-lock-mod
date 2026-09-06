@@ -1,4 +1,5 @@
 {
+  "itemGroup.crouchlock.korime_scene": "Korime Scene",
   "item.crouchlock.lock_key": "잠금 열쇠",
   "item.crouchlock.lock_key.code": "열쇠 코드: %s",
   "item.crouchlock.lock_key.unassigned": "처음 사용할 때 코드가 생성됩니다",
