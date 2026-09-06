@@ -1,4 +1,5 @@
 {
+  "itemGroup.crouchlock.korime_scene": "Korime Scene",
   "item.crouchlock.lock_key": "Lock Key",
   "item.crouchlock.lock_key.code": "Key code: %s",
   "item.crouchlock.lock_key.unassigned": "A code is created on first use",
