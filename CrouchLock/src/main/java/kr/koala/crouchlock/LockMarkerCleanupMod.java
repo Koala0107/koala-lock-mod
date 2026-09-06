@@ -21,7 +21,7 @@ public final class LockMarkerCleanupMod implements ModInitializer {
     @Override
     public void onInitialize() {
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) ->
-                dispatcher.register(CommandManager.literal("crouchlock")
+                dispatcher.register(CommandManager.literal("korime_scene")
                         .then(CommandManager.literal("cleanup")
                                 .executes(context -> cleanup(context.getSource().getWorld(), context.getSource())))));
     }
