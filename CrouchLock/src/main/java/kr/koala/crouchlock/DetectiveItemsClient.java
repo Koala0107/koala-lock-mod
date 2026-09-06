@@ -45,9 +45,14 @@ public final class DetectiveItemsClient implements ClientModInitializer {
                     model.hat.visible = true;
                 }
                 case CHEST -> {
+                    // The detective outfit is intentionally a complete skin-like costume.
+                    // Render the coat over torso, both arms and both legs so the player's
+                    // original shirt/shorts do not show through the equipped outfit.
                     model.body.visible = true;
                     model.rightArm.visible = true;
                     model.leftArm.visible = true;
+                    model.rightLeg.visible = true;
+                    model.leftLeg.visible = true;
                 }
                 default -> { }
             }
