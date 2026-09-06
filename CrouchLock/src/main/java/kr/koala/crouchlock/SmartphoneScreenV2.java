@@ -20,6 +20,8 @@ public final class SmartphoneScreenV2 extends Screen {
     private static final int PAGE_SIZE = 4;
     private static final int ROW_HEIGHT = 21;
     private static final int ICON_SIZE = 16;
+    private static final int INCOMING_COLOR = 0xFFE05252;
+    private static final int OUTGOING_COLOR = 0xFF4B82E8;
 
     private final Hand hand;
     private final boolean editable;
@@ -162,7 +164,7 @@ public final class SmartphoneScreenV2 extends Screen {
             context.drawText(textRenderer, Text.literal(time), listX + listWidth - timeWidth - 4, y + 2, 0xFF6C747B, false);
             String dir = directionText(record.outgoing()).getString();
             String secondary = dir + " · " + textRenderer.trimToWidth(detail, listWidth - 58);
-            int color = showingCalls && isMissedCall(detail) ? 0xFFD83A3A : 0xFF707980;
+            int color = record.outgoing() ? OUTGOING_COLOR : INCOMING_COLOR;
             context.drawText(textRenderer, Text.literal(secondary), textX, y + 11, color, false);
         }
     }
@@ -186,12 +188,10 @@ public final class SmartphoneScreenV2 extends Screen {
         }
     }
 
-    private boolean isMissedCall(String detail) {
-        String n = detail.toLowerCase();
-        return n.contains("miss") || n.contains("부재") || n.contains("실패") || n.contains("못") || n.contains("끊");
+    private Text directionText() { return coloredDirectionText(directionOutgoing); }
+    private Text coloredDirectionText(boolean outgoing) {
+        return directionText(outgoing).copy().styled(style -> style.withColor(outgoing ? 0x4B82E8 : 0xE05252));
     }
-
-    private Text directionText() { return directionText(directionOutgoing); }
     private Text directionText(boolean outgoing) {
         if (showingCalls) return Text.translatable(outgoing ? "screen.crouchlock.smartphone.call_outgoing" : "screen.crouchlock.smartphone.call_incoming");
         return Text.translatable(outgoing ? "screen.crouchlock.smartphone.message_outgoing" : "screen.crouchlock.smartphone.message_incoming");
