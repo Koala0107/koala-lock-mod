@@ -1,6 +1,5 @@
 package kr.koala.crouchlock;
 
-import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.item.ItemStack;
@@ -26,7 +25,8 @@ public final class SmartphoneBlockEntity extends BlockEntity {
     }
 
     public void setData(SmartphoneData data) {
-        this.data = new SmartphoneData(data.calls(), data.messages(), data.finalized());
+        this.data = new SmartphoneData(data.calls(), data.messages(), data.finalized(),
+                data.title(), data.subtitle());
         markDirty();
         if (world instanceof ServerWorld serverWorld) {
             serverWorld.getChunkManager().markForUpdate(pos);
