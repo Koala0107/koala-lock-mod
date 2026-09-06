@@ -8,6 +8,7 @@ import net.minecraft.screen.PropertyDelegate;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.sound.SoundEvents;
 
 import java.util.function.Predicate;
 
@@ -57,6 +58,8 @@ public final class KeypadScreenHandler extends ScreenHandler {
                 && input.length() <= MAX_DIGITS) {
             boolean success = confirmAction.test(input.toString());
             if (success) {
+                player.playSound(SoundEvents.BLOCK_NOTE_BLOCK_CHIME.value(), player.getSoundCategory(), 0.9F, 0.9F);
+                player.playSound(SoundEvents.ENTITY_PLAYER_LEVELUP, player.getSoundCategory(), 0.55F, 1.25F);
                 input.setLength(0);
                 if (player instanceof ServerPlayerEntity serverPlayer) {
                     serverPlayer.closeHandledScreen();

@@ -9,11 +9,7 @@ import net.minecraft.network.PacketByteBuf;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Per-item smartphone evidence data. Each smartphone keeps its own editable
- * call and message records in the ItemStack NBT so roleplay/survival worlds
- * can use the phone as a portable clue item.
- */
+/** Per-item smartphone evidence data stored directly in the ItemStack NBT. */
 public final class SmartphoneData {
     public static final int MAX_RECORDS = 32;
     public static final int MAX_NAME_LENGTH = 32;
@@ -23,20 +19,28 @@ public final class SmartphoneData {
     private static final String ROOT_KEY = "CrouchLockSmartphone";
     private static final String CALLS_KEY = "Calls";
     private static final String MESSAGES_KEY = "Messages";
+    private static final String FINALIZED_KEY = "Finalized";
     private static final String NAME_KEY = "Name";
     private static final String DETAIL_KEY = "Detail";
     private static final String TIME_KEY = "Time";
 
     private final List<PhoneRecord> calls;
     private final List<PhoneRecord> messages;
+    private final boolean finalized;
 
+    /** Creating data from the editor means the phone is being permanently saved. */
     public SmartphoneData(List<PhoneRecord> calls, List<PhoneRecord> messages) {
+        this(calls, messages, true);
+    }
+
+    public SmartphoneData(List<PhoneRecord> calls, List<PhoneRecord> messages, boolean finalized) {
         this.calls = copyAndLimit(calls);
         this.messages = copyAndLimit(messages);
+        this.finalized = finalized;
     }
 
     public static SmartphoneData empty() {
-        return new SmartphoneData(List.of(), List.of());
+        return new SmartphoneData(List.of(), List.of(), false);
     }
 
     public static SmartphoneData fromStack(ItemStack stack) {
@@ -48,7 +52,8 @@ public final class SmartphoneData {
         NbtCompound phone = stackNbt.getCompound(ROOT_KEY);
         return new SmartphoneData(
                 readNbtList(phone.getList(CALLS_KEY, NbtElement.COMPOUND_TYPE)),
-                readNbtList(phone.getList(MESSAGES_KEY, NbtElement.COMPOUND_TYPE))
+                readNbtList(phone.getList(MESSAGES_KEY, NbtElement.COMPOUND_TYPE)),
+                phone.getBoolean(FINALIZED_KEY)
         );
     }
 
@@ -60,20 +65,27 @@ public final class SmartphoneData {
         return List.copyOf(messages);
     }
 
+    public boolean finalized() {
+        return finalized;
+    }
+
     public void writeTo(ItemStack stack) {
         NbtCompound phone = new NbtCompound();
         phone.put(CALLS_KEY, writeNbtList(calls));
         phone.put(MESSAGES_KEY, writeNbtList(messages));
+        phone.putBoolean(FINALIZED_KEY, finalized);
         stack.getOrCreateNbt().put(ROOT_KEY, phone);
     }
 
     public void writePacket(PacketByteBuf buf) {
+        buf.writeBoolean(finalized);
         writePacketList(buf, calls);
         writePacketList(buf, messages);
     }
 
     public static SmartphoneData readPacket(PacketByteBuf buf) {
-        return new SmartphoneData(readPacketList(buf), readPacketList(buf));
+        boolean finalized = buf.readBoolean();
+        return new SmartphoneData(readPacketList(buf), readPacketList(buf), finalized);
     }
 
     private static List<PhoneRecord> readNbtList(NbtList list) {

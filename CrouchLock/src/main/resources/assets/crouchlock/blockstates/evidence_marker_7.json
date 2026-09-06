@@ -1,0 +1,1 @@
+{"variants":{"facing=north":{"model":"crouchlock:block/evidence_marker_7"},"facing=east":{"model":"crouchlock:block/evidence_marker_7","y":90},"facing=south":{"model":"crouchlock:block/evidence_marker_7","y":180},"facing=west":{"model":"crouchlock:block/evidence_marker_7","y":270}}}
