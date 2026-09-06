@@ -4,16 +4,17 @@
   "version": "${version}",
   "name": "CrouchLock",
   "description": "Minecraft 1.20.4 Fabric 잠금 모드",
-  "authors": [
-    "Koala"
-  ],
+  "authors": ["Koala"],
   "contact": {},
   "license": "MIT",
   "environment": "*",
   "entrypoints": {
     "main": [
       "kr.koala.crouchlock.CrouchLockMod",
+      "kr.koala.crouchlock.LockMarkerLayoutFix",
+      "kr.koala.crouchlock.KeyUnlockSound",
       "kr.koala.crouchlock.LockReliabilityMod",
+      "kr.koala.crouchlock.LockMarkerCleanupMod",
       "kr.koala.crouchlock.SmartphoneMod",
       "kr.koala.crouchlock.EvidenceMarkerMod"
     ],
