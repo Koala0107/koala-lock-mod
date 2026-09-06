@@ -1,5 +1,6 @@
 package kr.koala.crouchlock;
 
+import com.mojang.serialization.MapCodec;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.HorizontalFacingBlock;
@@ -15,12 +16,18 @@ import net.minecraft.util.shape.VoxelShape;
 import net.minecraft.world.BlockView;
 
 public final class EvidenceMarkerBlock extends HorizontalFacingBlock {
+    public static final MapCodec<EvidenceMarkerBlock> CODEC = createCodec(EvidenceMarkerBlock::new);
     private static final VoxelShape NORTH_SOUTH = Block.createCuboidShape(2.0, 0.0, 4.0, 14.0, 10.0, 12.0);
     private static final VoxelShape EAST_WEST = Block.createCuboidShape(4.0, 0.0, 2.0, 12.0, 10.0, 14.0);
 
     public EvidenceMarkerBlock(Settings settings) {
         super(settings);
         setDefaultState(getStateManager().getDefaultState().with(FACING, Direction.NORTH));
+    }
+
+    @Override
+    protected MapCodec<? extends HorizontalFacingBlock> getCodec() {
+        return CODEC;
     }
 
     @Override
