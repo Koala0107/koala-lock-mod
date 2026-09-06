@@ -37,7 +37,7 @@
   "screen.crouchlock.smartphone.save.name": "아이템 이름",
   "screen.crouchlock.smartphone.save.name_placeholder": "스마트폰 이름",
   "screen.crouchlock.smartphone.save.subtitle": "설명",
-  "screen.crouchlock.smartphone.save.subtitle_placeholder": "설명 (비워도 됨)",
+  "screen.crouchlock.smartphone.save.subtitle_placeholder": "문장을 작성해주세요",
   "screen.crouchlock.smartphone.save.warning": "최종 저장하시겠습니까? 저장 후에는 다시 편집할 수 없습니다.",
   "screen.crouchlock.smartphone.save.cancel": "돌아가기",
   "screen.crouchlock.smartphone.save.confirm": "최종 저장",
