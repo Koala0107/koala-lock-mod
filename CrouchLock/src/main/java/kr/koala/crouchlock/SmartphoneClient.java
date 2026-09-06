@@ -1,9 +1,11 @@
 package kr.koala.crouchlock;
 
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.blockrenderlayer.v1.BlockRenderLayerMap;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
 import net.fabricmc.fabric.api.event.player.UseItemCallback;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.render.RenderLayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.TypedActionResult;
@@ -11,6 +13,8 @@ import net.minecraft.util.TypedActionResult;
 public final class SmartphoneClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
+        BlockRenderLayerMap.INSTANCE.putBlock(SmartphoneMod.SMARTPHONE_BLOCK, RenderLayer.getCutout());
+
         UseItemCallback.EVENT.register((player, world, hand) -> {
             ItemStack stack = player.getStackInHand(hand);
             if (!world.isClient || !stack.isOf(SmartphoneMod.SMARTPHONE)) {
