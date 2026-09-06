@@ -14,6 +14,11 @@ public final class LockKeyItem extends Item {
         super(settings);
     }
 
+    @Override
+    public boolean hasGlint(ItemStack stack) {
+        return getKeyId(stack).isPresent() || super.hasGlint(stack);
+    }
+
     public static UUID getOrCreateKeyId(ItemStack stack) {
         Optional<UUID> current = getKeyId(stack);
         if (current.isPresent()) {
