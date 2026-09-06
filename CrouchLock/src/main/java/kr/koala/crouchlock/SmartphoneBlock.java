@@ -1,5 +1,6 @@
 package kr.koala.crouchlock;
 
+import com.mojang.serialization.MapCodec;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockEntityProvider;
 import net.minecraft.block.BlockState;
@@ -25,12 +26,18 @@ import net.minecraft.world.WorldView;
 import org.jetbrains.annotations.Nullable;
 
 public final class SmartphoneBlock extends HorizontalFacingBlock implements BlockEntityProvider {
+    public static final MapCodec<SmartphoneBlock> CODEC = createCodec(SmartphoneBlock::new);
     private static final VoxelShape NORTH_SOUTH = Block.createCuboidShape(4.0, 0.0, 2.0, 12.0, 1.0, 14.0);
     private static final VoxelShape EAST_WEST = Block.createCuboidShape(2.0, 0.0, 4.0, 14.0, 1.0, 12.0);
 
     public SmartphoneBlock(Settings settings) {
         super(settings);
         setDefaultState(getStateManager().getDefaultState().with(FACING, Direction.NORTH));
+    }
+
+    @Override
+    protected MapCodec<? extends HorizontalFacingBlock> getCodec() {
+        return CODEC;
     }
 
     @Override
@@ -57,14 +64,14 @@ public final class SmartphoneBlock extends HorizontalFacingBlock implements Bloc
     }
 
     @Override
-    public void onBreak(World world, BlockPos pos, BlockState state, PlayerEntity player) {
+    public BlockState onBreak(World world, BlockPos pos, BlockState state, PlayerEntity player) {
         if (!world.isClient && !player.getAbilities().creativeMode) {
             BlockEntity blockEntity = world.getBlockEntity(pos);
             if (blockEntity instanceof SmartphoneBlockEntity phone) {
                 Block.dropStack(world, pos, phone.createPhoneStack());
             }
         }
-        super.onBreak(world, pos, state, player);
+        return super.onBreak(world, pos, state, player);
     }
 
     @Override
