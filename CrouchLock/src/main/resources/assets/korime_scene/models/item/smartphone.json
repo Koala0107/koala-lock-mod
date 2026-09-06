@@ -1,6 +1,4 @@
 {
   "parent": "minecraft:item/generated",
-  "textures": {
-    "layer0": "crouchlock:item/smartphone"
-  }
+  "textures": { "layer0": "korime_scene:item/smartphone" }
 }
