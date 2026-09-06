@@ -29,6 +29,6 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: korime-scene-1.2.2
+          name: korime-scene-1.2.3
           path: CrouchLock/build/libs/korime-scene-*.jar
           if-no-files-found: error

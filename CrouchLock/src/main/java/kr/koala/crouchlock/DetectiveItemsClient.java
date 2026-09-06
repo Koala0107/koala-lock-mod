@@ -15,15 +15,16 @@ public final class DetectiveItemsClient implements ClientModInitializer {
     private static final Identifier DETECTIVE_ARMOR_TEXTURE =
             new Identifier(CrouchLockMod.MOD_ID, "textures/models/armor/detective_layer_1.png");
 
+    private BipedEntityModel<LivingEntity> armorModel;
+
     @Override
     public void onInitializeClient() {
         BlockRenderLayerMap.INSTANCE.putBlock(DetectiveItemsMod.MAGNIFYING_GLASS_BLOCK, RenderLayer.getCutout());
 
-        ModelPart root = MinecraftClient.getInstance().getEntityModelLoader()
-                .getModelPart(EntityModelLayers.PLAYER_OUTER_ARMOR);
-        BipedEntityModel<LivingEntity> model = new BipedEntityModel<>(root);
-
         ArmorRenderer.register((matrices, vertexConsumers, stack, entity, slot, light, contextModel) -> {
+            BipedEntityModel<LivingEntity> model = getArmorModel();
+            if (model == null) return;
+
             contextModel.copyBipedStateTo(model);
             model.setVisible(false);
             switch (slot) {
@@ -37,5 +38,14 @@ public final class DetectiveItemsClient implements ClientModInitializer {
             }
             ArmorRenderer.renderPart(matrices, vertexConsumers, light, stack, model, DETECTIVE_ARMOR_TEXTURE);
         }, DetectiveItemsMod.DETECTIVE_HAT, DetectiveItemsMod.DETECTIVE_ROBE);
+    }
+
+    private BipedEntityModel<LivingEntity> getArmorModel() {
+        if (armorModel != null) return armorModel;
+        MinecraftClient client = MinecraftClient.getInstance();
+        if (client == null || client.getEntityModelLoader() == null) return null;
+        ModelPart root = client.getEntityModelLoader().getModelPart(EntityModelLayers.PLAYER_OUTER_ARMOR);
+        armorModel = new BipedEntityModel<>(root);
+        return armorModel;
     }
 }
