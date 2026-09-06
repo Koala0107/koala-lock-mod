@@ -38,7 +38,7 @@ public final class SmartphoneItem extends BlockItem {
                               TooltipContext context) {
         SmartphoneData data = SmartphoneData.fromStack(stack);
         if (data.finalized() && !data.subtitle().isBlank()) {
-            tooltip.add(Text.literal(data.subtitle()).formatted(Formatting.GOLD));
+            tooltip.add(Text.literal(data.subtitle()).formatted(Formatting.LIGHT_PURPLE));
         }
     }
 }
