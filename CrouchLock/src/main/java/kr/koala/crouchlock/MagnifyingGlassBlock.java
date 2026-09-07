@@ -18,10 +18,10 @@ import net.minecraft.world.WorldView;
 public final class MagnifyingGlassBlock extends HorizontalFacingBlock {
     public static final MapCodec<MagnifyingGlassBlock> CODEC = createCodec(MagnifyingGlassBlock::new);
 
-    private static final VoxelShape NORTH = Block.createCuboidShape(0, 0, 14, 16, 16, 16);
-    private static final VoxelShape SOUTH = Block.createCuboidShape(0, 0, 0, 16, 16, 2);
-    private static final VoxelShape WEST = Block.createCuboidShape(14, 0, 0, 16, 16, 16);
-    private static final VoxelShape EAST = Block.createCuboidShape(0, 0, 0, 2, 16, 16);
+    private static final VoxelShape NORTH_SHAPE = Block.createCuboidShape(0, 0, 15, 16, 16, 16);
+    private static final VoxelShape SOUTH_SHAPE = Block.createCuboidShape(0, 0, 0, 16, 16, 1);
+    private static final VoxelShape WEST_SHAPE = Block.createCuboidShape(15, 0, 0, 16, 16, 16);
+    private static final VoxelShape EAST_SHAPE = Block.createCuboidShape(0, 0, 0, 1, 16, 16);
 
     public MagnifyingGlassBlock(Settings settings) {
         super(settings);
@@ -37,9 +37,8 @@ public final class MagnifyingGlassBlock extends HorizontalFacingBlock {
     public BlockState getPlacementState(ItemPlacementContext context) {
         Direction side = context.getSide();
         if (!side.getAxis().isHorizontal()) return null;
-        Direction facing = side;
-        BlockState state = getDefaultState().with(FACING, facing);
-        return canPlaceAt(state, context.getWorld(), context.getBlockPos()) ? state : null;
+        BlockState state = getDefaultState().with(FACING, side);
+        return state.canPlaceAt(context.getWorld(), context.getBlockPos()) ? state : null;
     }
 
     @Override
@@ -52,10 +51,10 @@ public final class MagnifyingGlassBlock extends HorizontalFacingBlock {
     @Override
     public VoxelShape getOutlineShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context) {
         return switch (state.get(FACING)) {
-            case SOUTH -> SOUTH;
-            case WEST -> WEST;
-            case EAST -> EAST;
-            default -> NORTH;
+            case SOUTH -> SOUTH_SHAPE;
+            case WEST -> WEST_SHAPE;
+            case EAST -> EAST_SHAPE;
+            default -> NORTH_SHAPE;
         };
     }
 
