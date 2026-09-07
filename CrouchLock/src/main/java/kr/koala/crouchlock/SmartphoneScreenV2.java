@@ -110,7 +110,7 @@ public final class SmartphoneScreenV2 extends Screen {
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        renderBackground(context, mouseX, mouseY, delta);
+        // Screen#renderBackground darkens the in-game world. Keep the world at normal brightness behind the phone UI.
         drawPhoneChrome(context);
         drawRecordList(context, mouseX, mouseY);
         List<SmartphoneData.PhoneRecord> records = activeRecords();
