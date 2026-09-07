@@ -26,6 +26,7 @@ public final class KorimeSceneItemGroup implements ModInitializer {
                         entries.add(DetectiveItemsMod.DETECTIVE_LEGGINGS);
                         entries.add(DetectiveItemsMod.DETECTIVE_BOOTS);
                         entries.add(DetectiveItemsMod.MAGNIFYING_GLASS);
+                        entries.add(DetectiveItemsMod.INVESTIGATION_BOARD);
                     })
                     .build());
 
