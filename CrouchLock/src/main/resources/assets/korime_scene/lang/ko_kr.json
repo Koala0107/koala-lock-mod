@@ -10,6 +10,8 @@
   "item.korime_scene.detective_boots": "탐정 부츠",
   "item.korime_scene.magnifying_glass": "돋보기",
   "block.korime_scene.magnifying_glass": "돋보기",
+  "item.korime_scene.investigation_board": "수사 보드",
+  "block.korime_scene.investigation_board": "수사 보드",
 
   "screen.crouchlock.set_code": "새 비밀번호 등록",
   "screen.crouchlock.enter_code": "비밀번호 입력",
