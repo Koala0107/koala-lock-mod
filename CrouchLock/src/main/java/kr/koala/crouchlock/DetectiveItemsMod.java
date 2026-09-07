@@ -10,6 +10,7 @@ import net.minecraft.item.Item;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
 import net.minecraft.sound.BlockSoundGroup;
+import net.minecraft.sound.SoundEvent;
 import net.minecraft.util.Identifier;
 
 public final class DetectiveItemsMod implements ModInitializer {
@@ -21,15 +22,12 @@ public final class DetectiveItemsMod implements ModInitializer {
             Registries.ITEM, new Identifier(CrouchLockMod.MOD_ID, "detective_chestplate"),
             new ArmorItem(ArmorMaterials.IRON, ArmorItem.Type.CHESTPLATE, new Item.Settings()));
 
-    // Legacy registry entries are intentionally kept for old worlds/inventories.
-    // They are hidden from the Korime Scene creative tab and are not rendered as detective gear.
-    public static final Item DETECTIVE_LEGGINGS = Registry.register(
-            Registries.ITEM, new Identifier(CrouchLockMod.MOD_ID, "detective_leggings"),
-            new ArmorItem(ArmorMaterials.IRON, ArmorItem.Type.LEGGINGS, new Item.Settings()));
-
-    public static final Item DETECTIVE_BOOTS = Registry.register(
-            Registries.ITEM, new Identifier(CrouchLockMod.MOD_ID, "detective_boots"),
-            new ArmorItem(ArmorMaterials.IRON, ArmorItem.Type.BOOTS, new Item.Settings()));
+    public static final Identifier MAGNIFYING_GLASS_USE_ID =
+            new Identifier(CrouchLockMod.MOD_ID, "magnifying_glass_use");
+    public static final SoundEvent MAGNIFYING_GLASS_USE = Registry.register(
+            Registries.SOUND_EVENT,
+            MAGNIFYING_GLASS_USE_ID,
+            SoundEvent.of(MAGNIFYING_GLASS_USE_ID));
 
     public static final Block MAGNIFYING_GLASS_BLOCK = Registry.register(
             Registries.BLOCK, new Identifier(CrouchLockMod.MOD_ID, "magnifying_glass"),
@@ -38,7 +36,7 @@ public final class DetectiveItemsMod implements ModInitializer {
 
     public static final Item MAGNIFYING_GLASS = Registry.register(
             Registries.ITEM, new Identifier(CrouchLockMod.MOD_ID, "magnifying_glass"),
-            new BlockItem(MAGNIFYING_GLASS_BLOCK, new Item.Settings().maxCount(16)));
+            new MagnifyingGlassItem(MAGNIFYING_GLASS_BLOCK, new Item.Settings().maxCount(16)));
 
     public static final Block INVESTIGATION_BOARD_BLOCK = Registry.register(
             Registries.BLOCK, new Identifier(CrouchLockMod.MOD_ID, "investigation_board"),
