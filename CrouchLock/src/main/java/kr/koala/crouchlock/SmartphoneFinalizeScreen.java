@@ -47,7 +47,8 @@ public final class SmartphoneFinalizeScreen extends Screen {
                 Text.translatable("screen.crouchlock.smartphone.save.subtitle")));
         subtitleField.setMaxLength(SmartphoneData.MAX_SUBTITLE_LENGTH);
         subtitleField.setPlaceholder(Text.translatable("screen.crouchlock.smartphone.save.subtitle_placeholder"));
-        subtitleField.setText(initialSubtitle);
+        // Description is intentionally blank when this dialog opens. The hint text is the placeholder.
+        subtitleField.setText("");
 
         int gap = 8;
         int buttonWidth = (innerWidth - gap) / 2;
@@ -78,7 +79,7 @@ public final class SmartphoneFinalizeScreen extends Screen {
         context.drawText(textRenderer, Text.translatable("screen.crouchlock.smartphone.save.name"),
                 panelX + 18, panelY + 32, 0xFF33383D, false);
         context.drawText(textRenderer, Text.translatable("screen.crouchlock.smartphone.save.subtitle"),
-                panelX + 18, panelY + 67, 0xFFB06C00, false);
+                panelX + 18, panelY + 67, 0xFF9B59D0, false);
         context.drawCenteredTextWithShadow(textRenderer,
                 Text.translatable("screen.crouchlock.smartphone.save.warning"),
                 panelX + panelWidth / 2, panelY + 103, 0xFFFFA000);
