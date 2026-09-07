@@ -21,14 +21,6 @@ public final class DetectiveItemsMod implements ModInitializer {
             Registries.ITEM, new Identifier(CrouchLockMod.MOD_ID, "detective_chestplate"),
             new ArmorItem(ArmorMaterials.IRON, ArmorItem.Type.CHESTPLATE, new Item.Settings()));
 
-    public static final Item DETECTIVE_LEGGINGS = Registry.register(
-            Registries.ITEM, new Identifier(CrouchLockMod.MOD_ID, "detective_leggings"),
-            new ArmorItem(ArmorMaterials.IRON, ArmorItem.Type.LEGGINGS, new Item.Settings()));
-
-    public static final Item DETECTIVE_BOOTS = Registry.register(
-            Registries.ITEM, new Identifier(CrouchLockMod.MOD_ID, "detective_boots"),
-            new ArmorItem(ArmorMaterials.IRON, ArmorItem.Type.BOOTS, new Item.Settings()));
-
     public static final Block MAGNIFYING_GLASS_BLOCK = Registry.register(
             Registries.BLOCK, new Identifier(CrouchLockMod.MOD_ID, "magnifying_glass"),
             new MagnifyingGlassBlock(AbstractBlock.Settings.create().strength(0.15F)
