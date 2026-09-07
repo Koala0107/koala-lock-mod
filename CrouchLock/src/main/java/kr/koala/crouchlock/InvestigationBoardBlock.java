@@ -47,22 +47,22 @@ public final class InvestigationBoardBlock extends HorizontalFacingBlock {
 
         BlockPos anchor = context.getBlockPos();
         Direction right = facing.rotateYCounterclockwise();
-        BlockPos[] positions = new BlockPos[] {
-                anchor,
-                anchor.offset(right),
-                anchor.up(),
-                anchor.up().offset(right)
-        };
+        BlockPos side = anchor.offset(right);
+        BlockPos top = anchor.up();
+        BlockPos topSide = top.offset(right);
 
-        for (int i = 0; i < positions.length; i++) {
-            BlockPos partPos = positions[i];
-            if (i > 0 && !context.getWorld().getBlockState(partPos).isAir()) return null;
+        // 2x2 앞 공간만 비어 있으면 설치 가능하게 하고,
+        // 실제 벽 지지는 클릭한 기준 칸 하나만 확인한다.
+        if (!context.getWorld().getBlockState(side).isAir()
+                || !context.getWorld().getBlockState(top).isAir()
+                || !context.getWorld().getBlockState(topSide).isAir()) {
+            return null;
+        }
 
-            BlockPos supportPos = partPos.offset(facing.getOpposite());
-            if (!context.getWorld().getBlockState(supportPos)
-                    .isSideSolidFullSquare(context.getWorld(), supportPos, facing)) {
-                return null;
-            }
+        BlockPos supportPos = anchor.offset(facing.getOpposite());
+        if (!context.getWorld().getBlockState(supportPos)
+                .isSideSolidFullSquare(context.getWorld(), supportPos, facing)) {
+            return null;
         }
 
         return getDefaultState().with(FACING, facing).with(PART, 0);
@@ -81,6 +81,9 @@ public final class InvestigationBoardBlock extends HorizontalFacingBlock {
 
     @Override
     public boolean canPlaceAt(BlockState state, WorldView world, BlockPos pos) {
+        // 기준 파트만 벽 지지를 필수로 둔다. 나머지 3칸은 2x2 장식의 일부라
+        // 벽 모양이 조금 울퉁불퉁해도 설치가 풀리지 않게 한다.
+        if (state.get(PART) != 0) return true;
         Direction facing = state.get(FACING);
         BlockPos supportPos = pos.offset(facing.getOpposite());
         return world.getBlockState(supportPos).isSideSolidFullSquare(world, supportPos, facing);
@@ -89,7 +92,9 @@ public final class InvestigationBoardBlock extends HorizontalFacingBlock {
     @Override
     public BlockState getStateForNeighborUpdate(BlockState state, Direction direction, BlockState neighborState,
                                                  WorldAccess world, BlockPos pos, BlockPos neighborPos) {
-        if (direction == state.get(FACING).getOpposite() && !state.canPlaceAt(world, pos)) {
+        if (state.get(PART) == 0
+                && direction == state.get(FACING).getOpposite()
+                && !state.canPlaceAt(world, pos)) {
             return Blocks.AIR.getDefaultState();
         }
         return super.getStateForNeighborUpdate(state, direction, neighborState, world, pos, neighborPos);
