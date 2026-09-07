@@ -14,10 +14,8 @@ import net.minecraft.util.Identifier;
 
 public final class DetectiveItemsClient implements ClientModInitializer {
     private static final Identifier LAYER_1 = new Identifier(CrouchLockMod.MOD_ID, "textures/models/armor/detective_layer_1.png");
-    private static final Identifier LAYER_2 = new Identifier(CrouchLockMod.MOD_ID, "textures/models/armor/detective_layer_2.png");
 
     private BipedEntityModel<LivingEntity> outerArmorModel;
-    private BipedEntityModel<LivingEntity> innerArmorModel;
 
     @Override
     public void onInitializeClient() {
@@ -25,7 +23,7 @@ public final class DetectiveItemsClient implements ClientModInitializer {
         BlockRenderLayerMap.INSTANCE.putBlock(DetectiveItemsMod.INVESTIGATION_BOARD_BLOCK, RenderLayer.getCutout());
 
         ArmorRenderer.register((matrices, vertexConsumers, stack, entity, slot, light, contextModel) -> {
-            BipedEntityModel<LivingEntity> model = slot == EquipmentSlot.LEGS ? getInnerArmorModel() : getOuterArmorModel();
+            BipedEntityModel<LivingEntity> model = getOuterArmorModel();
             if (model == null) return;
 
             contextModel.copyBipedStateTo(model);
@@ -40,22 +38,11 @@ public final class DetectiveItemsClient implements ClientModInitializer {
                     model.rightArm.visible = true;
                     model.leftArm.visible = true;
                 }
-                case LEGS -> {
-                    model.body.visible = true;
-                    model.rightLeg.visible = true;
-                    model.leftLeg.visible = true;
-                }
-                case FEET -> {
-                    model.rightLeg.visible = true;
-                    model.leftLeg.visible = true;
-                }
                 default -> { }
             }
 
-            ArmorRenderer.renderPart(matrices, vertexConsumers, light, stack, model,
-                    slot == EquipmentSlot.LEGS ? LAYER_2 : LAYER_1);
-        }, DetectiveItemsMod.DETECTIVE_HELMET, DetectiveItemsMod.DETECTIVE_CHESTPLATE,
-                DetectiveItemsMod.DETECTIVE_LEGGINGS, DetectiveItemsMod.DETECTIVE_BOOTS);
+            ArmorRenderer.renderPart(matrices, vertexConsumers, light, stack, model, LAYER_1);
+        }, DetectiveItemsMod.DETECTIVE_HELMET, DetectiveItemsMod.DETECTIVE_CHESTPLATE);
     }
 
     private BipedEntityModel<LivingEntity> getOuterArmorModel() {
@@ -65,14 +52,5 @@ public final class DetectiveItemsClient implements ClientModInitializer {
         ModelPart root = client.getEntityModelLoader().getModelPart(EntityModelLayers.PLAYER_OUTER_ARMOR);
         outerArmorModel = new BipedEntityModel<>(root);
         return outerArmorModel;
-    }
-
-    private BipedEntityModel<LivingEntity> getInnerArmorModel() {
-        if (innerArmorModel != null) return innerArmorModel;
-        MinecraftClient client = MinecraftClient.getInstance();
-        if (client == null || client.getEntityModelLoader() == null) return null;
-        ModelPart root = client.getEntityModelLoader().getModelPart(EntityModelLayers.PLAYER_INNER_ARMOR);
-        innerArmorModel = new BipedEntityModel<>(root);
-        return innerArmorModel;
     }
 }
