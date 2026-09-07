@@ -38,5 +38,14 @@ public final class DetectiveItemsMod implements ModInitializer {
             Registries.ITEM, new Identifier(CrouchLockMod.MOD_ID, "magnifying_glass"),
             new BlockItem(MAGNIFYING_GLASS_BLOCK, new Item.Settings().maxCount(16)));
 
+    public static final Block INVESTIGATION_BOARD_BLOCK = Registry.register(
+            Registries.BLOCK, new Identifier(CrouchLockMod.MOD_ID, "investigation_board"),
+            new InvestigationBoardBlock(AbstractBlock.Settings.create().strength(0.25F)
+                    .nonOpaque().sounds(BlockSoundGroup.WOOD)));
+
+    public static final Item INVESTIGATION_BOARD = Registry.register(
+            Registries.ITEM, new Identifier(CrouchLockMod.MOD_ID, "investigation_board"),
+            new BlockItem(INVESTIGATION_BOARD_BLOCK, new Item.Settings().maxCount(16)));
+
     @Override public void onInitialize() { }
 }
