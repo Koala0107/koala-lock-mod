@@ -22,6 +22,7 @@ public final class DetectiveItemsClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         BlockRenderLayerMap.INSTANCE.putBlock(DetectiveItemsMod.MAGNIFYING_GLASS_BLOCK, RenderLayer.getCutout());
+        BlockRenderLayerMap.INSTANCE.putBlock(DetectiveItemsMod.INVESTIGATION_BOARD_BLOCK, RenderLayer.getCutout());
 
         ArmorRenderer.register((matrices, vertexConsumers, stack, entity, slot, light, contextModel) -> {
             BipedEntityModel<LivingEntity> model = slot == EquipmentSlot.LEGS ? getInnerArmorModel() : getOuterArmorModel();
