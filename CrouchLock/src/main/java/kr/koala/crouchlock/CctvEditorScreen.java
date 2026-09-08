@@ -25,7 +25,7 @@ public final class CctvEditorScreen extends Screen {
     private int panelHeight;
 
     public CctvEditorScreen(BlockPos cctvPos, List<String> currentRecords) {
-        super(Text.translatable("screen.korime_scene.cctv.editor_title"));
+        super(Text.literal("CCTV 기록 편집"));
         this.cctvPos = cctvPos.toImmutable();
         this.records = new ArrayList<>(currentRecords);
     }
@@ -42,21 +42,21 @@ public final class CctvEditorScreen extends Screen {
 
         recordField = addDrawableChild(new TextFieldWidget(textRenderer,
                 innerX, panelY + 48, innerWidth, 20,
-                Text.translatable("screen.korime_scene.cctv.record")));
+                Text.literal("CCTV 기록 문장")));
         recordField.setMaxLength(CctvBlockEntity.MAX_RECORD_LENGTH);
-        recordField.setPlaceholder(Text.translatable("screen.korime_scene.cctv.record_placeholder"));
+        recordField.setPlaceholder(Text.literal("증거로 보여줄 문장을 입력해줘"));
 
         int gap = 6;
         int smallWidth = (innerWidth - gap) / 2;
-        addDrawableChild(ButtonWidget.builder(Text.translatable("screen.korime_scene.cctv.add"), button -> addRecord())
+        addDrawableChild(ButtonWidget.builder(Text.literal("문장 추가"), button -> addRecord())
                 .dimensions(innerX, panelY + 74, smallWidth, 20).build());
-        addDrawableChild(ButtonWidget.builder(Text.translatable("screen.korime_scene.cctv.delete_last"), button -> deleteLast())
+        addDrawableChild(ButtonWidget.builder(Text.literal("마지막 문장 삭제"), button -> deleteLast())
                 .dimensions(innerX + smallWidth + gap, panelY + 74, smallWidth, 20).build());
 
         int buttonWidth = (innerWidth - gap) / 2;
         addDrawableChild(ButtonWidget.builder(Text.translatable("gui.cancel"), button -> close())
                 .dimensions(innerX, panelY + panelHeight - 34, buttonWidth, 20).build());
-        addDrawableChild(ButtonWidget.builder(Text.translatable("screen.korime_scene.cctv.save"), button -> saveFinal())
+        addDrawableChild(ButtonWidget.builder(Text.literal("최종 저장"), button -> saveFinal())
                 .dimensions(innerX + buttonWidth + gap, panelY + panelHeight - 34, buttonWidth, 20).build());
 
         rebuildPreview();
@@ -114,7 +114,7 @@ public final class CctvEditorScreen extends Screen {
         context.fill(panelX, panelY, panelX + panelWidth, panelY + 30, 0xFF22272D);
 
         context.drawCenteredTextWithShadow(textRenderer, title, panelX + panelWidth / 2, panelY + 11, 0xFFFFFFFF);
-        context.drawText(textRenderer, Text.translatable("screen.korime_scene.cctv.editor_hint"), panelX + 18, panelY + 35, 0xFF59616A, false);
+        context.drawText(textRenderer, Text.literal("문장을 추가한 뒤 최종 저장하면 읽기 전용 증거가 돼."), panelX + 18, panelY + 35, 0xFF59616A, false);
 
         int previewTop = panelY + 104;
         int previewBottom = panelY + panelHeight - 44;
