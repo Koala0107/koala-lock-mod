@@ -27,7 +27,11 @@ import org.jetbrains.annotations.Nullable;
 
 public final class EvidenceMagnifierBlock extends HorizontalFacingBlock implements BlockEntityProvider {
     public static final MapCodec<EvidenceMagnifierBlock> CODEC = createCodec(EvidenceMagnifierBlock::new);
-    private static final VoxelShape SHAPE = Block.createCuboidShape(2, 0, 2, 14, 2, 14);
+
+    // The rendered magnifier is a vertical card centered in the block. Keep the
+    // interaction outline on that card instead of the old floor-level shape.
+    private static final VoxelShape NORTH_SOUTH_SHAPE = Block.createCuboidShape(0, 0, 7.25, 16, 16, 8.75);
+    private static final VoxelShape EAST_WEST_SHAPE = Block.createCuboidShape(7.25, 0, 0, 8.75, 16, 16);
 
     public EvidenceMagnifierBlock(Settings settings) {
         super(settings);
@@ -35,10 +39,17 @@ public final class EvidenceMagnifierBlock extends HorizontalFacingBlock implemen
     }
 
     @Override protected MapCodec<? extends HorizontalFacingBlock> getCodec() { return CODEC; }
-    @Override public @Nullable BlockState getPlacementState(ItemPlacementContext context) {
+
+    @Override
+    public @Nullable BlockState getPlacementState(ItemPlacementContext context) {
         return getDefaultState().with(FACING, context.getHorizontalPlayerFacing().getOpposite());
     }
-    @Override public VoxelShape getOutlineShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context) { return SHAPE; }
+
+    @Override
+    public VoxelShape getOutlineShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context) {
+        Direction facing = state.get(FACING);
+        return facing == Direction.EAST || facing == Direction.WEST ? EAST_WEST_SHAPE : NORTH_SOUTH_SHAPE;
+    }
 
     @Override
     public ActionResult onUse(BlockState state, World world, BlockPos pos, net.minecraft.entity.player.PlayerEntity player, Hand hand, BlockHitResult hit) {
