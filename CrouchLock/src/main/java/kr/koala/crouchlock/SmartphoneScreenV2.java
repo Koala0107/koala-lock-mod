@@ -122,8 +122,6 @@ public final class SmartphoneScreenV2 extends Screen {
         context.drawCenteredTextWithShadow(textRenderer,
                 Text.translatable("screen.crouchlock.smartphone.page", page + 1, totalPages, records.size()),
                 panelX + panelWidth / 2, panelY + 141, 0xFF58616A);
-        if (!editable) context.drawCenteredTextWithShadow(textRenderer,
-                Text.translatable("screen.crouchlock.smartphone.read_only"), panelX + panelWidth / 2, panelY + 151, 0xFF6C747B);
         super.render(context, mouseX, mouseY, delta);
     }
 
@@ -133,13 +131,11 @@ public final class SmartphoneScreenV2 extends Screen {
         context.fill(panelX, panelY, panelX + panelWidth, panelY + panelHeight, 0xFF171D22);
         context.fill(panelX + 6, panelY + 6, panelX + panelWidth - 6, panelY + panelHeight - 6, 0xFFF4F4F4);
         context.fill(panelX + 7, panelY + 7, panelX + panelWidth - 7, panelY + 28, 0xFF28333D);
-        context.fill(panelX + panelWidth / 2 - 22, panelY + 4, panelX + panelWidth / 2 + 17, panelY + 7, 0xFF050709);
         int iconColor = showingCalls ? 0xFF2FB55D : 0xFF318BEA;
         drawModeIcon(context, panelX + 13, panelY + 9, ICON_SIZE, showingCalls, iconColor);
         context.drawTextWithShadow(textRenderer,
                 showingCalls ? Text.translatable("screen.crouchlock.smartphone.calls") : Text.translatable("screen.crouchlock.smartphone.messages"),
                 panelX + 35, panelY + 12, 0xFFFFFFFF);
-        context.drawTextWithShadow(textRenderer, Text.literal("10:24"), panelX + panelWidth - 44, panelY + 12, 0xFFE7EDF3);
         context.fill(panelX + 9, panelY + 49, panelX + panelWidth - 9, panelY + 136, 0xFFFFFFFF);
         context.fill(panelX + 9, panelY + 49, panelX + panelWidth - 9, panelY + 50, 0xFFD0D4D8);
         context.fill(panelX + 9, panelY + 135, panelX + panelWidth - 9, panelY + 136, 0xFFD0D4D8);
