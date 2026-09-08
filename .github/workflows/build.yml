@@ -29,6 +29,6 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: korime-scene-${{ github.sha }}
-          path: korime_scene/build/libs/korime-scene-*.jar
+          name: korime_scene-${{ github.sha }}
+          path: korime_scene/build/libs/korime_scene-*.jar
           if-no-files-found: error
