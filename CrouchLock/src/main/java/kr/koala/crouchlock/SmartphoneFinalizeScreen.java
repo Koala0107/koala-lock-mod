@@ -46,8 +46,10 @@ public final class SmartphoneFinalizeScreen extends Screen {
                 innerX, panelY + 78, innerWidth, 20,
                 Text.translatable("screen.crouchlock.smartphone.save.subtitle")));
         subtitleField.setMaxLength(SmartphoneData.MAX_SUBTITLE_LENGTH);
-        subtitleField.setPlaceholder(Text.translatable("screen.crouchlock.smartphone.save.subtitle_placeholder"));
-        // Description is intentionally blank when this dialog opens. The hint text is the placeholder.
+        subtitleField.setEditableColor(0x9B59D0);
+        subtitleField.setUneditableColor(0x9B59D0);
+        subtitleField.setPlaceholder(Text.translatable("screen.crouchlock.smartphone.save.subtitle_placeholder")
+                .copy().styled(style -> style.withColor(0x9B59D0)));
         subtitleField.setText("");
 
         int gap = 8;
@@ -67,8 +69,12 @@ public final class SmartphoneFinalizeScreen extends Screen {
     }
 
     @Override
+    public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {
+        // Intentionally no-op: do not put a translucent/dark layer over the game world.
+    }
+
+    @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        renderBackground(context, mouseX, mouseY, delta);
         context.fill(panelX - 3, panelY - 3, panelX + panelWidth + 3, panelY + panelHeight + 3, 0xFF080A0D);
         context.fill(panelX, panelY, panelX + panelWidth, panelY + panelHeight, 0xFFF1F1F1);
         context.fill(panelX, panelY, panelX + panelWidth, panelY + 28, 0xFF252D35);
