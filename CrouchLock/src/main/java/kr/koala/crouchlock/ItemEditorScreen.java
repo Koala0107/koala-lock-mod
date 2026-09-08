@@ -111,7 +111,6 @@ public final class ItemEditorScreen extends Screen {
 
         context.drawText(textRenderer, Text.translatable("screen.korime_scene.item_editor.name"), panelX + 56, panelY + 43, 0xFF39333D, false);
         context.drawText(textRenderer, Text.translatable("screen.korime_scene.item_editor.description"), panelX + 56, panelY + 84, 0xFF9B59D0, false);
-        context.drawText(textRenderer, Text.translatable("screen.korime_scene.item_editor.hint"), panelX + 18, panelY + 125, 0xFF655C69, false);
 
         super.render(context, mouseX, mouseY, delta);
     }
