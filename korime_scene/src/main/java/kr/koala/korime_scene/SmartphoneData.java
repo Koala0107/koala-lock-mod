@@ -18,7 +18,7 @@ public final class SmartphoneData {
     public static final int MAX_TITLE_LENGTH = 48;
     public static final int MAX_SUBTITLE_LENGTH = 120;
 
-    private static final String ROOT_KEY = "CrouchLockSmartphone";
+    private static final String ROOT_KEY = "KorimeSceneSmartphone";
     private static final String CALLS_KEY = "Calls";
     private static final String MESSAGES_KEY = "Messages";
     private static final String FINALIZED_KEY = "Finalized";
