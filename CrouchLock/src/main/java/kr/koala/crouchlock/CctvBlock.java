@@ -44,7 +44,7 @@ public final class CctvBlock extends HorizontalFacingBlock implements BlockEntit
     @Override
     public @Nullable BlockState getPlacementState(ItemPlacementContext context) {
         Direction side = context.getSide();
-        if (side.getAxis().isVertical()) return null;
+        if (side.getAxis() == Direction.Axis.Y) return null;
         return getDefaultState().with(FACING, side);
     }
 
@@ -70,8 +70,12 @@ public final class CctvBlock extends HorizontalFacingBlock implements BlockEntit
 
     @Override
     public <T extends BlockEntity> @Nullable BlockEntityTicker<T> getTicker(World world, BlockState state, BlockEntityType<T> type) {
-        if (world.isClient || type != SceneToolsMod.CCTV_BLOCK_ENTITY) return null;
-        return (tickerWorld, pos, tickerState, blockEntity) -> CctvBlockEntity.serverTick(tickerWorld, pos, tickerState, (CctvBlockEntity) blockEntity);
+        if (world.isClient) return null;
+        return (tickerWorld, pos, tickerState, blockEntity) -> {
+            if (blockEntity instanceof CctvBlockEntity cctv) {
+                CctvBlockEntity.serverTick(tickerWorld, pos, tickerState, cctv);
+            }
+        };
     }
 
     @Override public BlockState rotate(BlockState state, BlockRotation rotation) { return state.with(FACING, rotation.rotate(state.get(FACING))); }
