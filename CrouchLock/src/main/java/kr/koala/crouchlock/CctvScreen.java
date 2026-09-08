@@ -46,7 +46,7 @@ public final class CctvScreen extends Screen {
     }
 
     private int visibleLines() {
-        return Math.max(1, (panelHeight - 64) / 11);
+        return Math.max(1, (panelHeight - 50) / 11);
     }
 
     private int maxScroll() {
@@ -70,12 +70,11 @@ public final class CctvScreen extends Screen {
         context.fill(panelX - 3, panelY - 3, panelX + panelWidth + 3, panelY + panelHeight + 3, 0xFF080A0D);
         context.fill(panelX, panelY, panelX + panelWidth, panelY + panelHeight, 0xFFE7E8EA);
         context.fill(panelX, panelY, panelX + panelWidth, panelY + 30, 0xFF22272D);
-        context.fill(panelX + 12, panelY + 42, panelX + panelWidth - 12, panelY + panelHeight - 12, 0xFFF7F7F7);
+        context.fill(panelX + 12, panelY + 38, panelX + panelWidth - 12, panelY + panelHeight - 12, 0xFFF7F7F7);
 
         context.drawCenteredTextWithShadow(textRenderer, title, panelX + panelWidth / 2, panelY + 11, 0xFFFFFFFF);
-        context.drawText(textRenderer, Text.literal("저장된 증거 기록 · 읽기 전용 · 마우스 휠로 스크롤"), panelX + 16, panelY + 34, 0xFF59616A, false);
 
-        int y = panelY + 49;
+        int y = panelY + 45;
         int end = Math.min(wrapped.size(), scroll + visibleLines());
         for (int i = scroll; i < end; i++) {
             context.drawText(textRenderer, wrapped.get(i), panelX + 20, y, 0xFF24282C, false);
@@ -83,7 +82,7 @@ public final class CctvScreen extends Screen {
         }
 
         if (maxScroll() > 0) {
-            int trackTop = panelY + 48;
+            int trackTop = panelY + 44;
             int trackBottom = panelY + panelHeight - 18;
             int thumbHeight = Math.max(16, (trackBottom - trackTop) * visibleLines() / wrapped.size());
             int thumbY = trackTop + (trackBottom - trackTop - thumbHeight) * scroll / maxScroll();
