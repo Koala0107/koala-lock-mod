@@ -18,8 +18,12 @@ import net.minecraft.sound.BlockSoundGroup;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public final class SceneToolsMod implements ModInitializer {
     public static final Identifier EDIT_ITEM_PACKET = new Identifier(CrouchLockMod.MOD_ID, "edit_item");
+    public static final Identifier CCTV_SAVE_PACKET = new Identifier(CrouchLockMod.MOD_ID, "cctv_save");
 
     public static final Block CCTV = Registry.register(
             Registries.BLOCK,
@@ -58,6 +62,29 @@ public final class SceneToolsMod implements ModInitializer {
 
     @Override
     public void onInitialize() {
+        ServerPlayNetworking.registerGlobalReceiver(CCTV_SAVE_PACKET,
+                (server, player, handler, buf, responseSender) -> {
+                    final BlockPos cctvPos;
+                    final List<String> records = new ArrayList<>();
+                    try {
+                        cctvPos = buf.readBlockPos();
+                        int count = Math.min(buf.readVarInt(), CctvBlockEntity.MAX_RECORDS);
+                        if (count < 0) return;
+                        for (int i = 0; i < count; i++) {
+                            records.add(buf.readString(CctvBlockEntity.MAX_RECORD_LENGTH));
+                        }
+                    } catch (RuntimeException ignored) {
+                        return;
+                    }
+
+                    server.execute(() -> {
+                        if (!player.getWorld().getBlockState(cctvPos).isOf(CCTV)) return;
+                        if (player.squaredDistanceTo(cctvPos.getX() + 0.5, cctvPos.getY() + 0.5, cctvPos.getZ() + 0.5) > 64.0) return;
+                        if (!(player.getWorld().getBlockEntity(cctvPos) instanceof CctvBlockEntity cctv)) return;
+                        cctv.setEvidence(records, true);
+                    });
+                });
+
         ServerPlayNetworking.registerGlobalReceiver(EDIT_ITEM_PACKET,
                 (server, player, handler, buf, responseSender) -> {
                     final BlockPos editorPos;
