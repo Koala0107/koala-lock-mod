@@ -15,10 +15,11 @@ import net.minecraft.util.Identifier;
 public final class BoundaryLineMod implements ModInitializer {
     public static final Block HORIZONTAL = registerEdge("boundary_line_horizontal", "하얀선 (가로)", true);
     public static final Block VERTICAL = registerEdge("boundary_line_vertical", "하얀선 (세로)", false);
-    public static final Block CORNER_NW = register("boundary_line_corner_nw", "하얀선 모서리 (11시)");
-    public static final Block CORNER_NE = register("boundary_line_corner_ne", "하얀선 모서리 (1시)");
-    public static final Block CORNER_SW = register("boundary_line_corner_sw", "하얀선 모서리 (7시)");
-    public static final Block CORNER_SE = register("boundary_line_corner_se", "하얀선 모서리 (5시)");
+    public static final Block CORNER = register(
+            "boundary_line_corner",
+            "하얀선 (모서리)",
+            new BoundaryCornerBlock(settings())
+    );
 
     private static Block register(String id, String displayName) {
         return register(id, displayName, new BoundaryLineBlock(settings()));
