@@ -9,6 +9,8 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
+import net.minecraft.registry.RegistryKey;
+import net.minecraft.registry.RegistryKeys;
 import net.minecraft.sound.BlockSoundGroup;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
@@ -49,7 +51,10 @@ public final class BoundaryLineMod implements ModInitializer {
 
     @Override
     public void onInitialize() {
-        ItemGroupEvents.modifyEntriesEvent(KorimeSceneItemGroup.GROUP).register(entries -> {
+        ItemGroupEvents.modifyEntriesEvent(RegistryKey.of(
+                RegistryKeys.ITEM_GROUP,
+                new Identifier(CrouchLockMod.MOD_ID, "korime_scene")
+        )).register(entries -> {
             entries.add(HORIZONTAL);
             entries.add(VERTICAL);
             entries.add(CORNER);
