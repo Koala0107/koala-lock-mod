@@ -41,8 +41,8 @@ public final class EvidenceMagnifierBlock extends HorizontalFacingBlock implemen
     @Override
     public ActionResult onUse(BlockState state, World world, BlockPos pos, net.minecraft.entity.player.PlayerEntity player, Hand hand, BlockHitResult hit) {
         if (!world.isClient && world.getBlockEntity(pos) instanceof EvidenceMagnifierBlockEntity evidence && evidence.isSaved()) {
-            world.playSound(null, pos, SoundEvents.BLOCK_NOTE_BLOCK_BELL, SoundCategory.BLOCKS, 0.75F, 0.85F);
-            world.playSound(null, pos, SoundEvents.BLOCK_NOTE_BLOCK_CHIME, SoundCategory.BLOCKS, 0.85F, 1.25F);
+            world.playSound(null, pos, SoundEvents.BLOCK_NOTE_BLOCK_BELL.value(), SoundCategory.BLOCKS, 0.75F, 0.85F);
+            world.playSound(null, pos, SoundEvents.BLOCK_NOTE_BLOCK_CHIME.value(), SoundCategory.BLOCKS, 0.85F, 1.25F);
             player.sendMessage(EvidenceTextUtil.parse(evidence.getEvidenceText()), false);
         }
         return ActionResult.SUCCESS;
