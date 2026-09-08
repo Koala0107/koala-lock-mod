@@ -109,8 +109,12 @@ public final class SmartphoneScreenV2 extends Screen {
     }
 
     @Override
+    public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {
+        // Intentionally no-op: the phone UI should not dim the world behind it.
+    }
+
+    @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        renderBackground(context, mouseX, mouseY, delta);
         drawPhoneChrome(context);
         drawRecordList(context, mouseX, mouseY);
         List<SmartphoneData.PhoneRecord> records = activeRecords();
