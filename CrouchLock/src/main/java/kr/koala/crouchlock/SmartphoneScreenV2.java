@@ -110,7 +110,7 @@ public final class SmartphoneScreenV2 extends Screen {
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        renderBackground(context, mouseX, mouseY, delta);
+        // Keep the world visible behind the phone instead of applying Minecraft's dim overlay.
         drawPhoneChrome(context);
         drawRecordList(context, mouseX, mouseY);
         List<SmartphoneData.PhoneRecord> records = activeRecords();
