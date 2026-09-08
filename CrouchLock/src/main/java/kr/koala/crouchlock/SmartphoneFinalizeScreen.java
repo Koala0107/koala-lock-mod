@@ -6,7 +6,7 @@ import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.text.Text;
 
-/** Final save dialog: choose the evidence item name/subtitle and confirm the irreversible save. */
+/** Final save dialog: choose the evidence item name/subtitle and confirm the save. */
 public final class SmartphoneFinalizeScreen extends Screen {
     private final SmartphoneScreenV2 parent;
     private final String initialTitle;
@@ -86,9 +86,6 @@ public final class SmartphoneFinalizeScreen extends Screen {
                 panelX + 18, panelY + 32, 0xFF33383D, false);
         context.drawText(textRenderer, Text.translatable("screen.crouchlock.smartphone.save.subtitle"),
                 panelX + 18, panelY + 67, 0xFF9B59D0, false);
-        context.drawCenteredTextWithShadow(textRenderer,
-                Text.translatable("screen.crouchlock.smartphone.save.warning"),
-                panelX + panelWidth / 2, panelY + 103, 0xFFFFA000);
 
         super.render(context, mouseX, mouseY, delta);
     }
