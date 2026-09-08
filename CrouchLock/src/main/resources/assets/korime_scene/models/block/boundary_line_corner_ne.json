@@ -1,1 +1,1 @@
-{"ambientocclusion":false,"textures":{"line":"korime_scene:block/boundary_line_corner_ne","particle":"minecraft:block/white_concrete"},"elements":[{"from":[0,0.1,0],"to":[16,0.2,16],"faces":{"up":{"uv":[0,0,16,16],"texture":"#line"}}}]}
+{"ambientocclusion":false,"textures":{"line":"korime_scene:block/boundary_line_corner_ne","particle":"minecraft:block/white_concrete"},"elements":[{"from":[0,0,0],"to":[16,1,16],"faces":{"up":{"uv":[0,0,16,16],"texture":"#line"}}}]}

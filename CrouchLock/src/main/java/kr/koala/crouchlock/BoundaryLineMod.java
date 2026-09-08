@@ -27,7 +27,6 @@ public final class BoundaryLineMod implements ModInitializer {
                 new BoundaryLineBlock(AbstractBlock.Settings.create()
                         .strength(0.05F)
                         .nonOpaque()
-                        .noCollision()
                         .sounds(BlockSoundGroup.WOOL))
         );
         Registry.register(
