@@ -1,10 +1,10 @@
 {
   "textures": {"phone":"korime_scene:item/smartphone","particle":"korime_scene:item/smartphone"},
   "elements": [{
-    "from":[4,0,2], "to":[12,1,14],
+    "from":[5.75,0,2.375], "to":[10.25,1,13.625],
     "faces": {
-      "up":{"uv":[0,0,16,16],"texture":"#phone"},
-      "down":{"uv":[0,0,16,16],"texture":"#phone"},
+      "up":{"uv":[3.5,0.5,12.5,15.5],"texture":"#phone"},
+      "down":{"uv":[3.5,0.5,12.5,15.5],"texture":"#phone"},
       "north":{"uv":[0,14,16,16],"texture":"#phone"},
       "south":{"uv":[0,14,16,16],"texture":"#phone"},
       "west":{"uv":[0,14,16,16],"texture":"#phone"},
