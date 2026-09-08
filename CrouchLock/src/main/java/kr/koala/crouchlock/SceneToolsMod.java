@@ -24,6 +24,7 @@ import java.util.List;
 public final class SceneToolsMod implements ModInitializer {
     public static final Identifier EDIT_ITEM_PACKET = new Identifier(CrouchLockMod.MOD_ID, "edit_item");
     public static final Identifier CCTV_SAVE_PACKET = new Identifier(CrouchLockMod.MOD_ID, "cctv_save");
+    public static final Identifier EVIDENCE_MAGNIFIER_SAVE_PACKET = new Identifier(CrouchLockMod.MOD_ID, "evidence_magnifier_save");
 
     public static final Block CCTV = Registry.register(
             Registries.BLOCK,
@@ -60,8 +61,48 @@ public final class SceneToolsMod implements ModInitializer {
             new BlockItem(ITEM_EDITOR, new Item.Settings())
     );
 
+    public static final Block EVIDENCE_MAGNIFIER = Registry.register(
+            Registries.BLOCK,
+            new Identifier(CrouchLockMod.MOD_ID, "evidence_magnifier"),
+            new EvidenceMagnifierBlock(AbstractBlock.Settings.create()
+                    .strength(0.35F)
+                    .sounds(BlockSoundGroup.GLASS)
+                    .nonOpaque())
+    );
+
+    public static final BlockEntityType<EvidenceMagnifierBlockEntity> EVIDENCE_MAGNIFIER_BLOCK_ENTITY = Registry.register(
+            Registries.BLOCK_ENTITY_TYPE,
+            new Identifier(CrouchLockMod.MOD_ID, "evidence_magnifier"),
+            FabricBlockEntityTypeBuilder.create(EvidenceMagnifierBlockEntity::new, EVIDENCE_MAGNIFIER).build()
+    );
+
+    public static final Item EVIDENCE_MAGNIFIER_ITEM = Registry.register(
+            Registries.ITEM,
+            new Identifier(CrouchLockMod.MOD_ID, "evidence_magnifier"),
+            new BlockItem(EVIDENCE_MAGNIFIER, new Item.Settings())
+    );
+
     @Override
     public void onInitialize() {
+        ServerPlayNetworking.registerGlobalReceiver(EVIDENCE_MAGNIFIER_SAVE_PACKET,
+                (server, player, handler, buf, responseSender) -> {
+                    final BlockPos pos;
+                    final String text;
+                    try {
+                        pos = buf.readBlockPos();
+                        text = buf.readString(EvidenceMagnifierBlockEntity.MAX_TEXT_LENGTH);
+                    } catch (RuntimeException ignored) {
+                        return;
+                    }
+
+                    server.execute(() -> {
+                        if (!player.getWorld().getBlockState(pos).isOf(EVIDENCE_MAGNIFIER)) return;
+                        if (player.squaredDistanceTo(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5) > 64.0) return;
+                        if (!(player.getWorld().getBlockEntity(pos) instanceof EvidenceMagnifierBlockEntity evidence)) return;
+                        evidence.saveEvidence(text);
+                    });
+                });
+
         ServerPlayNetworking.registerGlobalReceiver(CCTV_SAVE_PACKET,
                 (server, player, handler, buf, responseSender) -> {
                     final BlockPos cctvPos;
