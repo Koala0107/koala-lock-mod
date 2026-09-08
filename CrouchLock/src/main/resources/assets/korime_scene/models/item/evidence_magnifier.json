@@ -1,3 +1,6 @@
 {
-  "parent":"korime_scene:block/evidence_magnifier"
+  "parent": "item/generated",
+  "textures": {
+    "layer0": "korime_scene:block/evidence_magnifier"
+  }
 }
