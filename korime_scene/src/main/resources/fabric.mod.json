@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "korime_scene",
   "version": "${version}",
-  "name": "Korime Scene",
+  "name": "korime_scene",
   "description": "Minecraft 1.20.4 Fabric 범죄 현장 조사·증거·잠금 모드",
   "authors": ["Koala"],
   "contact": {},
