@@ -1,0 +1,1 @@
+{"type":"minecraft:block","pools":[{"rolls":1,"entries":[{"type":"minecraft:item","name":"korime_scene:boundary_line_horizontal"}],"conditions":[{"condition":"minecraft:survives_explosion"}]}]}
