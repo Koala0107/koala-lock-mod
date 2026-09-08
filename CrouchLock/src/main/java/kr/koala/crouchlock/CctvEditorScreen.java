@@ -114,7 +114,6 @@ public final class CctvEditorScreen extends Screen {
         context.fill(panelX, panelY, panelX + panelWidth, panelY + 30, 0xFF22272D);
 
         context.drawCenteredTextWithShadow(textRenderer, title, panelX + panelWidth / 2, panelY + 11, 0xFFFFFFFF);
-        context.drawText(textRenderer, Text.literal("문장을 추가한 뒤 최종 저장하면 읽기 전용 증거가 돼."), panelX + 18, panelY + 35, 0xFF59616A, false);
 
         int previewTop = panelY + 104;
         int previewBottom = panelY + panelHeight - 44;
