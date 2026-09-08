@@ -11,7 +11,7 @@ import net.minecraft.world.BlockView;
 import net.minecraft.world.WorldAccess;
 import net.minecraft.world.WorldView;
 
-public final class BoundaryLineBlock extends Block {
+public class BoundaryLineBlock extends Block {
     private static final VoxelShape SHAPE = Block.createCuboidShape(0.0, 0.0, 0.0, 16.0, 1.0, 16.0);
 
     public BoundaryLineBlock(Settings settings) {

@@ -1,1 +1,1 @@
-{"variants":{"":{"model":"korime_scene:block/boundary_line_vertical"}}}
+{"variants":{"flipped=false":{"model":"korime_scene:block/boundary_line_vertical"},"flipped=true":{"model":"korime_scene:block/boundary_line_vertical","y":180}}}

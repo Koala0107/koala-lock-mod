@@ -13,22 +13,30 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 
 public final class BoundaryLineMod implements ModInitializer {
-    public static final Block HORIZONTAL = register("boundary_line_horizontal", "하얀선 (가로)");
-    public static final Block VERTICAL = register("boundary_line_vertical", "하얀선 (세로)");
-    public static final Block CORNER_NW = register("boundary_line_corner_nw", "하얀선 코너 (좌상)");
-    public static final Block CORNER_NE = register("boundary_line_corner_ne", "하얀선 코너 (우상)");
-    public static final Block CORNER_SW = register("boundary_line_corner_sw", "하얀선 코너 (좌하)");
-    public static final Block CORNER_SE = register("boundary_line_corner_se", "하얀선 코너 (우하)");
+    public static final Block HORIZONTAL = registerEdge("boundary_line_horizontal", "하얀선 (가로)", true);
+    public static final Block VERTICAL = registerEdge("boundary_line_vertical", "하얀선 (세로)", false);
+    public static final Block CORNER_NW = register("boundary_line_corner_nw", "하얀선 모서리 (11시)");
+    public static final Block CORNER_NE = register("boundary_line_corner_ne", "하얀선 모서리 (1시)");
+    public static final Block CORNER_SW = register("boundary_line_corner_sw", "하얀선 모서리 (7시)");
+    public static final Block CORNER_SE = register("boundary_line_corner_se", "하얀선 모서리 (5시)");
 
     private static Block register(String id, String displayName) {
-        Block block = Registry.register(
-                Registries.BLOCK,
-                new Identifier(CrouchLockMod.MOD_ID, id),
-                new BoundaryLineBlock(AbstractBlock.Settings.create()
-                        .strength(0.05F)
-                        .nonOpaque()
-                        .sounds(BlockSoundGroup.WOOL))
-        );
+        return register(id, displayName, new BoundaryLineBlock(settings()));
+    }
+
+    private static Block registerEdge(String id, String displayName, boolean horizontal) {
+        return register(id, displayName, new BoundaryEdgeBlock(settings(), horizontal));
+    }
+
+    private static AbstractBlock.Settings settings() {
+        return AbstractBlock.Settings.create()
+                .strength(0.05F)
+                .nonOpaque()
+                .sounds(BlockSoundGroup.WOOL);
+    }
+
+    private static Block register(String id, String displayName, Block block) {
+        Registry.register(Registries.BLOCK, new Identifier(CrouchLockMod.MOD_ID, id), block);
         Registry.register(
                 Registries.ITEM,
                 new Identifier(CrouchLockMod.MOD_ID, id),
