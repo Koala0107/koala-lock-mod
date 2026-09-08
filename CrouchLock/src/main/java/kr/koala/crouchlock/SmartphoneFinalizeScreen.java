@@ -6,7 +6,7 @@ import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.text.Text;
 
-/** Final save dialog: choose the evidence item name/subtitle and confirm the save. */
+/** Save dialog: choose the evidence item name/subtitle and confirm the save. */
 public final class SmartphoneFinalizeScreen extends Screen {
     private final SmartphoneScreenV2 parent;
     private final String initialTitle;
@@ -20,7 +20,7 @@ public final class SmartphoneFinalizeScreen extends Screen {
     private int panelHeight;
 
     public SmartphoneFinalizeScreen(SmartphoneScreenV2 parent, String initialTitle, String initialSubtitle) {
-        super(Text.translatable("screen.crouchlock.smartphone.save.title"));
+        super(Text.literal("스마트폰 저장"));
         this.parent = parent;
         this.initialTitle = initialTitle;
         this.initialSubtitle = initialSubtitle;
@@ -60,7 +60,7 @@ public final class SmartphoneFinalizeScreen extends Screen {
                 .dimensions(innerX, panelY + 118, buttonWidth, 20)
                 .build());
         addDrawableChild(ButtonWidget.builder(
-                        Text.translatable("screen.crouchlock.smartphone.save.confirm"),
+                        Text.literal("저장"),
                         button -> confirmSave())
                 .dimensions(innerX + buttonWidth + gap, panelY + 118, buttonWidth, 20)
                 .build());
@@ -80,7 +80,7 @@ public final class SmartphoneFinalizeScreen extends Screen {
         context.fill(panelX, panelY, panelX + panelWidth, panelY + 28, 0xFF252D35);
 
         context.drawCenteredTextWithShadow(textRenderer,
-                Text.translatable("screen.crouchlock.smartphone.save.title"),
+                Text.literal("스마트폰 저장"),
                 panelX + panelWidth / 2, panelY + 10, 0xFFFFFFFF);
         context.drawText(textRenderer, Text.translatable("screen.crouchlock.smartphone.save.name"),
                 panelX + 18, panelY + 32, 0xFF33383D, false);
