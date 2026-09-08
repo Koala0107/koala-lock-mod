@@ -8,6 +8,8 @@ import net.minecraft.text.Text;
 
 /** Final save dialog: choose the evidence item name/subtitle and confirm the irreversible save. */
 public final class SmartphoneFinalizeScreen extends Screen {
+    private static final int DESCRIPTION_COLOR = 0x9B59D0;
+
     private final SmartphoneScreenV2 parent;
     private final String initialTitle;
     private final String initialSubtitle;
@@ -46,7 +48,10 @@ public final class SmartphoneFinalizeScreen extends Screen {
                 innerX, panelY + 78, innerWidth, 20,
                 Text.translatable("screen.crouchlock.smartphone.save.subtitle")));
         subtitleField.setMaxLength(SmartphoneData.MAX_SUBTITLE_LENGTH);
-        subtitleField.setPlaceholder(Text.translatable("screen.crouchlock.smartphone.save.subtitle_placeholder"));
+        subtitleField.setEditableColor(DESCRIPTION_COLOR);
+        subtitleField.setUneditableColor(DESCRIPTION_COLOR);
+        subtitleField.setPlaceholder(Text.translatable("screen.crouchlock.smartphone.save.subtitle_placeholder")
+                .styled(style -> style.withColor(DESCRIPTION_COLOR)));
         // Description is intentionally blank when this dialog opens. The hint text is the placeholder.
         subtitleField.setText("");
 
@@ -68,7 +73,7 @@ public final class SmartphoneFinalizeScreen extends Screen {
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        renderBackground(context, mouseX, mouseY, delta);
+        // Deliberately do not call renderBackground(): it adds Minecraft's full-screen dim layer.
         context.fill(panelX - 3, panelY - 3, panelX + panelWidth + 3, panelY + panelHeight + 3, 0xFF080A0D);
         context.fill(panelX, panelY, panelX + panelWidth, panelY + panelHeight, 0xFFF1F1F1);
         context.fill(panelX, panelY, panelX + panelWidth, panelY + 28, 0xFF252D35);
