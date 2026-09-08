@@ -6,13 +6,12 @@ import net.minecraft.item.BlockItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemUsageContext;
 import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.util.TypedActionResult;
 import net.minecraft.world.World;
 
-/** Magnifying glass: normal right-click inspects with sound; sneak-right-click keeps the old placeable behavior. */
+/** Magnifying glass: normal right-click inspects with the original custom sound; sneak-right-click keeps placement. */
 public final class MagnifyingGlassItem extends BlockItem {
     public MagnifyingGlassItem(Block block, Settings settings) {
         super(block, settings);
@@ -39,7 +38,7 @@ public final class MagnifyingGlassItem extends BlockItem {
         world.playSound(
                 null,
                 user.getX(), user.getY(), user.getZ(),
-                SoundEvents.ITEM_SPYGLASS_USE.value(),
+                DetectiveItemsMod.MAGNIFYING_GLASS_USE,
                 SoundCategory.PLAYERS,
                 1.0F,
                 1.0F
