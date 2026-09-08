@@ -6,6 +6,7 @@ import net.minecraft.item.BlockItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemUsageContext;
 import net.minecraft.sound.SoundCategory;
+import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.util.TypedActionResult;
@@ -38,7 +39,7 @@ public final class MagnifyingGlassItem extends BlockItem {
         world.playSound(
                 null,
                 user.getX(), user.getY(), user.getZ(),
-                DetectiveItemsMod.MAGNIFYING_GLASS_USE,
+                SoundEvents.ITEM_SPYGLASS_USE.value(),
                 SoundCategory.PLAYERS,
                 1.0F,
                 1.0F
