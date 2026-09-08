@@ -11,12 +11,21 @@ public final class SceneToolsClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         BlockRenderLayerMap.INSTANCE.putBlock(SceneToolsMod.CCTV, RenderLayer.getCutout());
+        BlockRenderLayerMap.INSTANCE.putBlock(SceneToolsMod.EVIDENCE_MAGNIFIER, RenderLayer.getCutout());
 
         UseBlockCallback.EVENT.register((player, world, hand, hit) -> {
             if (!world.isClient) return ActionResult.PASS;
 
             MinecraftClient client = MinecraftClient.getInstance();
             if (client.currentScreen != null) return ActionResult.PASS;
+
+            if (world.getBlockEntity(hit.getBlockPos()) instanceof EvidenceMagnifierBlockEntity evidence) {
+                if (!evidence.isSaved()) {
+                    client.setScreen(new EvidenceMagnifierScreen(hit.getBlockPos()));
+                    return ActionResult.SUCCESS;
+                }
+                return ActionResult.PASS;
+            }
 
             if (world.getBlockEntity(hit.getBlockPos()) instanceof CctvBlockEntity cctv) {
                 if (cctv.isFinalized()) {
