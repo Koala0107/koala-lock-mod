@@ -1,19 +1,16 @@
 {
+  "ambientocclusion": false,
   "textures": {
-    "evidence":"korime_scene:block/evidence_magnifier",
-    "particle":"korime_scene:block/evidence_magnifier"
+    "evidence": "korime_scene:block/evidence_magnifier",
+    "particle": "korime_scene:block/evidence_magnifier"
   },
   "elements": [
     {
-      "from":[2,0,2],
-      "to":[14,1,14],
+      "from": [0, 0, 7.99],
+      "to": [16, 16, 8.01],
       "faces": {
-        "up":{"uv":[0,0,16,16],"texture":"#evidence"},
-        "down":{"uv":[0,16,16,0],"texture":"#evidence"},
-        "north":{"uv":[0,15,16,16],"texture":"#evidence"},
-        "south":{"uv":[16,15,0,16],"texture":"#evidence"},
-        "west":{"uv":[0,15,16,16],"texture":"#evidence"},
-        "east":{"uv":[16,15,0,16],"texture":"#evidence"}
+        "north": {"uv": [0, 0, 16, 16], "texture": "#evidence"},
+        "south": {"uv": [16, 0, 0, 16], "texture": "#evidence"}
       }
     }
   ]
