@@ -1,6 +1,7 @@
 package kr.koala.crouchlock;
 
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
 import net.minecraft.block.AbstractBlock;
 import net.minecraft.block.Block;
 import net.minecraft.item.BlockItem;
@@ -13,11 +14,11 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 
 public final class BoundaryLineMod implements ModInitializer {
-    public static final Block HORIZONTAL = registerEdge("boundary_line_horizontal", "하얀선 (가로)", true);
-    public static final Block VERTICAL = registerEdge("boundary_line_vertical", "하얀선 (세로)", false);
+    public static final Block HORIZONTAL = registerEdge("boundary_line_horizontal", "하얀선 가로", true);
+    public static final Block VERTICAL = registerEdge("boundary_line_vertical", "하얀선 세로", false);
     public static final Block CORNER = register(
             "boundary_line_corner",
-            "하얀선 (모서리)",
+            "하얀선 모서리",
             new BoundaryCornerBlock(settings())
     );
 
@@ -46,7 +47,14 @@ public final class BoundaryLineMod implements ModInitializer {
         return block;
     }
 
-    @Override public void onInitialize() { }
+    @Override
+    public void onInitialize() {
+        ItemGroupEvents.modifyEntriesEvent(KorimeSceneItemGroup.GROUP).register(entries -> {
+            entries.add(HORIZONTAL);
+            entries.add(VERTICAL);
+            entries.add(CORNER);
+        });
+    }
 
     private static final class NamedBlockItem extends BlockItem {
         private final Text name;
