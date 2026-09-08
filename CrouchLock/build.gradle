@@ -26,6 +26,19 @@ processResources {
     filesMatching('fabric.mod.json') {
         expand 'version': project.version
     }
+
+    doLast {
+        def textureSources = [
+                ['cctv.png.b64', 'assets/korime_scene/textures/block/cctv.png'],
+                ['item_editor.png.b64', 'assets/korime_scene/textures/block/item_editor.png']
+        ]
+        textureSources.each { pair ->
+            def source = file("src/main/resource-base64/${pair[0]}")
+            def target = file("${destinationDir}/${pair[1]}")
+            target.parentFile.mkdirs()
+            target.bytes = source.text.trim().decodeBase64()
+        }
+    }
 }
 
 tasks.withType(JavaCompile).configureEach {
