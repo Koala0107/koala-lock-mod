@@ -19,7 +19,11 @@ public final class SceneToolsClient implements ClientModInitializer {
             if (client.currentScreen != null) return ActionResult.PASS;
 
             if (world.getBlockEntity(hit.getBlockPos()) instanceof CctvBlockEntity cctv) {
-                client.setScreen(new CctvScreen(cctv.getRecords()));
+                if (cctv.isFinalized()) {
+                    client.setScreen(new CctvScreen(cctv.getRecords()));
+                } else {
+                    client.setScreen(new CctvEditorScreen(hit.getBlockPos(), cctv.getRecords()));
+                }
                 return ActionResult.SUCCESS;
             }
 
