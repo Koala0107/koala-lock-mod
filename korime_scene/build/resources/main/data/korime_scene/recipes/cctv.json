@@ -1,0 +1,11 @@
+{
+  "type":"minecraft:crafting_shaped",
+  "pattern":["III","RGL"," I "],
+  "key":{
+    "I":{"item":"minecraft:iron_ingot"},
+    "R":{"item":"minecraft:redstone"},
+    "G":{"item":"minecraft:glass_pane"},
+    "L":{"item":"minecraft:lever"}
+  },
+  "result":{"item":"korime_scene:cctv","count":1}
+}

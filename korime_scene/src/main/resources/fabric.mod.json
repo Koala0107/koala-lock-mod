@@ -10,24 +10,24 @@
   "environment": "*",
   "entrypoints": {
     "main": [
-      "kr.koala.crouchlock.CrouchLockMod",
-      "kr.koala.crouchlock.LockMarkerLayoutFix",
-      "kr.koala.crouchlock.KeyUnlockSound",
-      "kr.koala.crouchlock.LockReliabilityMod",
-      "kr.koala.crouchlock.LockMarkerCleanupMod",
-      "kr.koala.crouchlock.SmartphoneMod",
-      "kr.koala.crouchlock.EvidenceMarkerMod",
-      "kr.koala.crouchlock.DetectiveItemsMod",
-      "kr.koala.crouchlock.BoundaryLineMod",
-      "kr.koala.crouchlock.SceneToolsMod",
-      "kr.koala.crouchlock.KorimeSceneItemGroup"
+      "kr.koala.korime_scene.KorimeSceneMod",
+      "kr.koala.korime_scene.LockMarkerLayoutFix",
+      "kr.koala.korime_scene.KeyUnlockSound",
+      "kr.koala.korime_scene.LockReliabilityMod",
+      "kr.koala.korime_scene.LockMarkerCleanupMod",
+      "kr.koala.korime_scene.SmartphoneMod",
+      "kr.koala.korime_scene.EvidenceMarkerMod",
+      "kr.koala.korime_scene.DetectiveItemsMod",
+      "kr.koala.korime_scene.BoundaryLineMod",
+      "kr.koala.korime_scene.SceneToolsMod",
+      "kr.koala.korime_scene.KorimeSceneItemGroup"
     ],
     "client": [
-      "kr.koala.crouchlock.CrouchLockClient",
-      "kr.koala.crouchlock.SmartphoneClient",
-      "kr.koala.crouchlock.DetectiveItemsClient",
-      "kr.koala.crouchlock.BoundaryLineClient",
-      "kr.koala.crouchlock.SceneToolsClient"
+      "kr.koala.korime_scene.KorimeSceneClient",
+      "kr.koala.korime_scene.SmartphoneClient",
+      "kr.koala.korime_scene.DetectiveItemsClient",
+      "kr.koala.korime_scene.BoundaryLineClient",
+      "kr.koala.korime_scene.SceneToolsClient"
     ]
   },
   "depends": {

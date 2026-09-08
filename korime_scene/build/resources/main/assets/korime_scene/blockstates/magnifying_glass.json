@@ -1,0 +1,1 @@
+{"variants":{"facing=north":{"model":"korime_scene:block/magnifying_glass"},"facing=east":{"model":"korime_scene:block/magnifying_glass","y":90},"facing=south":{"model":"korime_scene:block/magnifying_glass","y":180},"facing=west":{"model":"korime_scene:block/magnifying_glass","y":270}}}
