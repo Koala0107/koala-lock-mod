@@ -1,55 +1,43 @@
-# CrouchLock
+# korime_scene
 
-Minecraft 1.20.4 + Fabric용 잠금 모드입니다. 상자·문·덫문·통·울타리 문 등 여러 블록을 열쇠나 4자리 키패드로 잠글 수 있습니다.
+Minecraft 1.20.4 Fabric용 추리·범죄 현장 연출 모드입니다.
 
-## 필요한 모드
+## 포함 기능
+
+- 열쇠 / 키패드 잠금
+- 스마트폰 통화·메시지 기록
+- CCTV 증거 기록
+- 아이템 이름·설명문 수정기
+- 설치형 증거 돋보기
+- 증거 보드
+- 탐정 장비와 돋보기
+- 하얀 경계선과 증거 마커
+
+## 주요 아이템 ID
+
+- 열쇠: `korime_scene:key`
+- 키패드: `korime_scene:keypad`
+- 스마트폰: `korime_scene:smartphone`
+- CCTV: `korime_scene:cctv`
+- 아이템 수정기: `korime_scene:item_editor`
+- 증거: `korime_scene:evidence`
+- 증거 보드: `korime_scene:investigation_board`
+- 돋보기: `korime_scene:magnifying_glass`
+- 하얀선(가로): `korime_scene:line_horizontal`
+- 하얀선(세로): `korime_scene:line_vertical`
+- 하얀선(모서리): `korime_scene:line_corner`
+
+## 요구 사항
 
 - Minecraft 1.20.4
 - Fabric Loader 0.15.11 이상
 - Fabric API 0.97.2+1.20.4 이상
 - Java 17
 
-## 열쇠 조합법
-
-| 1열 | 2열 | 3열 |
-| --- | --- | --- |
-| 빈칸 | 철괴 | 철괴 |
-| 빈칸 | 레드스톤 가루 | 빈칸 |
-| 빈칸 | 막대기 | 빈칸 |
-
-필요 재료: 철괴 2개, 레드스톤 가루 1개, 막대기 1개.
-
-## 키패드 조합법
-
-| 1열 | 2열 | 3열 |
-| --- | --- | --- |
-| 철괴 | 철괴 | 철괴 |
-| 철괴 | 레드스톤 가루 | 철괴 |
-| 철괴 | 철괴 | 철괴 |
-
-필요 재료: 철괴 8개, 레드스톤 가루 1개.
-
-## 열쇠 잠금 사용법
-
-1. `잠금 열쇠`를 들고 웅크린 채 잠글 블록을 우클릭합니다.
-2. 잠긴 블록은 같은 열쇠를 손에 들어야 열고 부술 수 있습니다.
-3. 같은 열쇠를 들고 다시 웅크린 채 우클릭하면 잠금이 해제됩니다.
-
-## 키패드 잠금 사용법
-
-1. `잠금 키패드`를 들고 웅크린 채 잠글 블록을 우클릭합니다.
-2. 화면의 숫자 버튼으로 4자리 비밀번호를 정하고 초록색 `확인`을 누릅니다.
-3. 잠긴 블록을 우클릭하면 비밀번호 입력 화면이 나타납니다. 맞는 번호를 입력하면 열립니다.
-4. 잠금을 제거하려면 웅크린 채 우클릭하고 비밀번호를 입력합니다.
-5. 빨간색 `지우기` 버튼으로 입력한 숫자를 모두 지울 수 있습니다.
-
-두 아이템은 크리에이티브 모드의 `도구 및 유용한 물건` 탭에도 표시됩니다. 명령어는 `/give @s crouchlock:lock_key`와 `/give @s crouchlock:keypad`입니다.
-
-큰 상자는 양쪽이 함께 잠기고, 문은 위·아래 칸이 함께 잠깁니다. 서버 관리자도 맞는 열쇠나 비밀번호 없이 잠금을 우회할 수 없습니다.
-
 ## 빌드
 
-GitHub의 `Actions` 탭에서 가장 최근 `Build Fabric mod` 실행을 열고, 아래쪽 `Artifacts`의 `crouchlock-1.0.0`을 내려받으세요. 압축을 풀어 나온 `crouchlock-1.0.0.jar`와 Fabric API를 클라이언트 및 서버의 `mods` 폴더에 넣으면 됩니다.
+저장소의 `korime_scene` 디렉터리에서 `gradle clean build`를 실행합니다.
+GitHub Actions에서도 같은 경로를 빌드하며 결과 JAR은 `korime_scene/build/libs/`에 생성됩니다.
 
 ## 라이선스
 
