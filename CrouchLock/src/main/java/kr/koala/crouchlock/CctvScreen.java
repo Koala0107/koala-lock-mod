@@ -37,8 +37,8 @@ public final class CctvScreen extends Screen {
         if (records.isEmpty()) {
             wrapped.add(Text.translatable("screen.korime_scene.cctv.empty").asOrderedText());
         } else {
-            for (int i = records.size() - 1; i >= 0; i--) {
-                wrapped.addAll(textRenderer.wrapLines(Text.literal(records.get(i)), lineWidth));
+            for (int i = 0; i < records.size(); i++) {
+                wrapped.addAll(textRenderer.wrapLines(Text.literal((i + 1) + ". " + records.get(i)), lineWidth));
                 wrapped.add(Text.literal(" ").asOrderedText());
             }
         }
@@ -73,7 +73,7 @@ public final class CctvScreen extends Screen {
         context.fill(panelX + 12, panelY + 42, panelX + panelWidth - 12, panelY + panelHeight - 12, 0xFFF7F7F7);
 
         context.drawCenteredTextWithShadow(textRenderer, title, panelX + panelWidth / 2, panelY + 11, 0xFFFFFFFF);
-        context.drawText(textRenderer, Text.translatable("screen.korime_scene.cctv.subtitle"), panelX + 16, panelY + 34, 0xFF59616A, false);
+        context.drawText(textRenderer, Text.literal("저장된 증거 기록 · 읽기 전용 · 마우스 휠로 스크롤"), panelX + 16, panelY + 34, 0xFF59616A, false);
 
         int y = panelY + 49;
         int end = Math.min(wrapped.size(), scroll + visibleLines());
