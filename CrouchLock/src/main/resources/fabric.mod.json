@@ -19,13 +19,15 @@
       "kr.koala.crouchlock.EvidenceMarkerMod",
       "kr.koala.crouchlock.DetectiveItemsMod",
       "kr.koala.crouchlock.BoundaryLineMod",
+      "kr.koala.crouchlock.SceneToolsMod",
       "kr.koala.crouchlock.KorimeSceneItemGroup"
     ],
     "client": [
       "kr.koala.crouchlock.CrouchLockClient",
       "kr.koala.crouchlock.SmartphoneClient",
       "kr.koala.crouchlock.DetectiveItemsClient",
-      "kr.koala.crouchlock.BoundaryLineClient"
+      "kr.koala.crouchlock.BoundaryLineClient",
+      "kr.koala.crouchlock.SceneToolsClient"
     ]
   },
   "depends": {
