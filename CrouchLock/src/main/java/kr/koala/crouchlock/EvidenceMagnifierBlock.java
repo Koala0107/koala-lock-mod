@@ -8,6 +8,8 @@ import net.minecraft.block.HorizontalFacingBlock;
 import net.minecraft.block.ShapeContext;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.item.ItemPlacementContext;
+import net.minecraft.sound.SoundCategory;
+import net.minecraft.sound.SoundEvents;
 import net.minecraft.state.StateManager;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.BlockMirror;
@@ -35,9 +37,17 @@ public final class EvidenceMagnifierBlock extends HorizontalFacingBlock implemen
         return getDefaultState().with(FACING, context.getHorizontalPlayerFacing().getOpposite());
     }
     @Override public VoxelShape getOutlineShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context) { return SHAPE; }
-    @Override public ActionResult onUse(BlockState state, World world, BlockPos pos, net.minecraft.entity.player.PlayerEntity player, Hand hand, BlockHitResult hit) {
+
+    @Override
+    public ActionResult onUse(BlockState state, World world, BlockPos pos, net.minecraft.entity.player.PlayerEntity player, Hand hand, BlockHitResult hit) {
+        if (!world.isClient && world.getBlockEntity(pos) instanceof EvidenceMagnifierBlockEntity evidence && evidence.isSaved()) {
+            world.playSound(null, pos, SoundEvents.BLOCK_NOTE_BLOCK_BELL, SoundCategory.BLOCKS, 0.75F, 0.85F);
+            world.playSound(null, pos, SoundEvents.BLOCK_NOTE_BLOCK_CHIME, SoundCategory.BLOCKS, 0.85F, 1.25F);
+            player.sendMessage(EvidenceTextUtil.parse(evidence.getEvidenceText()), false);
+        }
         return ActionResult.SUCCESS;
     }
+
     @Override public @Nullable BlockEntity createBlockEntity(BlockPos pos, BlockState state) { return new EvidenceMagnifierBlockEntity(pos, state); }
     @Override public BlockState rotate(BlockState state, BlockRotation rotation) { return state.with(FACING, rotation.rotate(state.get(FACING))); }
     @Override public BlockState mirror(BlockState state, BlockMirror mirror) { return state.rotate(mirror.getRotation(state.get(FACING))); }
