@@ -1,1 +1,0 @@
-{"variants":{"facing=north":{"model":"korime_scene:block/evidence_marker_12"},"facing=east":{"model":"korime_scene:block/evidence_marker_12","y":90},"facing=south":{"model":"korime_scene:block/evidence_marker_12","y":180},"facing=west":{"model":"korime_scene:block/evidence_marker_12","y":270}}}
