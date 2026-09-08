@@ -54,9 +54,9 @@ public final class CctvScreen extends Screen {
     }
 
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double amount) {
-        if (amount > 0) scroll = Math.max(0, scroll - 2);
-        if (amount < 0) scroll = Math.min(maxScroll(), scroll + 2);
+    public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
+        if (verticalAmount > 0) scroll = Math.max(0, scroll - 2);
+        if (verticalAmount < 0) scroll = Math.min(maxScroll(), scroll + 2);
         return true;
     }
 
