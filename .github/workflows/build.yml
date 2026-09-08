@@ -1,4 +1,4 @@
-name: Build Fabric mod
+name: Build korime_scene
 
 on:
   push:
@@ -24,11 +24,11 @@ jobs:
           gradle-version: "8.6"
 
       - name: Build
-        working-directory: CrouchLock
-        run: gradle build --stacktrace
+        working-directory: korime_scene
+        run: gradle clean build --stacktrace
 
       - uses: actions/upload-artifact@v4
         with:
-          name: korime-scene-1.2.6
-          path: CrouchLock/build/libs/korime-scene-*.jar
+          name: korime-scene-${{ github.sha }}
+          path: korime_scene/build/libs/korime-scene-*.jar
           if-no-files-found: error
