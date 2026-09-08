@@ -7,8 +7,6 @@ import net.minecraft.block.BlockState;
 import net.minecraft.block.HorizontalFacingBlock;
 import net.minecraft.block.ShapeContext;
 import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.block.entity.BlockEntityTicker;
-import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.item.ItemPlacementContext;
 import net.minecraft.state.StateManager;
 import net.minecraft.util.ActionResult;
@@ -66,16 +64,6 @@ public final class CctvBlock extends HorizontalFacingBlock implements BlockEntit
     @Override
     public @Nullable BlockEntity createBlockEntity(BlockPos pos, BlockState state) {
         return new CctvBlockEntity(pos, state);
-    }
-
-    @Override
-    public <T extends BlockEntity> @Nullable BlockEntityTicker<T> getTicker(World world, BlockState state, BlockEntityType<T> type) {
-        if (world.isClient) return null;
-        return (tickerWorld, pos, tickerState, blockEntity) -> {
-            if (blockEntity instanceof CctvBlockEntity cctv) {
-                CctvBlockEntity.serverTick(tickerWorld, pos, tickerState, cctv);
-            }
-        };
     }
 
     @Override public BlockState rotate(BlockState state, BlockRotation rotation) { return state.with(FACING, rotation.rotate(state.get(FACING))); }
