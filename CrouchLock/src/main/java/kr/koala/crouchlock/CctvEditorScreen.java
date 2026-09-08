@@ -56,7 +56,7 @@ public final class CctvEditorScreen extends Screen {
         int buttonWidth = (innerWidth - gap) / 2;
         addDrawableChild(ButtonWidget.builder(Text.translatable("gui.cancel"), button -> close())
                 .dimensions(innerX, panelY + panelHeight - 34, buttonWidth, 20).build());
-        addDrawableChild(ButtonWidget.builder(Text.literal("최종 저장"), button -> saveFinal())
+        addDrawableChild(ButtonWidget.builder(Text.literal("저장"), button -> saveFinal())
                 .dimensions(innerX + buttonWidth + gap, panelY + panelHeight - 34, buttonWidth, 20).build());
 
         rebuildPreview();
