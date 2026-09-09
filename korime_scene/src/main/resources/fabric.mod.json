@@ -34,6 +34,12 @@
       "kr.koala.korime_scene.EvidenceCollectionClient"
     ]
   },
+  "mixins": [
+    {
+      "config": "korime_scene.client.mixins.json",
+      "environment": "client"
+    }
+  ],
   "depends": {
     "fabricloader": ">=0.15.11",
     "minecraft": "~1.20.4",
