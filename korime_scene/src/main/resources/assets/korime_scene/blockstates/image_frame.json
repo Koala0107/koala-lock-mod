@@ -1,8 +1,5 @@
 {
   "variants": {
-    "facing=north": {"model": "korime_scene:block/image_frame", "y": 180},
-    "facing=east": {"model": "korime_scene:block/image_frame", "y": 270},
-    "facing=south": {"model": "korime_scene:block/image_frame"},
-    "facing=west": {"model": "korime_scene:block/image_frame", "y": 90}
+    "": {"model": "korime_scene:block/image_frame"}
   }
 }
