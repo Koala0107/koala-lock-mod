@@ -11,7 +11,7 @@ import net.minecraft.util.Hand;
 import net.minecraft.util.TypedActionResult;
 import net.minecraft.world.World;
 
-/** Magnifying glass: normal right-click inspects with the original custom sound; sneak-right-click keeps placement. */
+/** Magnifying glass: right-click plays the original custom sound; placement is disabled. */
 public final class MagnifyingGlassItem extends BlockItem {
     public MagnifyingGlassItem(Block block, Settings settings) {
         super(block, settings);
@@ -25,11 +25,7 @@ public final class MagnifyingGlassItem extends BlockItem {
 
     @Override
     public ActionResult useOnBlock(ItemUsageContext context) {
-        PlayerEntity player = context.getPlayer();
-        if (player != null && player.isSneaking()) {
-            return super.useOnBlock(context);
-        }
-        playUseSound(context.getWorld(), player);
+        playUseSound(context.getWorld(), context.getPlayer());
         return ActionResult.success(context.getWorld().isClient());
     }
 
