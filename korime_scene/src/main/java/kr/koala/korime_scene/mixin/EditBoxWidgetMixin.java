@@ -15,7 +15,7 @@ public abstract class EditBoxWidgetMixin {
     private static final int NOTE_TEXT_COLOR = 0xFF24282C;
 
     @Redirect(
-            method = {"renderContents", "renderOverlay"},
+            method = "renderContents",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/DrawContext;drawTextWithShadow(Lnet/minecraft/client/font/TextRenderer;Lnet/minecraft/text/OrderedText;III)I"),
             require = 0
     )
@@ -28,7 +28,7 @@ public abstract class EditBoxWidgetMixin {
     }
 
     @Redirect(
-            method = {"renderContents", "renderOverlay"},
+            method = "renderContents",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/DrawContext;drawTextWithShadow(Lnet/minecraft/client/font/TextRenderer;Ljava/lang/String;III)I"),
             require = 0
     )
@@ -41,7 +41,7 @@ public abstract class EditBoxWidgetMixin {
     }
 
     @Redirect(
-            method = {"renderContents", "renderOverlay"},
+            method = "renderContents",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/DrawContext;drawTextWithShadow(Lnet/minecraft/client/font/TextRenderer;Lnet/minecraft/text/Text;III)I"),
             require = 0
     )
@@ -50,6 +50,41 @@ public abstract class EditBoxWidgetMixin {
         if ((Object) this instanceof WhiteEditBoxWidget) {
             return context.drawText(renderer, text, x, y, NOTE_TEXT_COLOR, false);
         }
+        return context.drawTextWithShadow(renderer, text, x, y, color);
+    }
+
+    // EditBoxWidget uses its overlay text for the character counter. Suppress only that
+    // text for the note widget; the scrollbar itself still renders normally.
+    @Redirect(
+            method = "renderOverlay",
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/DrawContext;drawTextWithShadow(Lnet/minecraft/client/font/TextRenderer;Lnet/minecraft/text/OrderedText;III)I"),
+            require = 0
+    )
+    private int korimeScene$hideOrderedOverlayText(DrawContext context, TextRenderer renderer, OrderedText text,
+                                                   int x, int y, int color) {
+        if ((Object) this instanceof WhiteEditBoxWidget) return 0;
+        return context.drawTextWithShadow(renderer, text, x, y, color);
+    }
+
+    @Redirect(
+            method = "renderOverlay",
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/DrawContext;drawTextWithShadow(Lnet/minecraft/client/font/TextRenderer;Ljava/lang/String;III)I"),
+            require = 0
+    )
+    private int korimeScene$hideStringOverlayText(DrawContext context, TextRenderer renderer, String text,
+                                                  int x, int y, int color) {
+        if ((Object) this instanceof WhiteEditBoxWidget) return 0;
+        return context.drawTextWithShadow(renderer, text, x, y, color);
+    }
+
+    @Redirect(
+            method = "renderOverlay",
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/DrawContext;drawTextWithShadow(Lnet/minecraft/client/font/TextRenderer;Lnet/minecraft/text/Text;III)I"),
+            require = 0
+    )
+    private int korimeScene$hideTextOverlayText(DrawContext context, TextRenderer renderer, Text text,
+                                                int x, int y, int color) {
+        if ((Object) this instanceof WhiteEditBoxWidget) return 0;
         return context.drawTextWithShadow(renderer, text, x, y, color);
     }
 }
