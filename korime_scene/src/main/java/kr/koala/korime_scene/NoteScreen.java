@@ -23,12 +23,12 @@ public final class NoteScreen extends Screen {
 
     @Override
     protected void init() {
-        int panelWidth = Math.min(320, width - 36);
-        int panelHeight = Math.min(196, height - 36);
+        int panelWidth = Math.min(330, width - 24);
+        int panelHeight = Math.min(220, height - 24);
         int x = (width - panelWidth) / 2;
         int y = (height - panelHeight) / 2;
 
-        bodyBox = new WhiteEditBoxWidget(textRenderer, x + 12, y + 31, panelWidth - 24, panelHeight - 43,
+        bodyBox = new WhiteEditBoxWidget(textRenderer, x + 12, y + 38, panelWidth - 24, panelHeight - 50,
                 Text.literal("자유롭게 입력하세요"), Text.literal("노트"));
         bodyBox.setMaxLength(NoteData.MAX_BODY_LENGTH);
         bodyBox.setText(NoteData.getBody(snapshot));
@@ -59,20 +59,22 @@ public final class NoteScreen extends Screen {
 
     @Override
     public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {
-        // Intentionally blank: the note draws its own clean white paper panel.
+        // CCTV-style window: keep the world visible behind the panel.
     }
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        int panelWidth = Math.min(320, width - 36);
-        int panelHeight = Math.min(196, height - 36);
+        int panelWidth = Math.min(330, width - 24);
+        int panelHeight = Math.min(220, height - 24);
         int x = (width - panelWidth) / 2;
         int y = (height - panelHeight) / 2;
 
-        context.fill(0, 0, width, height, 0xFFFDFDFD);
-        context.fill(x - 1, y - 1, x + panelWidth + 1, y + panelHeight + 1, 0xFFEDEDED);
-        context.fill(x, y, x + panelWidth, y + panelHeight, 0xFFFFFFFF);
-        context.drawCenteredTextWithShadow(textRenderer, Text.literal("노트"), width / 2, y + 11, 0xFF222222);
+        context.fill(x - 3, y - 3, x + panelWidth + 3, y + panelHeight + 3, 0xFF080A0D);
+        context.fill(x, y, x + panelWidth, y + panelHeight, 0xFFE7E8EA);
+        context.fill(x, y, x + panelWidth, y + 30, 0xFF22272D);
+        context.fill(x + 10, y + 36, x + panelWidth - 10, y + panelHeight - 10, 0xFFF1F1F1);
+        context.drawCenteredTextWithShadow(textRenderer, Text.literal("노트"), width / 2, y + 11, 0xFFFFFFFF);
+
         super.render(context, mouseX, mouseY, delta);
     }
 
