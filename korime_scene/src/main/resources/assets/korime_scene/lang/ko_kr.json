@@ -104,5 +104,8 @@
   "item.korime_scene.evidence_marker_15": "증거마커15",
   "item.korime_scene.key": "열쇠",
   "item.korime_scene.evidence": "증거",
-  "block.korime_scene.evidence": "증거"
+  "block.korime_scene.evidence": "증거",
+  "item.korime_scene.safe": "금고",
+  "block.korime_scene.safe": "금고",
+  "container.korime_scene.safe": "금고"
 }
