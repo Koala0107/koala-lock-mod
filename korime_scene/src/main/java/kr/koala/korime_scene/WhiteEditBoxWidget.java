@@ -23,8 +23,9 @@ public final class WhiteEditBoxWidget extends EditBoxWidget {
 
     @Override
     protected void renderContents(DrawContext context, int mouseX, int mouseY, float delta) {
-        // Match the CCTV body text instead of rendering near-black text.
-        RenderSystem.setShaderColor(0.30F, 0.33F, 0.36F, 1.0F);
+        // EditBoxWidget already renders dark text. A light multiplier brings its core
+        // glyph color close to the CCTV body's #24282C instead of crushing it to black.
+        RenderSystem.setShaderColor(0.65F, 0.65F, 0.65F, 1.0F);
         super.renderContents(context, mouseX, mouseY, delta);
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
     }
