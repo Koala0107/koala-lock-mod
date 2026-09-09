@@ -1,0 +1,5 @@
+{
+  "variants": {
+    "": { "model": "korime_scene:block/map_block" }
+  }
+}
