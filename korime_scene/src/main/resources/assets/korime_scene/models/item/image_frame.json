@@ -1,3 +1,6 @@
 {
-  "parent": "korime_scene:block/image_frame"
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "korime_scene:item/image_frame"
+  }
 }
