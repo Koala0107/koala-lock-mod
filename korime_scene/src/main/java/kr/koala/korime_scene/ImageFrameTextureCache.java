@@ -16,23 +16,25 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public final class ImageFrameTextureCache {
+    public record TextureInfo(Identifier id, int width, int height) { }
+
     private static final int MAX_BYTES = 8 * 1024 * 1024;
     private static final HttpClient HTTP = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(7))
             .followRedirects(HttpClient.Redirect.ALWAYS)
             .build();
 
-    private static final Map<String, Identifier> CACHE = new ConcurrentHashMap<>();
+    private static final Map<String, TextureInfo> CACHE = new ConcurrentHashMap<>();
     private static final Set<String> LOADING = ConcurrentHashMap.newKeySet();
     private static final Map<String, Long> RETRY_AFTER = new ConcurrentHashMap<>();
 
     private ImageFrameTextureCache() { }
 
-    public static Identifier get(String url) {
+    public static TextureInfo getInfo(String url) {
         String clean = url == null ? "" : url.trim();
         if (clean.isEmpty()) return null;
 
-        Identifier existing = CACHE.get(clean);
+        TextureInfo existing = CACHE.get(clean);
         if (existing != null) return existing;
 
         long now = System.currentTimeMillis();
@@ -41,6 +43,11 @@ public final class ImageFrameTextureCache {
 
         if (LOADING.add(clean)) loadAsync(clean);
         return null;
+    }
+
+    public static Identifier get(String url) {
+        TextureInfo info = getInfo(url);
+        return info == null ? null : info.id();
     }
 
     private static void loadAsync(String url) {
@@ -81,6 +88,8 @@ public final class ImageFrameTextureCache {
                     return;
                 }
 
+                int imageWidth = image.getWidth();
+                int imageHeight = image.getHeight();
                 NativeImage readyImage = image;
                 image = null;
                 MinecraftClient client = MinecraftClient.getInstance();
@@ -89,7 +98,7 @@ public final class ImageFrameTextureCache {
                         NativeImageBackedTexture texture = new NativeImageBackedTexture(readyImage);
                         Identifier id = client.getTextureManager().registerDynamicTexture(
                                 "image_frame_" + Integer.toHexString(url.hashCode()), texture);
-                        CACHE.put(url, id);
+                        CACHE.put(url, new TextureInfo(id, imageWidth, imageHeight));
                         RETRY_AFTER.remove(url);
                     } catch (Throwable ignored) {
                         readyImage.close();
@@ -103,8 +112,6 @@ public final class ImageFrameTextureCache {
                 if (image != null) image.close();
                 scheduleRetry(url);
             } finally {
-                // Successful registration removes this on the render thread. Every failure
-                // must release the URL so the frame can retry instead of getting stuck forever.
                 if (!CACHE.containsKey(url)) LOADING.remove(url);
             }
         }, "korime-scene-image-loader");
