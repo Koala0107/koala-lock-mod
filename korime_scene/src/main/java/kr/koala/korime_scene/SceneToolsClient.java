@@ -19,6 +19,15 @@ public final class SceneToolsClient implements ClientModInitializer {
             MinecraftClient client = MinecraftClient.getInstance();
             if (client.currentScreen != null) return ActionResult.PASS;
 
+            if (world.getBlockEntity(hit.getBlockPos()) instanceof SafeBlockEntity safe) {
+                if (safe.isCombinationSet()) {
+                    client.setScreen(new SafeDialScreen(hit.getBlockPos()));
+                } else {
+                    client.setScreen(new SafeSetupScreen(hit.getBlockPos()));
+                }
+                return ActionResult.SUCCESS;
+            }
+
             if (world.getBlockEntity(hit.getBlockPos()) instanceof EvidenceMagnifierBlockEntity evidence) {
                 if (!evidence.isSaved()) {
                     client.setScreen(new EvidenceMagnifierScreen(hit.getBlockPos()));
