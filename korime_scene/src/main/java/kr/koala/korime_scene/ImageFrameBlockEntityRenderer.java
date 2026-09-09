@@ -27,9 +27,10 @@ public final class ImageFrameBlockEntityRenderer implements BlockEntityRenderer<
 
         float imageAspect = texture.width() / (float) texture.height();
         float frameAspect = frameWidth / frameHeight;
+
         float drawWidth;
         float drawHeight;
-        if (imageAspect >= frameAspect) {
+        if (imageAspect > frameAspect) {
             drawWidth = frameWidth;
             drawHeight = frameWidth / imageAspect;
         } else {
@@ -37,8 +38,8 @@ public final class ImageFrameBlockEntityRenderer implements BlockEntityRenderer<
             drawWidth = frameHeight * imageAspect;
         }
 
-        float horizontalOffset = (frameWidth - drawWidth) * alignment.getHorizontal();
-        float verticalOffset = (frameHeight - drawHeight) * alignment.getVertical();
+        float left = (frameWidth - drawWidth) * alignment.getHorizontal();
+        float bottom = (frameHeight - drawHeight) * alignment.getVertical();
 
         VertexConsumer vc = vertexConsumers.getBuffer(RenderLayer.getEntityCutoutNoCull(texture.id()));
         MatrixStack.Entry entry = matrices.peek();
@@ -47,28 +48,28 @@ public final class ImageFrameBlockEntityRenderer implements BlockEntityRenderer<
 
         switch (facing) {
             case SOUTH -> drawWallZ(vc, position, normal, frameWidth, drawWidth, drawHeight,
-                    horizontalOffset, verticalOffset, 0.01F, true, light);
+                    left, bottom, 0.01F, true, light);
             case NORTH -> drawWallZ(vc, position, normal, frameWidth, drawWidth, drawHeight,
-                    horizontalOffset, verticalOffset, 0.99F, false, light);
+                    left, bottom, 0.99F, false, light);
             case EAST -> drawWallX(vc, position, normal, frameWidth, drawWidth, drawHeight,
-                    horizontalOffset, verticalOffset, 0.01F, true, light);
+                    left, bottom, 0.01F, true, light);
             case WEST -> drawWallX(vc, position, normal, frameWidth, drawWidth, drawHeight,
-                    horizontalOffset, verticalOffset, 0.99F, false, light);
+                    left, bottom, 0.99F, false, light);
             case UP -> drawFloor(vc, position, normal, frameWidth, frameHeight, drawWidth, drawHeight,
-                    horizontalOffset, verticalOffset, 0.01F, true, light);
+                    left, bottom, 0.01F, true, light);
             case DOWN -> drawFloor(vc, position, normal, frameWidth, frameHeight, drawWidth, drawHeight,
-                    horizontalOffset, verticalOffset, 0.99F, false, light);
+                    left, bottom, 0.99F, false, light);
         }
     }
 
     private static void drawWallZ(VertexConsumer vc, Matrix4f p, Matrix3f n,
                                   float frameWidth, float drawWidth, float drawHeight,
-                                  float horizontalOffset, float verticalOffset,
+                                  float left, float bottom,
                                   float z, boolean south, int light) {
         float frameX0 = 0.5F - frameWidth * 0.5F;
-        float x0 = frameX0 + horizontalOffset;
+        float x0 = frameX0 + left;
         float x1 = x0 + drawWidth;
-        float y0 = verticalOffset;
+        float y0 = bottom;
         float y1 = y0 + drawHeight;
         float nz = south ? 1F : -1F;
         if (south) {
@@ -86,12 +87,12 @@ public final class ImageFrameBlockEntityRenderer implements BlockEntityRenderer<
 
     private static void drawWallX(VertexConsumer vc, Matrix4f p, Matrix3f n,
                                   float frameWidth, float drawWidth, float drawHeight,
-                                  float horizontalOffset, float verticalOffset,
+                                  float left, float bottom,
                                   float x, boolean east, int light) {
         float frameZ0 = 0.5F - frameWidth * 0.5F;
-        float z0 = frameZ0 + horizontalOffset;
+        float z0 = frameZ0 + left;
         float z1 = z0 + drawWidth;
-        float y0 = verticalOffset;
+        float y0 = bottom;
         float y1 = y0 + drawHeight;
         float nx = east ? 1F : -1F;
         if (east) {
@@ -110,13 +111,13 @@ public final class ImageFrameBlockEntityRenderer implements BlockEntityRenderer<
     private static void drawFloor(VertexConsumer vc, Matrix4f p, Matrix3f n,
                                   float frameWidth, float frameDepth,
                                   float drawWidth, float drawDepth,
-                                  float horizontalOffset, float verticalOffset,
+                                  float left, float bottom,
                                   float y, boolean up, int light) {
         float frameX0 = 0.5F - frameWidth * 0.5F;
         float frameZ0 = 0.5F - frameDepth * 0.5F;
-        float x0 = frameX0 + horizontalOffset;
+        float x0 = frameX0 + left;
         float x1 = x0 + drawWidth;
-        float z0 = frameZ0 + verticalOffset;
+        float z0 = frameZ0 + bottom;
         float z1 = z0 + drawDepth;
         float ny = up ? 1F : -1F;
         if (up) {
