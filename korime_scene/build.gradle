@@ -39,6 +39,33 @@ processResources {
             target.parentFile.mkdirs()
             target.bytes = source.text.trim().decodeBase64()
         }
+
+        // GitHub's text-oriented editing path previously truncated the tails of these
+        // binary assets. Keep the untouched prefix and restore the verified original
+        // tail during resource processing so every clean build produces identical media.
+        def restoreVerifiedTail = { String resourcePath, int prefixLength, String tailSource ->
+            def target = file("${destinationDir}/${resourcePath}")
+            byte[] current = target.bytes
+            if (current.length < prefixLength) {
+                throw new GradleException("Resource is shorter than its verified prefix: ${resourcePath}")
+            }
+            byte[] tail = file("src/main/resource-base64/${tailSource}").text.trim().decodeBase64()
+            def restored = new ByteArrayOutputStream(prefixLength + tail.length)
+            restored.write(current, 0, prefixLength)
+            restored.write(tail)
+            target.bytes = restored.toByteArray()
+        }
+
+        restoreVerifiedTail(
+                'assets/korime_scene/textures/item/investigation_board.png',
+                7162,
+                'investigation_board.tail.b64'
+        )
+        restoreVerifiedTail(
+                'assets/korime_scene/sounds/magnifying_glass_use.ogg',
+                7500,
+                'magnifying_glass_use.tail.b64'
+        )
     }
 }
 
