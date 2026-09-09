@@ -18,7 +18,7 @@ public final class EvidenceCollectionClient implements ClientModInitializer {
             MinecraftClient client = MinecraftClient.getInstance();
             if (client.currentScreen != null) return TypedActionResult.pass(stack);
 
-            if (stack.isOf(EvidenceCollectionMod.EVIDENCE_ENVELOPE) && EvidenceEnvelopeData.isCaptured(stack)) {
+            if (stack.isOf(EvidenceCollectionMod.EVIDENCE_ENVELOPE)) {
                 client.setScreen(new EvidenceEnvelopeScreen(hand, stack.copy()));
                 return TypedActionResult.success(stack);
             }
@@ -35,10 +35,8 @@ public final class EvidenceCollectionClient implements ClientModInitializer {
             MinecraftClient client = MinecraftClient.getInstance();
             if (client.currentScreen != null) return ActionResult.PASS;
 
-            if (stack.isOf(EvidenceCollectionMod.EVIDENCE_ENVELOPE) && EvidenceEnvelopeData.isCaptured(stack)) {
-                client.setScreen(new EvidenceEnvelopeScreen(hand, stack.copy()));
-                return ActionResult.SUCCESS;
-            }
+            // Evidence envelopes intentionally do NOT open here: right-clicking a block
+            // is reserved for adding another copied evidence item to the 30-slot bag.
             if (stack.isOf(EvidenceCollectionMod.NOTE)) {
                 client.setScreen(new NoteScreen(hand, stack.copy()));
                 return ActionResult.SUCCESS;
