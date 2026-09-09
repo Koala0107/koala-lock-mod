@@ -20,6 +20,7 @@
       "kr.koala.korime_scene.DetectiveItemsMod",
       "kr.koala.korime_scene.BoundaryLineMod",
       "kr.koala.korime_scene.SceneToolsMod",
+      "kr.koala.korime_scene.ImageFrameMod",
       "kr.koala.korime_scene.KorimeSceneItemGroup"
     ],
     "client": [
@@ -27,7 +28,8 @@
       "kr.koala.korime_scene.SmartphoneClient",
       "kr.koala.korime_scene.DetectiveItemsClient",
       "kr.koala.korime_scene.BoundaryLineClient",
-      "kr.koala.korime_scene.SceneToolsClient"
+      "kr.koala.korime_scene.SceneToolsClient",
+      "kr.koala.korime_scene.ImageFrameClient"
     ]
   },
   "depends": {
