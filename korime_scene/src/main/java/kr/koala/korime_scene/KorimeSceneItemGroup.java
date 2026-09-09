@@ -32,6 +32,7 @@ public final class KorimeSceneItemGroup implements ModInitializer {
                         entries.add(ImageFrameMod.IMAGE_FRAME_ITEM);
                         entries.add(EvidenceCollectionMod.EVIDENCE_ENVELOPE);
                         entries.add(EvidenceCollectionMod.NOTE);
+                        entries.add(MapBlockMod.MAP_BLOCK_ITEM);
                     })
                     .build());
 
