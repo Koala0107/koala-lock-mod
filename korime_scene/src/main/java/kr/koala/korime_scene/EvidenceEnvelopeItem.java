@@ -19,6 +19,11 @@ public final class EvidenceEnvelopeItem extends Item {
     }
 
     @Override
+    public Text getName(ItemStack stack) {
+        return Text.literal("증거 봉투");
+    }
+
+    @Override
     public ActionResult useOnBlock(ItemUsageContext context) {
         ItemStack stack = context.getStack();
         if (EvidenceEnvelopeData.isCaptured(stack)) return ActionResult.PASS;
