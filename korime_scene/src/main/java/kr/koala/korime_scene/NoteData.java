@@ -54,9 +54,24 @@ public final class NoteData {
         while (pages.size() <= pageIndex && pages.size() < MAX_PAGES) pages.add("");
         if (pageIndex >= pages.size()) return;
         pages.set(pageIndex, trim(body, MAX_BODY_LENGTH));
+        writePages(stack, pages);
+    }
 
+    public static void removePage(ItemStack stack, int pageIndex) {
+        List<String> pages = getPages(stack);
+        if (pages.size() <= 1 || pageIndex < 0 || pageIndex >= pages.size()) return;
+        pages.remove(pageIndex);
+        if (pages.isEmpty()) pages.add("");
+        writePages(stack, pages);
+    }
+
+    private static void writePages(ItemStack stack, List<String> pages) {
         NbtList list = new NbtList();
-        for (String page : pages) list.add(NbtString.of(trim(page, MAX_BODY_LENGTH)));
+        int count = Math.min(pages.size(), MAX_PAGES);
+        for (int i = 0; i < count; i++) {
+            list.add(NbtString.of(trim(pages.get(i), MAX_BODY_LENGTH)));
+        }
+        if (list.isEmpty()) list.add(NbtString.of(""));
 
         NbtCompound root = getOrCreateRoot(stack);
         root.put(PAGES_KEY, list);
