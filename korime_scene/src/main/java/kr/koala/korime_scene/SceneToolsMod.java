@@ -15,6 +15,8 @@ import net.minecraft.nbt.NbtString;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
 import net.minecraft.sound.BlockSoundGroup;
+import net.minecraft.sound.SoundCategory;
+import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 
@@ -25,14 +27,13 @@ public final class SceneToolsMod implements ModInitializer {
     public static final Identifier EDIT_ITEM_PACKET = new Identifier(KorimeSceneMod.MOD_ID, "edit_item");
     public static final Identifier CCTV_SAVE_PACKET = new Identifier(KorimeSceneMod.MOD_ID, "cctv_save");
     public static final Identifier EVIDENCE_MAGNIFIER_SAVE_PACKET = new Identifier(KorimeSceneMod.MOD_ID, "evidence_magnifier_save");
+    public static final Identifier SAFE_SETUP_PACKET = new Identifier(KorimeSceneMod.MOD_ID, "safe_setup");
+    public static final Identifier SAFE_ATTEMPT_PACKET = new Identifier(KorimeSceneMod.MOD_ID, "safe_attempt");
 
     public static final Block CCTV = Registry.register(
             Registries.BLOCK,
             new Identifier(KorimeSceneMod.MOD_ID, "cctv"),
-            new CctvBlock(AbstractBlock.Settings.create()
-                    .strength(0.8F)
-                    .sounds(BlockSoundGroup.METAL)
-                    .nonOpaque())
+            new CctvBlock(AbstractBlock.Settings.create().strength(0.8F).sounds(BlockSoundGroup.METAL).nonOpaque())
     );
 
     public static final BlockEntityType<CctvBlockEntity> CCTV_BLOCK_ENTITY = Registry.register(
@@ -50,9 +51,7 @@ public final class SceneToolsMod implements ModInitializer {
     public static final Block ITEM_EDITOR = Registry.register(
             Registries.BLOCK,
             new Identifier(KorimeSceneMod.MOD_ID, "item_editor"),
-            new ItemEditorBlock(AbstractBlock.Settings.create()
-                    .strength(2.5F)
-                    .sounds(BlockSoundGroup.METAL))
+            new ItemEditorBlock(AbstractBlock.Settings.create().strength(2.5F).sounds(BlockSoundGroup.METAL))
     );
 
     public static final Item ITEM_EDITOR_ITEM = Registry.register(
@@ -64,10 +63,7 @@ public final class SceneToolsMod implements ModInitializer {
     public static final Block EVIDENCE_MAGNIFIER = Registry.register(
             Registries.BLOCK,
             new Identifier(KorimeSceneMod.MOD_ID, "evidence"),
-            new EvidenceMagnifierBlock(AbstractBlock.Settings.create()
-                    .strength(0.35F)
-                    .sounds(BlockSoundGroup.GLASS)
-                    .noCollision())
+            new EvidenceMagnifierBlock(AbstractBlock.Settings.create().strength(0.35F).sounds(BlockSoundGroup.GLASS).noCollision())
     );
 
     public static final BlockEntityType<EvidenceMagnifierBlockEntity> EVIDENCE_MAGNIFIER_BLOCK_ENTITY = Registry.register(
@@ -85,9 +81,7 @@ public final class SceneToolsMod implements ModInitializer {
     public static final Block SAFE = Registry.register(
             Registries.BLOCK,
             new Identifier(KorimeSceneMod.MOD_ID, "safe"),
-            new SafeBlock(AbstractBlock.Settings.create()
-                    .strength(5.0F, 6.0F)
-                    .sounds(BlockSoundGroup.METAL))
+            new SafeBlock(AbstractBlock.Settings.create().strength(5.0F, 6.0F).sounds(BlockSoundGroup.METAL))
     );
 
     public static final BlockEntityType<SafeBlockEntity> SAFE_BLOCK_ENTITY = Registry.register(
@@ -104,6 +98,52 @@ public final class SceneToolsMod implements ModInitializer {
 
     @Override
     public void onInitialize() {
+        ServerPlayNetworking.registerGlobalReceiver(SAFE_SETUP_PACKET,
+                (server, player, handler, buf, responseSender) -> {
+                    final BlockPos pos;
+                    final int first, second, third;
+                    try {
+                        pos = buf.readBlockPos();
+                        first = buf.readUnsignedByte();
+                        second = buf.readUnsignedByte();
+                        third = buf.readUnsignedByte();
+                    } catch (RuntimeException ignored) {
+                        return;
+                    }
+                    server.execute(() -> {
+                        if (!isValidSafeTarget(player, pos)) return;
+                        if (first > 99 || second > 99 || third > 99) return;
+                        if (!(player.getWorld().getBlockEntity(pos) instanceof SafeBlockEntity safe)) return;
+                        if (safe.isCombinationSet()) return;
+                        safe.setCombination(first, second, third);
+                        player.getWorld().playSound(null, pos, SoundEvents.BLOCK_IRON_TRAPDOOR_CLOSE, SoundCategory.BLOCKS, 0.6F, 1.25F);
+                    });
+                });
+
+        ServerPlayNetworking.registerGlobalReceiver(SAFE_ATTEMPT_PACKET,
+                (server, player, handler, buf, responseSender) -> {
+                    final BlockPos pos;
+                    final int first, second, third;
+                    try {
+                        pos = buf.readBlockPos();
+                        first = buf.readUnsignedByte();
+                        second = buf.readUnsignedByte();
+                        third = buf.readUnsignedByte();
+                    } catch (RuntimeException ignored) {
+                        return;
+                    }
+                    server.execute(() -> {
+                        if (!isValidSafeTarget(player, pos)) return;
+                        if (!(player.getWorld().getBlockEntity(pos) instanceof SafeBlockEntity safe)) return;
+                        if (safe.matches(first, second, third)) {
+                            player.getWorld().playSound(null, pos, SoundEvents.BLOCK_IRON_DOOR_OPEN, SoundCategory.BLOCKS, 0.8F, 0.85F);
+                            player.openHandledScreen(safe);
+                        } else {
+                            player.getWorld().playSound(null, pos, SoundEvents.BLOCK_NOTE_BLOCK_BASS.value(), SoundCategory.BLOCKS, 0.45F, 0.75F);
+                        }
+                    });
+                });
+
         ServerPlayNetworking.registerGlobalReceiver(EVIDENCE_MAGNIFIER_SAVE_PACKET,
                 (server, player, handler, buf, responseSender) -> {
                     final BlockPos pos;
@@ -168,7 +208,6 @@ public final class SceneToolsMod implements ModInitializer {
 
                         String cleanName = name.trim();
                         String cleanDescription = description.trim();
-
                         if (cleanName.isEmpty()) stack.removeCustomName();
                         else stack.setCustomName(net.minecraft.text.Text.literal(cleanName));
 
@@ -184,10 +223,14 @@ public final class SceneToolsMod implements ModInitializer {
                         }
                         if (display.isEmpty()) root.remove("display");
                         else root.put("display", display);
-
                         player.currentScreenHandler.sendContentUpdates();
                     });
                 });
+    }
+
+    private static boolean isValidSafeTarget(net.minecraft.server.network.ServerPlayerEntity player, BlockPos pos) {
+        return player.getWorld().getBlockState(pos).isOf(SAFE)
+                && player.squaredDistanceTo(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5) <= 64.0;
     }
 
     private static String escapeJson(String value) {
