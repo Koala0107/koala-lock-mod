@@ -13,7 +13,6 @@ import net.minecraft.util.math.BlockPos;
 import java.util.List;
 
 public final class ContainerEvidencePickerScreen extends Screen {
-    private static final int COLS = 9;
     private static final int SLOT = 20;
 
     private final Hand hand;
@@ -27,13 +26,29 @@ public final class ContainerEvidencePickerScreen extends Screen {
         this.items = List.copyOf(items);
     }
 
+    private int columns() {
+        return Math.max(1, Math.min(9, items.size()));
+    }
+
+    private int rows() {
+        return Math.max(1, (items.size() + columns() - 1) / columns());
+    }
+
+    private int panelWidth() {
+        return columns() * SLOT + 28;
+    }
+
+    private int panelHeight() {
+        return rows() * SLOT + 56;
+    }
+
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         renderBackground(context, mouseX, mouseY, delta);
 
-        int rows = Math.max(1, (items.size() + COLS - 1) / COLS);
-        int panelWidth = COLS * SLOT + 28;
-        int panelHeight = rows * SLOT + 56;
+        int cols = columns();
+        int panelWidth = panelWidth();
+        int panelHeight = panelHeight();
         int x = (width - panelWidth) / 2;
         int y = (height - panelHeight) / 2;
 
@@ -44,8 +59,8 @@ public final class ContainerEvidencePickerScreen extends Screen {
         int gridX = x + 14;
         int gridY = y + 34;
         for (int i = 0; i < items.size(); i++) {
-            int col = i % COLS;
-            int row = i / COLS;
+            int col = i % cols;
+            int row = i / cols;
             int sx = gridX + col * SLOT;
             int sy = gridY + row * SLOT;
 
@@ -61,8 +76,8 @@ public final class ContainerEvidencePickerScreen extends Screen {
         for (int i = 0; i < items.size(); i++) {
             ItemStack stack = items.get(i);
             if (stack.isEmpty()) continue;
-            int col = i % COLS;
-            int row = i / COLS;
+            int col = i % cols;
+            int row = i / cols;
             int sx = gridX + col * SLOT;
             int sy = gridY + row * SLOT;
             if (mouseX >= sx && mouseX < sx + 18 && mouseY >= sy && mouseY < sy + 18) {
@@ -75,29 +90,31 @@ public final class ContainerEvidencePickerScreen extends Screen {
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (button == 0) {
-            int rows = Math.max(1, (items.size() + COLS - 1) / COLS);
-            int panelWidth = COLS * SLOT + 28;
-            int panelHeight = rows * SLOT + 56;
+            int cols = columns();
+            int panelWidth = panelWidth();
+            int panelHeight = panelHeight();
             int x = (width - panelWidth) / 2;
             int y = (height - panelHeight) / 2;
             int gridX = x + 14;
             int gridY = y + 34;
 
-            int col = (int) ((mouseX - gridX) / SLOT);
-            int row = (int) ((mouseY - gridY) / SLOT);
-            if (mouseX >= gridX && mouseY >= gridY && col >= 0 && col < COLS && row >= 0) {
-                int index = row * COLS + col;
-                if (index >= 0 && index < items.size()) {
-                    int sx = gridX + col * SLOT;
-                    int sy = gridY + row * SLOT;
-                    if (mouseX < sx + 18 && mouseY < sy + 18 && !items.get(index).isEmpty()) {
-                        PacketByteBuf buf = PacketByteBufs.create();
-                        buf.writeEnumConstant(hand);
-                        buf.writeBlockPos(pos);
-                        buf.writeVarInt(index);
-                        ClientPlayNetworking.send(EvidenceCollectionMod.TAKE_CONTAINER_EVIDENCE_PACKET, buf);
-                        close();
-                        return true;
+            if (mouseX >= gridX && mouseY >= gridY) {
+                int col = (int) ((mouseX - gridX) / SLOT);
+                int row = (int) ((mouseY - gridY) / SLOT);
+                if (col >= 0 && col < cols && row >= 0 && row < rows()) {
+                    int index = row * cols + col;
+                    if (index >= 0 && index < items.size()) {
+                        int sx = gridX + col * SLOT;
+                        int sy = gridY + row * SLOT;
+                        if (mouseX < sx + 18 && mouseY < sy + 18 && !items.get(index).isEmpty()) {
+                            PacketByteBuf buf = PacketByteBufs.create();
+                            buf.writeEnumConstant(hand);
+                            buf.writeBlockPos(pos);
+                            buf.writeVarInt(index);
+                            ClientPlayNetworking.send(EvidenceCollectionMod.TAKE_CONTAINER_EVIDENCE_PACKET, buf);
+                            close();
+                            return true;
+                        }
                     }
                 }
             }
