@@ -15,6 +15,11 @@ public final class NoteItem extends Item {
     }
 
     @Override
+    public Text getName(ItemStack stack) {
+        return Text.literal("노트");
+    }
+
+    @Override
     public void appendTooltip(ItemStack stack, World world, List<Text> tooltip, TooltipContext context) {
         String title = NoteData.getTitle(stack);
         if (!title.isBlank()) tooltip.add(Text.literal(title).formatted(Formatting.YELLOW));
