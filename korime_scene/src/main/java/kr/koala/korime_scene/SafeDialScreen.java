@@ -22,10 +22,10 @@ public final class SafeDialScreen extends Screen {
     private double dialAngle;
     private double lastPointerAngle;
     private boolean dragging;
-    private int dragDirection;
-    private double dragTravel;
+    private double signedDragTravel;
+    private double absoluteDragTravel;
     private int stage;
-    private String status = "다이얼을 잡고 표시된 방향으로 돌린 뒤 손을 놓아줘";
+    private ButtonWidget openButton;
 
     public SafeDialScreen(BlockPos pos) {
         super(Text.literal("금고 다이얼"));
@@ -35,12 +35,13 @@ public final class SafeDialScreen extends Screen {
     @Override
     protected void init() {
         centerX = width / 2;
-        centerY = height / 2 - 4;
+        centerY = height / 2 - 9;
         radius = Math.min(92, Math.max(58, Math.min(width, height) / 4));
 
         int buttonWidth = 112;
-        addDrawableChild(ButtonWidget.builder(Text.literal("손잡이 열기"), b -> attemptOpen())
-                .dimensions(centerX - buttonWidth / 2, centerY + radius + 42, buttonWidth, 20).build());
+        openButton = addDrawableChild(ButtonWidget.builder(Text.literal("손잡이 열기"), b -> attemptOpen())
+                .dimensions(centerX - buttonWidth / 2, centerY + radius + 29, buttonWidth, 20).build());
+        openButton.active = false;
     }
 
     private static double pointerAngle(double mouseX, double mouseY, double cx, double cy) {
@@ -59,13 +60,14 @@ public final class SafeDialScreen extends Screen {
         return angle;
     }
 
-    /** Number currently sitting under the fixed index at 12 o'clock. */
+    /** Number currently under the fixed gold index at 12 o'clock. */
     private int currentNumber() {
-        return Math.floorMod((int)Math.round(wrapAngle(dialAngle) / TWO_PI * 100.0), 100);
+        double turns = wrapAngle(-dialAngle) / TWO_PI;
+        return Math.floorMod((int)Math.round(turns * 100.0), 100);
     }
 
     private int expectedDirection() {
-        return stage == 1 ? -1 : 1; // clockwise, counter-clockwise, clockwise
+        return stage == 1 ? -1 : 1;
     }
 
     private String directionName() {
@@ -73,18 +75,12 @@ public final class SafeDialScreen extends Screen {
     }
 
     private void handleTurn(double delta) {
-        if (Math.abs(delta) < 0.001) return;
-
-        int direction = delta > 0 ? 1 : -1;
-        if (dragDirection == 0) dragDirection = direction;
-        if (direction != dragDirection) {
-            // Ignore tiny hand jitter during one drag. A stage is committed on mouse release.
-            return;
-        }
+        if (Math.abs(delta) < 0.0005) return;
 
         int before = currentNumber();
         dialAngle = wrapAngle(dialAngle + delta);
-        dragTravel += Math.abs(delta);
+        signedDragTravel += delta;
+        absoluteDragTravel += Math.abs(delta);
         int after = currentNumber();
 
         if (after != before && client != null && client.player != null) {
@@ -93,36 +89,19 @@ public final class SafeDialScreen extends Screen {
     }
 
     private void finishStage() {
-        if (stage >= 3) return;
-        if (dragTravel < MIN_STAGE_TRAVEL) {
-            status = "조금 더 돌린 다음 손을 놓아줘";
-            return;
-        }
-        if (dragDirection != expectedDirection()) {
-            status = "방향이 반대야 · " + directionName() + "으로 돌려줘";
-            return;
-        }
+        if (stage >= 3 || absoluteDragTravel < MIN_STAGE_TRAVEL) return;
+
+        int actualDirection = signedDragTravel > 0 ? 1 : signedDragTravel < 0 ? -1 : 0;
+        if (actualDirection != expectedDirection()) return;
 
         entered[stage] = currentNumber();
         stage++;
-        if (stage < 3) {
-            status = stage + "번째 숫자 입력 완료 · 이제 " + directionName();
-        } else {
-            status = "세 숫자 입력 완료 · 손잡이 열기를 눌러줘";
-        }
-    }
-
-    private void resetSequence() {
-        entered[0] = entered[1] = entered[2] = -1;
-        stage = 0;
-        status = "처음부터 다시 · 시계 방향 ↻";
+        if (openButton != null) openButton.active = stage == 3;
     }
 
     private void attemptOpen() {
-        if (stage != 3) {
-            status = "아직 조합 입력이 끝나지 않았어";
-            return;
-        }
+        if (stage != 3) return;
+
         PacketByteBuf buf = PacketByteBufs.create();
         buf.writeBlockPos(pos);
         buf.writeByte(entered[0]);
@@ -140,8 +119,8 @@ public final class SafeDialScreen extends Screen {
             double distance = Math.sqrt(dx * dx + dy * dy);
             if (distance <= radius && distance >= radius * 0.20) {
                 dragging = true;
-                dragDirection = 0;
-                dragTravel = 0.0;
+                signedDragTravel = 0.0;
+                absoluteDragTravel = 0.0;
                 lastPointerAngle = pointerAngle(mouseX, mouseY, centerX, centerY);
                 return true;
             }
@@ -166,21 +145,11 @@ public final class SafeDialScreen extends Screen {
         if (button == 0 && dragging) {
             dragging = false;
             finishStage();
-            dragDirection = 0;
-            dragTravel = 0.0;
+            signedDragTravel = 0.0;
+            absoluteDragTravel = 0.0;
             return true;
         }
         return super.mouseReleased(mouseX, mouseY, button);
-    }
-
-    @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        // R resets only this safe-dial attempt; useful if the player loses track.
-        if (keyCode == 82) {
-            resetSequence();
-            return true;
-        }
-        return super.keyPressed(keyCode, scanCode, modifiers);
     }
 
     @Override public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) { }
@@ -188,7 +157,7 @@ public final class SafeDialScreen extends Screen {
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         int panelWidth = radius * 2 + 94;
-        int panelHeight = radius * 2 + 142;
+        int panelHeight = radius * 2 + 112;
         int x0 = centerX - panelWidth / 2;
         int y0 = centerY - radius - 52;
 
@@ -204,22 +173,7 @@ public final class SafeDialScreen extends Screen {
         context.drawCenteredTextWithShadow(textRenderer, Text.literal(stageText),
                 centerX, centerY + radius + 8, stage < 3 ? 0xFFD9B44A : 0xFF7ED58A);
 
-        context.drawCenteredTextWithShadow(textRenderer, Text.literal(progressText()),
-                centerX, centerY + radius + 21, 0xFFB6BBC1);
-        context.drawCenteredTextWithShadow(textRenderer, Text.literal(status),
-                centerX, centerY + radius + 31, 0xFFD4D7DA);
-
         super.render(context, mouseX, mouseY, delta);
-    }
-
-    private String progressText() {
-        StringBuilder s = new StringBuilder("입력  ");
-        for (int i = 0; i < 3; i++) {
-            s.append(i < stage ? "●" : "○");
-            if (i < 2) s.append("  ");
-        }
-        s.append("    R: 다시 시작");
-        return s.toString();
     }
 
     private void drawDial(DrawContext context) {
@@ -231,10 +185,9 @@ public final class SafeDialScreen extends Screen {
         fillCircle(context, centerX, centerY, outer - 5, 0xFF4A5057);
         fillCircle(context, centerX, centerY, inner, 0xFF171A1E);
 
-        // The whole numbered plate rotates. Numbers increase counter-clockwise on the plate,
-        // so turning the dial clockwise makes the number at the fixed top index increase.
+        // Clockwise visual order: 0, 10, 20 ... 90.
         for (int n = 0; n < 100; n++) {
-            double a = -n / 100.0 * TWO_PI - Math.PI / 2.0 + dialAngle;
+            double a = n / 100.0 * TWO_PI - Math.PI / 2.0 + dialAngle;
             int len = n % 10 == 0 ? 12 : (n % 5 == 0 ? 9 : 5);
             int x1 = centerX + (int)Math.round(Math.cos(a) * (outer - 7));
             int y1 = centerY + (int)Math.round(Math.sin(a) * (outer - 7));
@@ -244,14 +197,14 @@ public final class SafeDialScreen extends Screen {
         }
 
         for (int n = 0; n < 100; n += 10) {
-            double a = -n / 100.0 * TWO_PI - Math.PI / 2.0 + dialAngle;
+            double a = n / 100.0 * TWO_PI - Math.PI / 2.0 + dialAngle;
             int tx = centerX + (int)Math.round(Math.cos(a) * (inner - 12));
             int ty = centerY + (int)Math.round(Math.sin(a) * (inner - 12));
             String s = Integer.toString(n);
             context.drawText(textRenderer, Text.literal(s), tx - textRenderer.getWidth(s) / 2, ty - 4, 0xFFDFE2E5, false);
         }
 
-        // Fixed index mark: this never rotates. Read the number directly under it.
+        // Fixed reading index.
         context.fill(centerX - 2, centerY - outer - 8, centerX + 3, centerY - outer + 8, 0xFFE5C04D);
         context.fill(centerX - 5, centerY - outer - 8, centerX + 6, centerY - outer - 5, 0xFFE5C04D);
 
