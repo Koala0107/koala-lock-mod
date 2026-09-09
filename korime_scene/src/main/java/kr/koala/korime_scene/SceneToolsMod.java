@@ -26,6 +26,7 @@ import java.util.List;
 public final class SceneToolsMod implements ModInitializer {
     public static final Identifier EDIT_ITEM_PACKET = new Identifier(KorimeSceneMod.MOD_ID, "edit_item");
     public static final Identifier CCTV_SAVE_PACKET = new Identifier(KorimeSceneMod.MOD_ID, "cctv_save");
+    public static final Identifier CCTV_BREAK_PACKET = new Identifier(KorimeSceneMod.MOD_ID, "cctv_break");
     public static final Identifier EVIDENCE_MAGNIFIER_SAVE_PACKET = new Identifier(KorimeSceneMod.MOD_ID, "evidence_magnifier_save");
     public static final Identifier EVIDENCE_BREAK_PACKET = new Identifier(KorimeSceneMod.MOD_ID, "evidence_break");
     public static final Identifier SAFE_SETUP_PACKET = new Identifier(KorimeSceneMod.MOD_ID, "safe_setup");
@@ -108,9 +109,7 @@ public final class SceneToolsMod implements ModInitializer {
                         first = buf.readUnsignedByte();
                         second = buf.readUnsignedByte();
                         third = buf.readUnsignedByte();
-                    } catch (RuntimeException ignored) {
-                        return;
-                    }
+                    } catch (RuntimeException ignored) { return; }
                     server.execute(() -> {
                         if (!isValidSafeTarget(player, pos)) return;
                         if (first > 99 || second > 99 || third > 99) return;
@@ -130,9 +129,7 @@ public final class SceneToolsMod implements ModInitializer {
                         first = buf.readUnsignedByte();
                         second = buf.readUnsignedByte();
                         third = buf.readUnsignedByte();
-                    } catch (RuntimeException ignored) {
-                        return;
-                    }
+                    } catch (RuntimeException ignored) { return; }
                     server.execute(() -> {
                         if (!isValidSafeTarget(player, pos)) return;
                         if (!(player.getWorld().getBlockEntity(pos) instanceof SafeBlockEntity safe)) return;
@@ -148,16 +145,15 @@ public final class SceneToolsMod implements ModInitializer {
         ServerPlayNetworking.registerGlobalReceiver(EVIDENCE_BREAK_PACKET,
                 (server, player, handler, buf, responseSender) -> {
                     final BlockPos pos;
-                    try {
-                        pos = buf.readBlockPos();
-                    } catch (RuntimeException ignored) {
-                        return;
-                    }
-                    server.execute(() -> {
-                        if (!player.getWorld().getBlockState(pos).isOf(EVIDENCE_MAGNIFIER)) return;
-                        if (player.squaredDistanceTo(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5) > 64.0) return;
-                        player.getWorld().breakBlock(pos, true, player);
-                    });
+                    try { pos = buf.readBlockPos(); } catch (RuntimeException ignored) { return; }
+                    server.execute(() -> breakValidated(player, pos, EVIDENCE_MAGNIFIER));
+                });
+
+        ServerPlayNetworking.registerGlobalReceiver(CCTV_BREAK_PACKET,
+                (server, player, handler, buf, responseSender) -> {
+                    final BlockPos pos;
+                    try { pos = buf.readBlockPos(); } catch (RuntimeException ignored) { return; }
+                    server.execute(() -> breakValidated(player, pos, CCTV));
                 });
 
         ServerPlayNetworking.registerGlobalReceiver(EVIDENCE_MAGNIFIER_SAVE_PACKET,
@@ -167,10 +163,7 @@ public final class SceneToolsMod implements ModInitializer {
                     try {
                         pos = buf.readBlockPos();
                         text = buf.readString(EvidenceMagnifierBlockEntity.MAX_TEXT_LENGTH);
-                    } catch (RuntimeException ignored) {
-                        return;
-                    }
-
+                    } catch (RuntimeException ignored) { return; }
                     server.execute(() -> {
                         if (!player.getWorld().getBlockState(pos).isOf(EVIDENCE_MAGNIFIER)) return;
                         if (player.squaredDistanceTo(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5) > 64.0) return;
@@ -187,13 +180,8 @@ public final class SceneToolsMod implements ModInitializer {
                         cctvPos = buf.readBlockPos();
                         int count = Math.min(buf.readVarInt(), CctvBlockEntity.MAX_RECORDS);
                         if (count < 0) return;
-                        for (int i = 0; i < count; i++) {
-                            records.add(buf.readString(CctvBlockEntity.MAX_RECORD_LENGTH));
-                        }
-                    } catch (RuntimeException ignored) {
-                        return;
-                    }
-
+                        for (int i = 0; i < count; i++) records.add(buf.readString(CctvBlockEntity.MAX_RECORD_LENGTH));
+                    } catch (RuntimeException ignored) { return; }
                     server.execute(() -> {
                         if (!player.getWorld().getBlockState(cctvPos).isOf(CCTV)) return;
                         if (player.squaredDistanceTo(cctvPos.getX() + 0.5, cctvPos.getY() + 0.5, cctvPos.getZ() + 0.5) > 64.0) return;
@@ -211,27 +199,20 @@ public final class SceneToolsMod implements ModInitializer {
                         editorPos = buf.readBlockPos();
                         name = buf.readString(128);
                         description = buf.readString(512);
-                    } catch (RuntimeException ignored) {
-                        return;
-                    }
-
+                    } catch (RuntimeException ignored) { return; }
                     server.execute(() -> {
                         if (!player.getWorld().getBlockState(editorPos).isOf(ITEM_EDITOR)) return;
                         if (player.squaredDistanceTo(editorPos.getX() + 0.5, editorPos.getY() + 0.5, editorPos.getZ() + 0.5) > 64.0) return;
-
                         ItemStack stack = player.getMainHandStack();
                         if (stack.isEmpty()) return;
-
                         String cleanName = name.trim();
                         String cleanDescription = description.trim();
                         if (cleanName.isEmpty()) stack.removeCustomName();
                         else stack.setCustomName(net.minecraft.text.Text.literal(cleanName));
-
                         NbtCompound root = stack.getOrCreateNbt();
                         NbtCompound display = root.contains("display", 10) ? root.getCompound("display") : new NbtCompound();
-                        if (cleanDescription.isEmpty()) {
-                            display.remove("Lore");
-                        } else {
+                        if (cleanDescription.isEmpty()) display.remove("Lore");
+                        else {
                             NbtList lore = new NbtList();
                             String json = "{\"text\":\"" + escapeJson(cleanDescription) + "\",\"color\":\"light_purple\",\"italic\":false}";
                             lore.add(NbtString.of(json));
@@ -242,6 +223,12 @@ public final class SceneToolsMod implements ModInitializer {
                         player.currentScreenHandler.sendContentUpdates();
                     });
                 });
+    }
+
+    private static void breakValidated(net.minecraft.server.network.ServerPlayerEntity player, BlockPos pos, Block block) {
+        if (!player.getWorld().getBlockState(pos).isOf(block)) return;
+        if (player.squaredDistanceTo(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5) > 64.0) return;
+        player.getWorld().breakBlock(pos, true, player);
     }
 
     private static boolean isValidSafeTarget(net.minecraft.server.network.ServerPlayerEntity player, BlockPos pos) {
@@ -259,10 +246,7 @@ public final class SceneToolsMod implements ModInitializer {
                 case '\n' -> out.append("\\n");
                 case '\r' -> out.append("\\r");
                 case '\t' -> out.append("\\t");
-                default -> {
-                    if (c < 0x20) out.append(String.format("\\u%04x", (int)c));
-                    else out.append(c);
-                }
+                default -> { if (c < 0x20) out.append(String.format("\\u%04x", (int)c)); else out.append(c); }
             }
         }
         return out.toString();
