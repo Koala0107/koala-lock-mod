@@ -2,7 +2,6 @@ package kr.koala.korime_scene;
 
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.Inventory;
@@ -21,7 +20,7 @@ public final class EvidenceEnvelopeItem extends Item {
 
     @Override
     public Text getName(ItemStack stack) {
-        return Text.literal("Evidence Pouch");
+        return Text.literal("증거 봉투");
     }
 
     @Override
@@ -31,14 +30,11 @@ public final class EvidenceEnvelopeItem extends Item {
 
         ItemStack pouch = context.getStack();
         if (EvidenceEnvelopeData.isFull(pouch)) {
-            if (!context.getWorld().isClient()) {
-                player.sendMessage(Text.literal("Evidence Pouch가 가득 찼습니다. (30/30)"), true);
-            }
             return ActionResult.FAIL;
         }
 
-        BlockEntity blockEntity = context.getWorld().getBlockEntity(context.getBlockPos());
-        if (!(blockEntity instanceof Inventory inventory)) return ActionResult.PASS;
+        Inventory inventory = EvidenceCollectionMod.getEvidenceInventory(context.getWorld(), context.getBlockPos());
+        if (inventory == null) return ActionResult.PASS;
 
         if (context.getWorld().isClient()) return ActionResult.SUCCESS;
         if (!(player instanceof ServerPlayerEntity serverPlayer)) return ActionResult.PASS;
