@@ -22,6 +22,7 @@
       "kr.koala.korime_scene.SceneToolsMod",
       "kr.koala.korime_scene.ImageFrameMod",
       "kr.koala.korime_scene.EvidenceCollectionMod",
+      "kr.koala.korime_scene.MapBlockMod",
       "kr.koala.korime_scene.KorimeSceneItemGroup"
     ],
     "client": [
