@@ -26,9 +26,8 @@ public final class SafeDialScreen extends Screen {
     private int previousNumber;
 
     public SafeDialScreen(BlockPos pos) {
-        super(Text.translatable("screen.korime_scene.safe.dial_title"));
+        super(Text.literal("금고 다이얼"));
         this.pos = pos.toImmutable();
-        this.dialAngle = 0.0;
     }
 
     @Override
@@ -38,7 +37,7 @@ public final class SafeDialScreen extends Screen {
         radius = Math.min(92, Math.max(58, Math.min(width, height) / 4));
 
         int buttonWidth = 92;
-        addDrawableChild(ButtonWidget.builder(Text.translatable("screen.korime_scene.safe.open"), b -> attemptOpen())
+        addDrawableChild(ButtonWidget.builder(Text.literal("열기"), b -> attemptOpen())
                 .dimensions(centerX - buttonWidth / 2, centerY + radius + 18, buttonWidth, 20).build());
     }
 
@@ -59,13 +58,12 @@ public final class SafeDialScreen extends Screen {
     }
 
     private int currentNumber() {
-        // 0 is at the top; numbers increase clockwise.
         double fromTop = wrapAngle(dialAngle + Math.PI / 2.0);
         return Math.floorMod((int)Math.round(fromTop / TWO_PI * 100.0), 100);
     }
 
     private int expectedDirection() {
-        return stage == 1 ? -1 : 1; // clockwise, counter-clockwise, clockwise
+        return stage == 1 ? -1 : 1;
     }
 
     private void handleTurn(double delta) {
@@ -76,8 +74,7 @@ public final class SafeDialScreen extends Screen {
         int after = currentNumber();
 
         if (after != before && client != null && client.player != null) {
-            // Local tactile click while passing dial marks.
-            client.player.playSound(net.minecraft.sound.SoundEvents.UI_BUTTON_CLICK.value(), 0.10F, 1.7F);
+            client.player.playSound(net.minecraft.sound.SoundEvents.UI_BUTTON_CLICK, 0.10F, 1.7F);
         }
 
         if (lastDirection != 0 && direction != lastDirection && stage < 2) {
@@ -87,10 +84,6 @@ public final class SafeDialScreen extends Screen {
             } else {
                 resetSequence();
             }
-        }
-
-        if (stage < 2 && direction != expectedDirection() && lastDirection == 0) {
-            // Wait until the player starts in the correct direction.
         }
 
         lastDirection = direction;
@@ -152,10 +145,7 @@ public final class SafeDialScreen extends Screen {
         return super.mouseReleased(mouseX, mouseY, button);
     }
 
-    @Override
-    public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {
-        // Keep the crime scene visible behind the safe dial.
-    }
+    @Override public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) { }
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
@@ -167,13 +157,12 @@ public final class SafeDialScreen extends Screen {
         context.fill(x0 - 3, y0 - 3, x0 + panelWidth + 3, y0 + panelHeight + 3, 0xEE050607);
         context.fill(x0, y0, x0 + panelWidth, y0 + panelHeight, 0xEE202429);
         context.drawCenteredTextWithShadow(textRenderer, title, centerX, y0 + 13, 0xFFF1F1F1);
-
         drawDial(context);
 
-        String direction = stage == 0 ? "→" : stage == 1 ? "←" : "→";
-        Text hint = Text.translatable("screen.korime_scene.safe.dial_hint", stage + 1, direction);
-        context.drawCenteredTextWithShadow(textRenderer, hint, centerX, centerY + radius + 3, 0xFFD4D7DA);
-
+        String direction = stage == 0 ? "오른쪽 →" : stage == 1 ? "← 왼쪽" : "오른쪽 →";
+        context.drawCenteredTextWithShadow(textRenderer,
+                Text.literal((stage + 1) + "번째 · " + direction),
+                centerX, centerY + radius + 3, 0xFFD4D7DA);
         super.render(context, mouseX, mouseY, delta);
     }
 
@@ -182,7 +171,6 @@ public final class SafeDialScreen extends Screen {
         int inner = (int)(radius * 0.79);
         int hub = (int)(radius * 0.20);
 
-        // Pixel-circle approximation made of rings and tick marks.
         fillCircle(context, centerX, centerY, outer, 0xFF0B0D10);
         fillCircle(context, centerX, centerY, outer - 5, 0xFF4A5057);
         fillCircle(context, centerX, centerY, inner, 0xFF171A1E);
@@ -205,7 +193,6 @@ public final class SafeDialScreen extends Screen {
             context.drawText(textRenderer, Text.literal(s), tx - textRenderer.getWidth(s) / 2, ty - 4, 0xFFDFE2E5, false);
         }
 
-        // Rotating pointer.
         double pointer = dialAngle - Math.PI / 2.0;
         int px = centerX + (int)Math.round(Math.cos(pointer) * (inner - 9));
         int py = centerY + (int)Math.round(Math.sin(pointer) * (inner - 9));
