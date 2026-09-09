@@ -57,11 +57,6 @@ public final class EvidenceEnvelopeScreen extends Screen {
     }
 
     @Override
-    public void tick() {
-        if (noteBox != null) noteBox.tick();
-    }
-
-    @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         renderBackground(context, mouseX, mouseY, delta);
         int panelWidth = Math.min(390, width - 30);
