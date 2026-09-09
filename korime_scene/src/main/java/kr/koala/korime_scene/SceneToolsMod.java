@@ -81,7 +81,7 @@ public final class SceneToolsMod implements ModInitializer {
     public static final Block SAFE = Registry.register(
             Registries.BLOCK,
             new Identifier(KorimeSceneMod.MOD_ID, "safe"),
-            new SafeBlock(AbstractBlock.Settings.create().strength(5.0F, 6.0F).sounds(BlockSoundGroup.METAL))
+            new SafeBlock(AbstractBlock.Settings.create().strength(5.0F, 6.0F).sounds(BlockSoundGroup.METAL).nonOpaque())
     );
 
     public static final BlockEntityType<SafeBlockEntity> SAFE_BLOCK_ENTITY = Registry.register(
