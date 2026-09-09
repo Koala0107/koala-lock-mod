@@ -35,13 +35,13 @@ public final class SafeDialScreen extends Screen {
     @Override
     protected void init() {
         centerX = width / 2;
-        centerY = height / 2 - 9;
-        radius = Math.min(92, Math.max(58, Math.min(width, height) / 4));
+        radius = Math.min(78, Math.max(44, (height - 112) / 2));
+        centerY = height / 2 - 2;
 
         int buttonWidth = 112;
         openButton = addDrawableChild(ButtonWidget.builder(Text.literal("손잡이 열기"), b -> attemptOpen())
-                .dimensions(centerX - buttonWidth / 2, centerY + radius + 29, buttonWidth, 20).build());
-        openButton.active = false;
+                .dimensions(centerX - buttonWidth / 2, centerY + radius + 23, buttonWidth, 20).build());
+        openButton.active = stage == 3;
     }
 
     private static double pointerAngle(double mouseX, double mouseY, double cx, double cy) {
@@ -90,14 +90,23 @@ public final class SafeDialScreen extends Screen {
     private void finishStage() {
         if (stage >= 3 || absoluteDragTravel < MIN_STAGE_TRAVEL) return;
 
-        // Minecraft GUI mouse coordinates run downward on Y, so the visual turn direction
-        // is opposite to the raw atan2 delta sign. Convert to what the player actually sees.
+        // Screen Y grows downward, so the raw atan2 sign is opposite to the visual turn direction.
         int actualDirection = signedDragTravel < 0 ? 1 : signedDragTravel > 0 ? -1 : 0;
         if (actualDirection != expectedDirection()) return;
 
         entered[stage] = currentNumber();
         stage++;
         if (openButton != null) openButton.active = stage == 3;
+    }
+
+    private void resetAttempt() {
+        entered[0] = entered[1] = entered[2] = -1;
+        stage = 0;
+        dialAngle = 0.0;
+        dragging = false;
+        signedDragTravel = 0.0;
+        absoluteDragTravel = 0.0;
+        if (openButton != null) openButton.active = false;
     }
 
     private void attemptOpen() {
@@ -110,6 +119,15 @@ public final class SafeDialScreen extends Screen {
         buf.writeByte(entered[2]);
         ClientPlayNetworking.send(SceneToolsMod.SAFE_ATTEMPT_PACKET, buf);
         close();
+    }
+
+    @Override
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (keyCode == 82) {
+            resetAttempt();
+            return true;
+        }
+        return super.keyPressed(keyCode, scanCode, modifiers);
     }
 
     @Override
@@ -157,14 +175,14 @@ public final class SafeDialScreen extends Screen {
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        int panelWidth = radius * 2 + 94;
-        int panelHeight = radius * 2 + 112;
+        int panelWidth = radius * 2 + 90;
+        int panelHeight = radius * 2 + 92;
         int x0 = centerX - panelWidth / 2;
-        int y0 = centerY - radius - 52;
+        int y0 = centerY - radius - 38;
 
         context.fill(x0 - 3, y0 - 3, x0 + panelWidth + 3, y0 + panelHeight + 3, 0xEE050607);
         context.fill(x0, y0, x0 + panelWidth, y0 + panelHeight, 0xEE202429);
-        context.drawCenteredTextWithShadow(textRenderer, title, centerX, y0 + 13, 0xFFF1F1F1);
+        context.drawCenteredTextWithShadow(textRenderer, title, centerX, y0 + 12, 0xFFF1F1F1);
 
         drawDial(context);
 
@@ -172,7 +190,7 @@ public final class SafeDialScreen extends Screen {
                 ? (stage + 1) + "번째 · " + directionName()
                 : "조합 입력 완료";
         context.drawCenteredTextWithShadow(textRenderer, Text.literal(stageText),
-                centerX, centerY + radius + 8, stage < 3 ? 0xFFD9B44A : 0xFF7ED58A);
+                centerX, centerY + radius + 7, stage < 3 ? 0xFFD9B44A : 0xFF7ED58A);
 
         super.render(context, mouseX, mouseY, delta);
     }
