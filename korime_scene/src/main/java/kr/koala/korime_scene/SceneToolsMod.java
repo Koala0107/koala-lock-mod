@@ -67,7 +67,7 @@ public final class SceneToolsMod implements ModInitializer {
             new EvidenceMagnifierBlock(AbstractBlock.Settings.create()
                     .strength(0.35F)
                     .sounds(BlockSoundGroup.GLASS)
-                    .nonOpaque())
+                    .noCollision())
     );
 
     public static final BlockEntityType<EvidenceMagnifierBlockEntity> EVIDENCE_MAGNIFIER_BLOCK_ENTITY = Registry.register(
@@ -80,6 +80,26 @@ public final class SceneToolsMod implements ModInitializer {
             Registries.ITEM,
             new Identifier(KorimeSceneMod.MOD_ID, "evidence"),
             new BlockItem(EVIDENCE_MAGNIFIER, new Item.Settings())
+    );
+
+    public static final Block SAFE = Registry.register(
+            Registries.BLOCK,
+            new Identifier(KorimeSceneMod.MOD_ID, "safe"),
+            new SafeBlock(AbstractBlock.Settings.create()
+                    .strength(5.0F, 6.0F)
+                    .sounds(BlockSoundGroup.METAL))
+    );
+
+    public static final BlockEntityType<SafeBlockEntity> SAFE_BLOCK_ENTITY = Registry.register(
+            Registries.BLOCK_ENTITY_TYPE,
+            new Identifier(KorimeSceneMod.MOD_ID, "safe"),
+            FabricBlockEntityTypeBuilder.create(SafeBlockEntity::new, SAFE).build()
+    );
+
+    public static final Item SAFE_ITEM = Registry.register(
+            Registries.ITEM,
+            new Identifier(KorimeSceneMod.MOD_ID, "safe"),
+            new BlockItem(SAFE, new Item.Settings())
     );
 
     @Override
