@@ -2,9 +2,10 @@
   "parent": "block/block",
   "textures": {
     "body": "minecraft:block/polished_deepslate",
-    "door": "minecraft:block/iron_block",
     "frame": "minecraft:block/black_concrete",
-    "handle": "minecraft:block/gold_block",
+    "door": "minecraft:block/deepslate_tiles",
+    "metal": "minecraft:block/iron_block",
+    "dial": "minecraft:block/gray_concrete",
     "particle": "minecraft:block/polished_deepslate"
   },
   "elements": [
@@ -21,39 +22,38 @@
       }
     },
     {
-      "from": [2, 2, 0.5],
-      "to": [14, 14, 1.5],
+      "from": [2, 2, 0.82],
+      "to": [14, 14, 1.02],
       "faces": {
-        "north": { "texture": "#frame" },
-        "south": { "texture": "#frame" },
-        "east": { "texture": "#frame" },
-        "west": { "texture": "#frame" },
-        "up": { "texture": "#frame" },
-        "down": { "texture": "#frame" }
+        "north": { "texture": "#frame" }
       }
     },
     {
-      "from": [3, 3, 0],
-      "to": [13, 13, 0.75],
+      "from": [2.75, 2.75, 0.60],
+      "to": [13.25, 13.25, 0.80],
       "faces": {
-        "north": { "texture": "#door" },
-        "south": { "texture": "#door" },
-        "east": { "texture": "#door" },
-        "west": { "texture": "#door" },
-        "up": { "texture": "#door" },
-        "down": { "texture": "#door" }
+        "north": { "texture": "#door" }
       }
     },
     {
-      "from": [10.5, 7, -0.5],
-      "to": [11.5, 9, 0.25],
+      "from": [5.5, 6.0, 0.40],
+      "to": [9.5, 10.0, 0.60],
       "faces": {
-        "north": { "texture": "#handle" },
-        "south": { "texture": "#handle" },
-        "east": { "texture": "#handle" },
-        "west": { "texture": "#handle" },
-        "up": { "texture": "#handle" },
-        "down": { "texture": "#handle" }
+        "north": { "texture": "#metal" }
+      }
+    },
+    {
+      "from": [6.0, 6.5, 0.20],
+      "to": [9.0, 9.5, 0.40],
+      "faces": {
+        "north": { "texture": "#dial" }
+      }
+    },
+    {
+      "from": [11.0, 6.5, 0.20],
+      "to": [11.8, 9.5, 0.40],
+      "faces": {
+        "north": { "texture": "#metal" }
       }
     }
   ],
