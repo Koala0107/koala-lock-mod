@@ -74,7 +74,7 @@ public final class SafeDialScreen extends Screen {
         int after = currentNumber();
 
         if (after != before && client != null && client.player != null) {
-            client.player.playSound(net.minecraft.sound.SoundEvents.UI_BUTTON_CLICK, 0.10F, 1.7F);
+            client.player.playSound(net.minecraft.sound.SoundEvents.UI_BUTTON_CLICK.value(), 0.10F, 1.7F);
         }
 
         if (lastDirection != 0 && direction != lastDirection && stage < 2) {
