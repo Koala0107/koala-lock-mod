@@ -36,7 +36,12 @@ public final class ImageFrameBlockEntity extends BlockEntity {
         frameHeight = Math.max(1, Math.min(MAX_SIZE, height));
         this.alignment = alignment == null ? ImageFrameAlignment.CENTER : alignment;
         markDirty();
+
+        // Persist on the server and immediately push the new URL/size/alignment to every
+        // client tracking this chunk, so multiplayer players see the same image placement.
         if (world instanceof ServerWorld serverWorld) {
+            BlockState state = getCachedState();
+            serverWorld.updateListeners(pos, state, state, 3);
             serverWorld.getChunkManager().markForUpdate(pos);
         }
     }
