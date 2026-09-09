@@ -1,21 +1,14 @@
 package kr.koala.korime_scene;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.ItemEntity;
-import net.minecraft.entity.decoration.ItemFrameEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtList;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
 
 import java.util.ArrayList;
 import java.util.List;
 
-/** 30-slot evidence bag. Stored copies are view-only and cannot be extracted. */
+/** 30-slot evidence bag. Stored item copies are view-only and cannot be extracted. */
 public final class EvidenceEnvelopeData {
     public static final int MAX_ITEMS = 30;
     public static final int MAX_NOTE_LENGTH = 4096;
@@ -25,7 +18,6 @@ public final class EvidenceEnvelopeData {
     private static final String STORED_ITEMS_KEY = "StoredItems";
     private static final String LEGACY_STORED_ITEM_KEY = "StoredItem";
     private static final String NOTE_KEY = "Note";
-    private static final String BLOCK_ENTITY_TAG = "BlockEntityTag";
 
     private EvidenceEnvelopeData() { }
 
@@ -59,6 +51,7 @@ public final class EvidenceEnvelopeData {
                 } catch (RuntimeException ignored) { }
             }
         } else if (root.contains(LEGACY_STORED_ITEM_KEY, NbtElement.COMPOUND_TYPE)) {
+            // Keep compatibility with the short-lived one-item envelope format.
             try {
                 ItemStack legacy = ItemStack.fromNbt(root.getCompound(LEGACY_STORED_ITEM_KEY));
                 if (!legacy.isEmpty()) result.add(legacy);
@@ -67,48 +60,18 @@ public final class EvidenceEnvelopeData {
         return result;
     }
 
-    public static boolean captureBlock(ItemStack envelope, World world, BlockPos pos) {
-        if (isFull(envelope)) return false;
+    /** Adds one read-only copy of an existing item stack to the evidence bag. */
+    public static boolean addItemCopy(ItemStack envelope, ItemStack source) {
+        if (source == null || source.isEmpty() || isFull(envelope)) return false;
 
-        BlockState state = world.getBlockState(pos);
-        ItemStack captured = state.getBlock().getPickStack(world, pos, state);
-        if (captured.isEmpty()) return false;
-        captured = captured.copy();
+        ItemStack captured = source.copy();
         captured.setCount(1);
-
-        BlockEntity blockEntity = world.getBlockEntity(pos);
-        if (blockEntity != null) {
-            NbtCompound blockEntityNbt = blockEntity.createNbt();
-            if (!blockEntityNbt.isEmpty()) {
-                captured.getOrCreateNbt().put(BLOCK_ENTITY_TAG, blockEntityNbt.copy());
-            }
-        }
-
-        return addStoredItem(envelope, captured);
-    }
-
-    public static boolean captureEntity(ItemStack envelope, Entity entity) {
-        if (isFull(envelope)) return false;
-
-        ItemStack captured = ItemStack.EMPTY;
-        if (entity instanceof ItemFrameEntity frame) {
-            captured = frame.getHeldItemStack().copy();
-        } else if (entity instanceof ItemEntity dropped) {
-            captured = dropped.getStack().copy();
-        }
-
-        if (captured.isEmpty()) return false;
-        captured.setCount(1);
-        return addStoredItem(envelope, captured);
-    }
-
-    private static boolean addStoredItem(ItemStack envelope, ItemStack captured) {
         NbtCompound itemNbt = captured.writeNbt(new NbtCompound());
         if (itemNbt.toString().length() > MAX_STORED_ITEM_TEXT_LENGTH) return false;
 
         List<ItemStack> current = getStoredItems(envelope);
         if (current.size() >= MAX_ITEMS) return false;
-        current.add(captured.copy());
+        current.add(captured);
 
         NbtList list = new NbtList();
         for (ItemStack stack : current) {
