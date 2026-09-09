@@ -50,7 +50,7 @@ public final class EvidenceBreakConfirmScreen extends Screen {
 
         context.fill(x - 3, y - 3, x + panelWidth + 3, y + panelHeight + 3, 0xEE050607);
         context.fill(x, y, x + panelWidth, y + panelHeight, 0xEE202429);
-        context.drawCenteredTextWithShadow(textRenderer, Text.literal("진짜로 부수겠습니까?"), width / 2, y + 23, 0xFFFFFFFF);
+        context.drawCenteredTextWithShadow(textRenderer, Text.literal("진짜 부수시겠습니까?"), width / 2, y + 23, 0xFFFFFFFF);
         context.drawCenteredTextWithShadow(textRenderer, Text.literal("저장된 증거가 사라집니다."), width / 2, y + 40, 0xFFB8BCC0);
         super.render(context, mouseX, mouseY, delta);
     }
