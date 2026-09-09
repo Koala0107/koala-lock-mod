@@ -31,7 +31,8 @@ processResources {
         def textureSources = [
                 ['cctv.png.b64', 'assets/korime_scene/textures/block/cctv.png'],
                 ['item_editor.png.b64', 'assets/korime_scene/textures/block/item_editor.png'],
-                ['evidence_magnifier.png.b64', 'assets/korime_scene/textures/block/evidence_magnifier.png']
+                ['evidence_magnifier.png.b64', 'assets/korime_scene/textures/block/evidence_magnifier.png'],
+                ['evidence_magnifier.png.b64', 'assets/korime_scene/textures/block/evidence.png']
         ]
         textureSources.each { pair ->
             def source = file("src/main/resource-base64/${pair[0]}")
