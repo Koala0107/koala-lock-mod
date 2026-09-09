@@ -33,7 +33,9 @@ processResources {
                 ['item_editor.png.b64', 'assets/korime_scene/textures/block/item_editor.png'],
                 ['evidence_magnifier.png.b64', 'assets/korime_scene/textures/block/evidence_magnifier.png'],
                 ['evidence_magnifier.png.b64', 'assets/korime_scene/textures/block/evidence.png'],
-                ['image_frame.png.b64', 'assets/korime_scene/textures/item/image_frame.png']
+                ['image_frame.png.b64', 'assets/korime_scene/textures/item/image_frame.png'],
+                ['evidence_envelope.png.b64', 'assets/korime_scene/textures/item/evidence_envelope.png'],
+                ['note.png.b64', 'assets/korime_scene/textures/item/note.png']
         ]
         textureSources.each { pair ->
             def source = file("src/main/resource-base64/${pair[0]}")
