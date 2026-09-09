@@ -21,6 +21,7 @@ import net.minecraft.world.World;
 
 public final class EvidenceCollectionMod implements ModInitializer {
     public static final Identifier NOTE_SAVE_PACKET = new Identifier(KorimeSceneMod.MOD_ID, "note_save");
+    public static final Identifier NOTE_REMOVE_PAGE_PACKET = new Identifier(KorimeSceneMod.MOD_ID, "note_remove_page");
     public static final Identifier OPEN_CONTAINER_EVIDENCE_PACKET = new Identifier(KorimeSceneMod.MOD_ID, "evidence_container_open");
     public static final Identifier TAKE_CONTAINER_EVIDENCE_PACKET = new Identifier(KorimeSceneMod.MOD_ID, "evidence_container_take");
     public static final Identifier EXTRACT_POUCH_ITEM_PACKET = new Identifier(KorimeSceneMod.MOD_ID, "evidence_pouch_extract");
@@ -56,6 +57,24 @@ public final class EvidenceCollectionMod implements ModInitializer {
                         if (!stack.isOf(NOTE)) return;
                         if (pageIndex < 0 || pageIndex >= NoteData.MAX_PAGES) return;
                         NoteData.setPage(stack, pageIndex, body);
+                        player.currentScreenHandler.sendContentUpdates();
+                    });
+                });
+
+        ServerPlayNetworking.registerGlobalReceiver(NOTE_REMOVE_PAGE_PACKET,
+                (server, player, handler, buf, responseSender) -> {
+                    final Hand hand;
+                    final int pageIndex;
+                    try {
+                        hand = buf.readEnumConstant(Hand.class);
+                        pageIndex = buf.readVarInt();
+                    } catch (RuntimeException ignored) {
+                        return;
+                    }
+                    server.execute(() -> {
+                        ItemStack stack = player.getStackInHand(hand);
+                        if (!stack.isOf(NOTE)) return;
+                        NoteData.removePage(stack, pageIndex);
                         player.currentScreenHandler.sendContentUpdates();
                     });
                 });
