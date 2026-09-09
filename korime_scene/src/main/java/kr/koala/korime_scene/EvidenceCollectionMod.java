@@ -2,16 +2,22 @@ package kr.koala.korime_scene;
 
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import net.minecraft.block.ChestBlock;
+import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.inventory.DoubleInventory;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
-import net.minecraft.text.Text;
+import net.minecraft.state.property.Properties;
+import net.minecraft.block.enums.ChestType;
 import net.minecraft.util.Hand;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
+import net.minecraft.world.World;
 
 public final class EvidenceCollectionMod implements ModInitializer {
     public static final Identifier NOTE_SAVE_PACKET = new Identifier(KorimeSceneMod.MOD_ID, "note_save");
@@ -69,15 +75,14 @@ public final class EvidenceCollectionMod implements ModInitializer {
                         if (!pouch.isOf(EVIDENCE_ENVELOPE) || EvidenceEnvelopeData.isFull(pouch)) return;
                         if (player.squaredDistanceTo(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5) > 64.0) return;
 
-                        BlockEntity blockEntity = player.getWorld().getBlockEntity(pos);
-                        if (!(blockEntity instanceof Inventory inventory)) return;
-                        if (slot < 0 || slot >= inventory.size()) return;
+                        Inventory inventory = getEvidenceInventory(player.getWorld(), pos);
+                        if (inventory == null || slot < 0 || slot >= inventory.size()) return;
 
                         ItemStack source = inventory.getStack(slot);
                         if (source.isEmpty()) return;
                         if (!EvidenceEnvelopeData.addItemCopy(pouch, source)) return;
 
-                        player.sendMessage(Text.literal("증거물을 파우치에 넣었습니다. (" + EvidenceEnvelopeData.getItemCount(pouch) + "/30)"), true);
+                        // Intentionally silent: adding/removing pouch evidence should not spam the action bar.
                         player.currentScreenHandler.sendContentUpdates();
                     });
                 });
@@ -103,5 +108,36 @@ public final class EvidenceCollectionMod implements ModInitializer {
                         player.currentScreenHandler.sendContentUpdates();
                     });
                 });
+    }
+
+    /**
+     * Returns the complete inventory represented by a clicked container block.
+     * A double chest is exposed as all 54 slots instead of only the clicked 27-slot half.
+     */
+    public static Inventory getEvidenceInventory(World world, BlockPos pos) {
+        BlockEntity firstEntity = world.getBlockEntity(pos);
+        if (!(firstEntity instanceof Inventory first)) return null;
+
+        BlockState state = world.getBlockState(pos);
+        if (!(state.getBlock() instanceof ChestBlock)
+                || !state.contains(Properties.CHEST_TYPE)
+                || state.get(Properties.CHEST_TYPE) == ChestType.SINGLE) {
+            return first;
+        }
+
+        for (Direction direction : Direction.Type.HORIZONTAL) {
+            BlockPos otherPos = pos.offset(direction);
+            BlockState otherState = world.getBlockState(otherPos);
+            if (!otherState.isOf(state.getBlock())
+                    || !otherState.contains(Properties.CHEST_TYPE)
+                    || otherState.get(Properties.CHEST_TYPE) == ChestType.SINGLE) {
+                continue;
+            }
+            BlockEntity otherEntity = world.getBlockEntity(otherPos);
+            if (otherEntity instanceof Inventory second) {
+                return new DoubleInventory(first, second);
+            }
+        }
+        return first;
     }
 }
