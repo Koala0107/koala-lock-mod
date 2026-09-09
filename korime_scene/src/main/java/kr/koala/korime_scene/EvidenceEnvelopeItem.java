@@ -21,7 +21,7 @@ public final class EvidenceEnvelopeItem extends Item {
 
     @Override
     public Text getName(ItemStack stack) {
-        return Text.literal("증거 봉투");
+        return Text.literal("Evidence Pouch");
     }
 
     @Override
@@ -29,19 +29,16 @@ public final class EvidenceEnvelopeItem extends Item {
         PlayerEntity player = context.getPlayer();
         if (player == null || !player.isSneaking()) return ActionResult.PASS;
 
-        ItemStack envelope = context.getStack();
-        if (EvidenceEnvelopeData.isFull(envelope)) {
+        ItemStack pouch = context.getStack();
+        if (EvidenceEnvelopeData.isFull(pouch)) {
             if (!context.getWorld().isClient()) {
-                player.sendMessage(Text.literal("증거 봉투가 가득 찼습니다. (30/30)"), true);
+                player.sendMessage(Text.literal("Evidence Pouch가 가득 찼습니다. (30/30)"), true);
             }
             return ActionResult.FAIL;
         }
 
         BlockEntity blockEntity = context.getWorld().getBlockEntity(context.getBlockPos());
-        if (!(blockEntity instanceof Inventory inventory)) {
-            // Normal blocks and non-inventory devices cannot be copied into the bag.
-            return ActionResult.PASS;
-        }
+        if (!(blockEntity instanceof Inventory inventory)) return ActionResult.PASS;
 
         if (context.getWorld().isClient()) return ActionResult.SUCCESS;
         if (!(player instanceof ServerPlayerEntity serverPlayer)) return ActionResult.PASS;
@@ -59,7 +56,6 @@ public final class EvidenceEnvelopeItem extends Item {
 
     @Override
     public ActionResult useOnEntity(ItemStack stack, PlayerEntity user, LivingEntity entity, net.minecraft.util.Hand hand) {
-        // Evidence envelopes no longer copy entities or placed objects directly.
         return ActionResult.PASS;
     }
 }
