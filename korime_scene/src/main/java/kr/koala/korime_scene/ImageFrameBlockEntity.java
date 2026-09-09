@@ -17,6 +17,7 @@ public final class ImageFrameBlockEntity extends BlockEntity {
     private String imageUrl = "";
     private int frameWidth = 1;
     private int frameHeight = 1;
+    private ImageFrameAlignment alignment = ImageFrameAlignment.CENTER;
 
     public ImageFrameBlockEntity(BlockPos pos, BlockState state) {
         super(ImageFrameMod.IMAGE_FRAME_BLOCK_ENTITY, pos, state);
@@ -25,13 +26,15 @@ public final class ImageFrameBlockEntity extends BlockEntity {
     public String getImageUrl() { return imageUrl; }
     public int getFrameWidth() { return frameWidth; }
     public int getFrameHeight() { return frameHeight; }
+    public ImageFrameAlignment getAlignment() { return alignment; }
 
-    public void configure(String url, int width, int height) {
+    public void configure(String url, int width, int height, ImageFrameAlignment alignment) {
         String clean = url == null ? "" : url.trim();
         if (clean.length() > MAX_URL_LENGTH) clean = clean.substring(0, MAX_URL_LENGTH);
         imageUrl = clean;
         frameWidth = Math.max(1, Math.min(MAX_SIZE, width));
         frameHeight = Math.max(1, Math.min(MAX_SIZE, height));
+        this.alignment = alignment == null ? ImageFrameAlignment.CENTER : alignment;
         markDirty();
         if (world instanceof ServerWorld serverWorld) {
             serverWorld.getChunkManager().markForUpdate(pos);
@@ -44,6 +47,7 @@ public final class ImageFrameBlockEntity extends BlockEntity {
         nbt.putString("ImageUrl", imageUrl);
         nbt.putInt("FrameWidth", frameWidth);
         nbt.putInt("FrameHeight", frameHeight);
+        nbt.putInt("Alignment", alignment.ordinal());
     }
 
     @Override
@@ -52,6 +56,7 @@ public final class ImageFrameBlockEntity extends BlockEntity {
         imageUrl = nbt.getString("ImageUrl");
         frameWidth = nbt.contains("FrameWidth") ? Math.max(1, Math.min(MAX_SIZE, nbt.getInt("FrameWidth"))) : 1;
         frameHeight = nbt.contains("FrameHeight") ? Math.max(1, Math.min(MAX_SIZE, nbt.getInt("FrameHeight"))) : 1;
+        alignment = nbt.contains("Alignment") ? ImageFrameAlignment.fromId(nbt.getInt("Alignment")) : ImageFrameAlignment.CENTER;
     }
 
     @Override
