@@ -42,9 +42,11 @@ public final class EvidenceCollectionMod implements ModInitializer {
         ServerPlayNetworking.registerGlobalReceiver(NOTE_SAVE_PACKET,
                 (server, player, handler, buf, responseSender) -> {
                     final Hand hand;
+                    final int pageIndex;
                     final String body;
                     try {
                         hand = buf.readEnumConstant(Hand.class);
+                        pageIndex = buf.readVarInt();
                         body = buf.readString(NoteData.MAX_BODY_LENGTH);
                     } catch (RuntimeException ignored) {
                         return;
@@ -52,7 +54,8 @@ public final class EvidenceCollectionMod implements ModInitializer {
                     server.execute(() -> {
                         ItemStack stack = player.getStackInHand(hand);
                         if (!stack.isOf(NOTE)) return;
-                        NoteData.setBody(stack, body);
+                        if (pageIndex < 0 || pageIndex >= NoteData.MAX_PAGES) return;
+                        NoteData.setPage(stack, pageIndex, body);
                         player.currentScreenHandler.sendContentUpdates();
                     });
                 });
@@ -82,7 +85,6 @@ public final class EvidenceCollectionMod implements ModInitializer {
                         if (source.isEmpty()) return;
                         if (!EvidenceEnvelopeData.addItemCopy(pouch, source)) return;
 
-                        // Intentionally silent: adding/removing pouch evidence should not spam the action bar.
                         player.currentScreenHandler.sendContentUpdates();
                     });
                 });
@@ -110,10 +112,6 @@ public final class EvidenceCollectionMod implements ModInitializer {
                 });
     }
 
-    /**
-     * Returns the complete inventory represented by a clicked container block.
-     * A double chest is exposed as all 54 slots instead of only the clicked 27-slot half.
-     */
     public static Inventory getEvidenceInventory(World world, BlockPos pos) {
         BlockEntity firstEntity = world.getBlockEntity(pos);
         if (!(firstEntity instanceof Inventory first)) return null;
