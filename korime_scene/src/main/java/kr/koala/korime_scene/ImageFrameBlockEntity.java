@@ -19,7 +19,7 @@ public final class ImageFrameBlockEntity extends BlockEntity {
     private int frameHeight = 1;
 
     public ImageFrameBlockEntity(BlockPos pos, BlockState state) {
-        super(SceneToolsMod.IMAGE_FRAME_BLOCK_ENTITY, pos, state);
+        super(ImageFrameMod.IMAGE_FRAME_BLOCK_ENTITY, pos, state);
     }
 
     public String getImageUrl() { return imageUrl; }
@@ -50,10 +50,8 @@ public final class ImageFrameBlockEntity extends BlockEntity {
     public void readNbt(NbtCompound nbt) {
         super.readNbt(nbt);
         imageUrl = nbt.getString("ImageUrl");
-        frameWidth = Math.max(1, Math.min(MAX_SIZE, nbt.getInt("FrameWidth")));
-        frameHeight = Math.max(1, Math.min(MAX_SIZE, nbt.getInt("FrameHeight")));
-        if (!nbt.contains("FrameWidth")) frameWidth = 1;
-        if (!nbt.contains("FrameHeight")) frameHeight = 1;
+        frameWidth = nbt.contains("FrameWidth") ? Math.max(1, Math.min(MAX_SIZE, nbt.getInt("FrameWidth"))) : 1;
+        frameHeight = nbt.contains("FrameHeight") ? Math.max(1, Math.min(MAX_SIZE, nbt.getInt("FrameHeight"))) : 1;
     }
 
     @Override
