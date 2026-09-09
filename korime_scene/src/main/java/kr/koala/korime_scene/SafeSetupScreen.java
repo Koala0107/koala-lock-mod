@@ -16,7 +16,7 @@ public final class SafeSetupScreen extends Screen {
     private int panelX, panelY, panelWidth, panelHeight;
 
     public SafeSetupScreen(BlockPos pos) {
-        super(Text.translatable("screen.korime_scene.safe.setup_title"));
+        super(Text.literal("금고 조합 설정"));
         this.pos = pos.toImmutable();
     }
 
@@ -35,14 +35,19 @@ public final class SafeSetupScreen extends Screen {
                     innerX + i * (fieldWidth + gap), panelY + 68, fieldWidth, 22,
                     Text.literal(Integer.toString(i + 1))));
             fields[i].setMaxLength(2);
-            fields[i].setTextPredicate(s -> s.isEmpty() || (s.chars().allMatch(Character::isDigit) && Integer.parseInt(s) <= 99));
+            fields[i].setTextPredicate(s -> {
+                if (s.isEmpty()) return true;
+                if (!s.chars().allMatch(Character::isDigit)) return false;
+                try { return Integer.parseInt(s) <= 99; }
+                catch (NumberFormatException e) { return false; }
+            });
             fields[i].setPlaceholder(Text.literal("00"));
         }
 
         int buttonWidth = 100;
         addDrawableChild(ButtonWidget.builder(Text.translatable("gui.cancel"), b -> close())
                 .dimensions(panelX + 30, panelY + 132, buttonWidth, 20).build());
-        addDrawableChild(ButtonWidget.builder(Text.translatable("screen.korime_scene.safe.save"), b -> save())
+        addDrawableChild(ButtonWidget.builder(Text.literal("저장"), b -> save())
                 .dimensions(panelX + panelWidth - 30 - buttonWidth, panelY + 132, buttonWidth, 20).build());
         fields[0].setFocused(true);
     }
@@ -52,11 +57,8 @@ public final class SafeSetupScreen extends Screen {
         for (int i = 0; i < 3; i++) {
             String s = fields[i].getText().trim();
             if (s.isEmpty()) return;
-            try {
-                combo[i] = Integer.parseInt(s);
-            } catch (NumberFormatException e) {
-                return;
-            }
+            try { combo[i] = Integer.parseInt(s); }
+            catch (NumberFormatException e) { return; }
             if (combo[i] < 0 || combo[i] > 99) return;
         }
 
@@ -77,7 +79,7 @@ public final class SafeSetupScreen extends Screen {
         context.fill(panelX, panelY, panelX + panelWidth, panelY + panelHeight, 0xFF25292E);
         context.drawCenteredTextWithShadow(textRenderer, title, panelX + panelWidth / 2, panelY + 16, 0xFFFFFFFF);
         context.drawCenteredTextWithShadow(textRenderer,
-                Text.translatable("screen.korime_scene.safe.setup_hint"),
+                Text.literal("0~99 세 숫자 · 오른쪽 → 왼쪽 → 오른쪽"),
                 panelX + panelWidth / 2, panelY + 40, 0xFFC9CDD1);
         context.drawCenteredTextWithShadow(textRenderer, Text.literal("→        ←        →"),
                 panelX + panelWidth / 2, panelY + 56, 0xFFD9B44A);
