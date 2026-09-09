@@ -20,7 +20,7 @@ public final class EvidenceEnvelopeScreen extends Screen {
     private final ItemStack snapshot;
 
     public EvidenceEnvelopeScreen(Hand hand, ItemStack snapshot) {
-        super(Text.literal("Evidence Pouch"));
+        super(Text.literal("증거 봉투"));
         this.hand = hand;
         this.snapshot = snapshot;
     }
@@ -36,7 +36,7 @@ public final class EvidenceEnvelopeScreen extends Screen {
 
         context.fill(x - 2, y - 2, x + panelWidth + 2, y + panelHeight + 2, 0xFF08090A);
         context.fill(x, y, x + panelWidth, y + panelHeight, 0xFF202226);
-        context.drawCenteredTextWithShadow(textRenderer, Text.literal("Evidence Pouch"), width / 2, y + 12, 0xFFFFFFFF);
+        context.drawCenteredTextWithShadow(textRenderer, Text.literal("증거 봉투"), width / 2, y + 12, 0xFFFFFFFF);
 
         List<ItemStack> items = EvidenceEnvelopeData.getStoredItems(snapshot);
         context.drawTextWithShadow(textRenderer, Text.literal(items.size() + " / " + EvidenceEnvelopeData.MAX_ITEMS), x + 14, y + 31, 0xFFBFC5CB);
