@@ -32,17 +32,16 @@ public final class EvidenceCollectionMod implements ModInitializer {
     public void onInitialize() {
         UseEntityCallback.EVENT.register((player, world, hand, entity, hitResult) -> {
             ItemStack stack = player.getStackInHand(hand);
-            if (!stack.isOf(EVIDENCE_ENVELOPE) || EvidenceEnvelopeData.isCaptured(stack) || entity == player) {
+            if (!stack.isOf(EVIDENCE_ENVELOPE) || EvidenceEnvelopeData.hasStoredItem(stack) || entity == player) {
                 return ActionResult.PASS;
             }
             if (world.isClient()) return ActionResult.SUCCESS;
 
-            if (EvidenceEnvelopeData.captureEntity(stack, world, entity, player)) {
-                player.sendMessage(Text.literal("증거를 봉투에 채취했습니다."), true);
+            if (EvidenceEnvelopeData.captureEntity(stack, entity)) {
+                player.sendMessage(Text.literal("증거물을 봉투에 넣었습니다."), true);
                 return ActionResult.SUCCESS;
             }
-            player.sendMessage(Text.literal("이 대상은 증거 봉투에 저장하기에는 데이터가 너무 큽니다."), true);
-            return ActionResult.FAIL;
+            return ActionResult.PASS;
         });
 
         ServerPlayNetworking.registerGlobalReceiver(ENVELOPE_NOTE_PACKET,
@@ -57,7 +56,7 @@ public final class EvidenceCollectionMod implements ModInitializer {
                     }
                     server.execute(() -> {
                         ItemStack stack = player.getStackInHand(hand);
-                        if (!stack.isOf(EVIDENCE_ENVELOPE) || !EvidenceEnvelopeData.isCaptured(stack)) return;
+                        if (!stack.isOf(EVIDENCE_ENVELOPE) || !EvidenceEnvelopeData.hasStoredItem(stack)) return;
                         EvidenceEnvelopeData.setNote(stack, note);
                         player.currentScreenHandler.sendContentUpdates();
                     });
@@ -66,11 +65,9 @@ public final class EvidenceCollectionMod implements ModInitializer {
         ServerPlayNetworking.registerGlobalReceiver(NOTE_SAVE_PACKET,
                 (server, player, handler, buf, responseSender) -> {
                     final Hand hand;
-                    final String title;
                     final String body;
                     try {
                         hand = buf.readEnumConstant(Hand.class);
-                        title = buf.readString(NoteData.MAX_TITLE_LENGTH);
                         body = buf.readString(NoteData.MAX_BODY_LENGTH);
                     } catch (RuntimeException ignored) {
                         return;
@@ -78,7 +75,7 @@ public final class EvidenceCollectionMod implements ModInitializer {
                     server.execute(() -> {
                         ItemStack stack = player.getStackInHand(hand);
                         if (!stack.isOf(NOTE)) return;
-                        NoteData.set(stack, title, body);
+                        NoteData.setBody(stack, body);
                         player.currentScreenHandler.sendContentUpdates();
                     });
                 });
