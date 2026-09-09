@@ -15,24 +15,27 @@ public final class ImageFrameScreen extends Screen {
     private final String currentUrl;
     private final int currentWidth;
     private final int currentHeight;
+    private ImageFrameAlignment alignment;
 
     private TextFieldWidget urlField;
     private TextFieldWidget widthField;
     private TextFieldWidget heightField;
+    private ButtonWidget alignmentButton;
 
-    public ImageFrameScreen(BlockPos pos, String url, int width, int height) {
+    public ImageFrameScreen(BlockPos pos, String url, int width, int height, ImageFrameAlignment alignment) {
         super(Text.literal("이미지 액자"));
         this.pos = pos.toImmutable();
         this.currentUrl = url == null ? "" : url;
         this.currentWidth = width;
         this.currentHeight = height;
+        this.alignment = alignment == null ? ImageFrameAlignment.CENTER : alignment;
     }
 
     @Override
     protected void init() {
         int panelWidth = Math.min(390, width - 24);
         int x = (width - panelWidth) / 2;
-        int y = Math.max(20, height / 2 - 82);
+        int y = Math.max(20, height / 2 - 96);
         int innerX = x + 18;
         int innerWidth = panelWidth - 36;
 
@@ -49,12 +52,22 @@ public final class ImageFrameScreen extends Screen {
         heightField.setMaxLength(1);
         heightField.setText(Integer.toString(currentHeight));
 
+        alignmentButton = addDrawableChild(ButtonWidget.builder(alignmentText(), b -> {
+                    alignment = alignment.next();
+                    alignmentButton.setMessage(alignmentText());
+                })
+                .dimensions(innerX, y + 108, innerWidth, 20).build());
+
         addDrawableChild(ButtonWidget.builder(Text.literal("취소"), b -> close())
-                .dimensions(innerX, y + 116, (innerWidth - 8) / 2, 20).build());
+                .dimensions(innerX, y + 144, (innerWidth - 8) / 2, 20).build());
         addDrawableChild(ButtonWidget.builder(Text.literal("저장"), b -> save())
-                .dimensions(innerX + (innerWidth - 8) / 2 + 8, y + 116, (innerWidth - 8) / 2, 20).build());
+                .dimensions(innerX + (innerWidth - 8) / 2 + 8, y + 144, (innerWidth - 8) / 2, 20).build());
 
         urlField.setFocused(true);
+    }
+
+    private Text alignmentText() {
+        return Text.literal("정렬: " + alignment.getDisplayName());
     }
 
     private void save() {
@@ -66,6 +79,7 @@ public final class ImageFrameScreen extends Screen {
         buf.writeString(urlField.getText(), ImageFrameBlockEntity.MAX_URL_LENGTH);
         buf.writeByte(w);
         buf.writeByte(h);
+        buf.writeByte(alignment.ordinal());
         ClientPlayNetworking.send(ImageFrameMod.SAVE_PACKET, buf);
         close();
     }
@@ -84,10 +98,10 @@ public final class ImageFrameScreen extends Screen {
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         int panelWidth = Math.min(390, width - 24);
         int x = (width - panelWidth) / 2;
-        int y = Math.max(20, height / 2 - 82);
+        int y = Math.max(20, height / 2 - 96);
 
-        context.fill(x - 3, y - 3, x + panelWidth + 3, y + 154, 0xEE050607);
-        context.fill(x, y, x + panelWidth, y + 151, 0xEE202429);
+        context.fill(x - 3, y - 3, x + panelWidth + 3, y + 182, 0xEE050607);
+        context.fill(x, y, x + panelWidth, y + 179, 0xEE202429);
         context.drawCenteredTextWithShadow(textRenderer, title, width / 2, y + 11, 0xFFFFFFFF);
         context.drawText(textRenderer, Text.literal("이미지 URL"), x + 18, y + 24, 0xFFD5D8DB, false);
         context.drawText(textRenderer, Text.literal("가로"), x + 18, y + 65, 0xFFD5D8DB, false);
