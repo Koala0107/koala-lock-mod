@@ -32,13 +32,13 @@ public final class EvidenceCollectionMod implements ModInitializer {
     public void onInitialize() {
         UseEntityCallback.EVENT.register((player, world, hand, entity, hitResult) -> {
             ItemStack stack = player.getStackInHand(hand);
-            if (!stack.isOf(EVIDENCE_ENVELOPE) || EvidenceEnvelopeData.hasStoredItem(stack) || entity == player) {
+            if (!stack.isOf(EVIDENCE_ENVELOPE) || EvidenceEnvelopeData.isFull(stack) || entity == player) {
                 return ActionResult.PASS;
             }
             if (world.isClient()) return ActionResult.SUCCESS;
 
             if (EvidenceEnvelopeData.captureEntity(stack, entity)) {
-                player.sendMessage(Text.literal("증거물을 봉투에 넣었습니다."), true);
+                player.sendMessage(Text.literal("증거물을 봉투에 넣었습니다. (" + EvidenceEnvelopeData.getItemCount(stack) + "/30)"), true);
                 return ActionResult.SUCCESS;
             }
             return ActionResult.PASS;
@@ -56,7 +56,7 @@ public final class EvidenceCollectionMod implements ModInitializer {
                     }
                     server.execute(() -> {
                         ItemStack stack = player.getStackInHand(hand);
-                        if (!stack.isOf(EVIDENCE_ENVELOPE) || !EvidenceEnvelopeData.hasStoredItem(stack)) return;
+                        if (!stack.isOf(EVIDENCE_ENVELOPE)) return;
                         EvidenceEnvelopeData.setNote(stack, note);
                         player.currentScreenHandler.sendContentUpdates();
                     });
