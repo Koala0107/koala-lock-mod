@@ -32,7 +32,8 @@ processResources {
                 ['cctv.png.b64', 'assets/korime_scene/textures/block/cctv.png'],
                 ['item_editor.png.b64', 'assets/korime_scene/textures/block/item_editor.png'],
                 ['evidence_magnifier.png.b64', 'assets/korime_scene/textures/block/evidence_magnifier.png'],
-                ['evidence_magnifier.png.b64', 'assets/korime_scene/textures/block/evidence.png']
+                ['evidence_magnifier.png.b64', 'assets/korime_scene/textures/block/evidence.png'],
+                ['image_frame.png.b64', 'assets/korime_scene/textures/item/image_frame.png']
         ]
         textureSources.each { pair ->
             def source = file("src/main/resource-base64/${pair[0]}")
@@ -41,9 +42,6 @@ processResources {
             target.bytes = source.text.trim().decodeBase64()
         }
 
-        // GitHub's text-oriented editing path previously truncated the tails of these
-        // binary assets. Keep the untouched prefix and restore the verified original
-        // tail during resource processing so every clean build produces identical media.
         def restoreVerifiedTail = { String resourcePath, int prefixLength, String tailSource ->
             def target = file("${destinationDir}/${resourcePath}")
             byte[] current = target.bytes
