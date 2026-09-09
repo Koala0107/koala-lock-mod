@@ -6,7 +6,6 @@ import net.fabricmc.fabric.api.object.builder.v1.block.entity.FabricBlockEntityT
 import net.minecraft.block.AbstractBlock;
 import net.minecraft.block.Block;
 import net.minecraft.block.entity.BlockEntityType;
-import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
@@ -36,7 +35,7 @@ public final class ImageFrameMod implements ModInitializer {
     public static final Item IMAGE_FRAME_ITEM = Registry.register(
             Registries.ITEM,
             new Identifier(KorimeSceneMod.MOD_ID, "image_frame"),
-            new BlockItem(IMAGE_FRAME, new Item.Settings())
+            new ImageFrameItem(IMAGE_FRAME, new Item.Settings())
     );
 
     @Override
