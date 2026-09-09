@@ -11,6 +11,7 @@ import net.minecraft.util.math.BlockPos;
 
 public final class SafeDialScreen extends Screen {
     private static final double TWO_PI = Math.PI * 2.0;
+    private static final double MIN_STAGE_TRAVEL = TWO_PI / 100.0 * 2.0;
 
     private final BlockPos pos;
     private final int[] entered = {-1, -1, -1};
@@ -21,9 +22,10 @@ public final class SafeDialScreen extends Screen {
     private double dialAngle;
     private double lastPointerAngle;
     private boolean dragging;
-    private int lastDirection;
+    private int dragDirection;
+    private double dragTravel;
     private int stage;
-    private int previousNumber;
+    private String status = "다이얼을 잡고 표시된 방향으로 돌린 뒤 손을 놓아줘";
 
     public SafeDialScreen(BlockPos pos) {
         super(Text.literal("금고 다이얼"));
@@ -33,12 +35,12 @@ public final class SafeDialScreen extends Screen {
     @Override
     protected void init() {
         centerX = width / 2;
-        centerY = height / 2 + 2;
+        centerY = height / 2 - 4;
         radius = Math.min(92, Math.max(58, Math.min(width, height) / 4));
 
-        int buttonWidth = 92;
-        addDrawableChild(ButtonWidget.builder(Text.literal("열기"), b -> attemptOpen())
-                .dimensions(centerX - buttonWidth / 2, centerY + radius + 18, buttonWidth, 20).build());
+        int buttonWidth = 112;
+        addDrawableChild(ButtonWidget.builder(Text.literal("손잡이 열기"), b -> attemptOpen())
+                .dimensions(centerX - buttonWidth / 2, centerY + radius + 42, buttonWidth, 20).build());
     }
 
     private static double pointerAngle(double mouseX, double mouseY, double cx, double cy) {
@@ -57,51 +59,70 @@ public final class SafeDialScreen extends Screen {
         return angle;
     }
 
+    /** Number currently sitting under the fixed index at 12 o'clock. */
     private int currentNumber() {
-        double fromTop = wrapAngle(dialAngle + Math.PI / 2.0);
-        return Math.floorMod((int)Math.round(fromTop / TWO_PI * 100.0), 100);
+        return Math.floorMod((int)Math.round(wrapAngle(dialAngle) / TWO_PI * 100.0), 100);
     }
 
     private int expectedDirection() {
-        return stage == 1 ? -1 : 1;
+        return stage == 1 ? -1 : 1; // clockwise, counter-clockwise, clockwise
+    }
+
+    private String directionName() {
+        return expectedDirection() > 0 ? "시계 방향 ↻" : "반시계 방향 ↺";
     }
 
     private void handleTurn(double delta) {
         if (Math.abs(delta) < 0.001) return;
+
         int direction = delta > 0 ? 1 : -1;
+        if (dragDirection == 0) dragDirection = direction;
+        if (direction != dragDirection) {
+            // Ignore tiny hand jitter during one drag. A stage is committed on mouse release.
+            return;
+        }
+
         int before = currentNumber();
         dialAngle = wrapAngle(dialAngle + delta);
+        dragTravel += Math.abs(delta);
         int after = currentNumber();
 
         if (after != before && client != null && client.player != null) {
             client.player.playSound(net.minecraft.sound.SoundEvents.UI_BUTTON_CLICK.value(), 0.10F, 1.7F);
         }
+    }
 
-        if (lastDirection != 0 && direction != lastDirection && stage < 2) {
-            if (lastDirection == expectedDirection()) {
-                entered[stage] = previousNumber;
-                stage++;
-            } else {
-                resetSequence();
-            }
+    private void finishStage() {
+        if (stage >= 3) return;
+        if (dragTravel < MIN_STAGE_TRAVEL) {
+            status = "조금 더 돌린 다음 손을 놓아줘";
+            return;
+        }
+        if (dragDirection != expectedDirection()) {
+            status = "방향이 반대야 · " + directionName() + "으로 돌려줘";
+            return;
         }
 
-        lastDirection = direction;
-        previousNumber = after;
+        entered[stage] = currentNumber();
+        stage++;
+        if (stage < 3) {
+            status = stage + "번째 숫자 입력 완료 · 이제 " + directionName();
+        } else {
+            status = "세 숫자 입력 완료 · 손잡이 열기를 눌러줘";
+        }
     }
 
     private void resetSequence() {
         entered[0] = entered[1] = entered[2] = -1;
         stage = 0;
-        lastDirection = 0;
+        status = "처음부터 다시 · 시계 방향 ↻";
     }
 
     private void attemptOpen() {
-        if (stage != 2 || lastDirection != 1) {
-            resetSequence();
+        if (stage != 3) {
+            status = "아직 조합 입력이 끝나지 않았어";
             return;
         }
-        entered[2] = currentNumber();
         PacketByteBuf buf = PacketByteBufs.create();
         buf.writeBlockPos(pos);
         buf.writeByte(entered[0]);
@@ -113,14 +134,15 @@ public final class SafeDialScreen extends Screen {
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (button == 0) {
+        if (button == 0 && stage < 3) {
             double dx = mouseX - centerX;
             double dy = mouseY - centerY;
             double distance = Math.sqrt(dx * dx + dy * dy);
-            if (distance <= radius && distance >= radius * 0.22) {
+            if (distance <= radius && distance >= radius * 0.20) {
                 dragging = true;
+                dragDirection = 0;
+                dragTravel = 0.0;
                 lastPointerAngle = pointerAngle(mouseX, mouseY, centerX, centerY);
-                previousNumber = currentNumber();
                 return true;
             }
         }
@@ -141,29 +163,63 @@ public final class SafeDialScreen extends Screen {
 
     @Override
     public boolean mouseReleased(double mouseX, double mouseY, int button) {
-        if (button == 0) dragging = false;
+        if (button == 0 && dragging) {
+            dragging = false;
+            finishStage();
+            dragDirection = 0;
+            dragTravel = 0.0;
+            return true;
+        }
         return super.mouseReleased(mouseX, mouseY, button);
+    }
+
+    @Override
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        // R resets only this safe-dial attempt; useful if the player loses track.
+        if (keyCode == 82) {
+            resetSequence();
+            return true;
+        }
+        return super.keyPressed(keyCode, scanCode, modifiers);
     }
 
     @Override public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) { }
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        int panelWidth = radius * 2 + 72;
-        int panelHeight = radius * 2 + 102;
+        int panelWidth = radius * 2 + 94;
+        int panelHeight = radius * 2 + 142;
         int x0 = centerX - panelWidth / 2;
-        int y0 = centerY - radius - 42;
+        int y0 = centerY - radius - 52;
 
         context.fill(x0 - 3, y0 - 3, x0 + panelWidth + 3, y0 + panelHeight + 3, 0xEE050607);
         context.fill(x0, y0, x0 + panelWidth, y0 + panelHeight, 0xEE202429);
         context.drawCenteredTextWithShadow(textRenderer, title, centerX, y0 + 13, 0xFFF1F1F1);
+
         drawDial(context);
 
-        String direction = stage == 0 ? "오른쪽 →" : stage == 1 ? "← 왼쪽" : "오른쪽 →";
-        context.drawCenteredTextWithShadow(textRenderer,
-                Text.literal((stage + 1) + "번째 · " + direction),
-                centerX, centerY + radius + 3, 0xFFD4D7DA);
+        String stageText = stage < 3
+                ? (stage + 1) + "번째 · " + directionName()
+                : "조합 입력 완료";
+        context.drawCenteredTextWithShadow(textRenderer, Text.literal(stageText),
+                centerX, centerY + radius + 8, stage < 3 ? 0xFFD9B44A : 0xFF7ED58A);
+
+        context.drawCenteredTextWithShadow(textRenderer, Text.literal(progressText()),
+                centerX, centerY + radius + 21, 0xFFB6BBC1);
+        context.drawCenteredTextWithShadow(textRenderer, Text.literal(status),
+                centerX, centerY + radius + 31, 0xFFD4D7DA);
+
         super.render(context, mouseX, mouseY, delta);
+    }
+
+    private String progressText() {
+        StringBuilder s = new StringBuilder("입력  ");
+        for (int i = 0; i < 3; i++) {
+            s.append(i < stage ? "●" : "○");
+            if (i < 2) s.append("  ");
+        }
+        s.append("    R: 다시 시작");
+        return s.toString();
     }
 
     private void drawDial(DrawContext context) {
@@ -171,12 +227,14 @@ public final class SafeDialScreen extends Screen {
         int inner = (int)(radius * 0.79);
         int hub = (int)(radius * 0.20);
 
-        fillCircle(context, centerX, centerY, outer, 0xFF0B0D10);
+        fillCircle(context, centerX, centerY, outer, 0xFF090B0E);
         fillCircle(context, centerX, centerY, outer - 5, 0xFF4A5057);
         fillCircle(context, centerX, centerY, inner, 0xFF171A1E);
 
+        // The whole numbered plate rotates. Numbers increase counter-clockwise on the plate,
+        // so turning the dial clockwise makes the number at the fixed top index increase.
         for (int n = 0; n < 100; n++) {
-            double a = n / 100.0 * TWO_PI - Math.PI / 2.0;
+            double a = -n / 100.0 * TWO_PI - Math.PI / 2.0 + dialAngle;
             int len = n % 10 == 0 ? 12 : (n % 5 == 0 ? 9 : 5);
             int x1 = centerX + (int)Math.round(Math.cos(a) * (outer - 7));
             int y1 = centerY + (int)Math.round(Math.sin(a) * (outer - 7));
@@ -186,21 +244,19 @@ public final class SafeDialScreen extends Screen {
         }
 
         for (int n = 0; n < 100; n += 10) {
-            double a = n / 100.0 * TWO_PI - Math.PI / 2.0;
+            double a = -n / 100.0 * TWO_PI - Math.PI / 2.0 + dialAngle;
             int tx = centerX + (int)Math.round(Math.cos(a) * (inner - 12));
             int ty = centerY + (int)Math.round(Math.sin(a) * (inner - 12));
             String s = Integer.toString(n);
             context.drawText(textRenderer, Text.literal(s), tx - textRenderer.getWidth(s) / 2, ty - 4, 0xFFDFE2E5, false);
         }
 
-        double pointer = dialAngle - Math.PI / 2.0;
-        int px = centerX + (int)Math.round(Math.cos(pointer) * (inner - 9));
-        int py = centerY + (int)Math.round(Math.sin(pointer) * (inner - 9));
-        drawLine(context, centerX, centerY, px, py, 0xFFD9B44A);
-        drawLine(context, centerX + 1, centerY, px + 1, py, 0xFFD9B44A);
+        // Fixed index mark: this never rotates. Read the number directly under it.
+        context.fill(centerX - 2, centerY - outer - 8, centerX + 3, centerY - outer + 8, 0xFFE5C04D);
+        context.fill(centerX - 5, centerY - outer - 8, centerX + 6, centerY - outer - 5, 0xFFE5C04D);
+
         fillCircle(context, centerX, centerY, hub, 0xFF24282D);
         fillCircle(context, centerX, centerY, Math.max(4, hub - 5), 0xFF777E86);
-
         String number = String.format("%02d", currentNumber());
         context.drawCenteredTextWithShadow(textRenderer, Text.literal(number), centerX, centerY - 5, 0xFFFFFFFF);
     }
