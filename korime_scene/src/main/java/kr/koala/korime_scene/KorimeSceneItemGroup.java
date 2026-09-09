@@ -29,6 +29,7 @@ public final class KorimeSceneItemGroup implements ModInitializer {
                         entries.add(SceneToolsMod.ITEM_EDITOR_ITEM);
                         entries.add(SceneToolsMod.EVIDENCE_MAGNIFIER_ITEM);
                         entries.add(SceneToolsMod.SAFE_ITEM);
+                        entries.add(ImageFrameMod.IMAGE_FRAME_ITEM);
                     })
                     .build());
 
