@@ -27,6 +27,7 @@ public final class SceneToolsMod implements ModInitializer {
     public static final Identifier EDIT_ITEM_PACKET = new Identifier(KorimeSceneMod.MOD_ID, "edit_item");
     public static final Identifier CCTV_SAVE_PACKET = new Identifier(KorimeSceneMod.MOD_ID, "cctv_save");
     public static final Identifier EVIDENCE_MAGNIFIER_SAVE_PACKET = new Identifier(KorimeSceneMod.MOD_ID, "evidence_magnifier_save");
+    public static final Identifier EVIDENCE_BREAK_PACKET = new Identifier(KorimeSceneMod.MOD_ID, "evidence_break");
     public static final Identifier SAFE_SETUP_PACKET = new Identifier(KorimeSceneMod.MOD_ID, "safe_setup");
     public static final Identifier SAFE_ATTEMPT_PACKET = new Identifier(KorimeSceneMod.MOD_ID, "safe_attempt");
 
@@ -141,6 +142,21 @@ public final class SceneToolsMod implements ModInitializer {
                         } else {
                             player.getWorld().playSound(null, pos, SoundEvents.BLOCK_NOTE_BLOCK_BASS.value(), SoundCategory.BLOCKS, 0.45F, 0.75F);
                         }
+                    });
+                });
+
+        ServerPlayNetworking.registerGlobalReceiver(EVIDENCE_BREAK_PACKET,
+                (server, player, handler, buf, responseSender) -> {
+                    final BlockPos pos;
+                    try {
+                        pos = buf.readBlockPos();
+                    } catch (RuntimeException ignored) {
+                        return;
+                    }
+                    server.execute(() -> {
+                        if (!player.getWorld().getBlockState(pos).isOf(EVIDENCE_MAGNIFIER)) return;
+                        if (player.squaredDistanceTo(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5) > 64.0) return;
+                        player.getWorld().breakBlock(pos, true, player);
                     });
                 });
 
