@@ -36,7 +36,7 @@ public final class ImageFrameBlockEntityRenderer implements BlockEntityRenderer<
             default -> 0.0F;
         };
         matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(yaw));
-        matrices.translate(0.0, (height - 1.0F) * 0.5F, 0.505);
+        matrices.translate(0.0, (height - 1.0F) * 0.5F, 0.04);
 
         float x0 = -width * 0.5F;
         float x1 = width * 0.5F;
