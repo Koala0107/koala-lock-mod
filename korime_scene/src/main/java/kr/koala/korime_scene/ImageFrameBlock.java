@@ -4,11 +4,12 @@ import com.mojang.serialization.MapCodec;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockEntityProvider;
 import net.minecraft.block.BlockState;
-import net.minecraft.block.HorizontalFacingBlock;
 import net.minecraft.block.ShapeContext;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.item.ItemPlacementContext;
 import net.minecraft.state.StateManager;
+import net.minecraft.state.property.DirectionProperty;
+import net.minecraft.state.property.Properties;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.BlockMirror;
 import net.minecraft.util.BlockRotation;
@@ -21,11 +22,16 @@ import net.minecraft.world.BlockView;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
-public final class ImageFrameBlock extends HorizontalFacingBlock implements BlockEntityProvider {
+public final class ImageFrameBlock extends Block implements BlockEntityProvider {
     public static final MapCodec<ImageFrameBlock> CODEC = createCodec(ImageFrameBlock::new);
+    public static final DirectionProperty FACING = Properties.FACING;
 
-    private static final VoxelShape NORTH_SOUTH = Block.createCuboidShape(0, 0, 7.5, 16, 16, 8.5);
-    private static final VoxelShape EAST_WEST = Block.createCuboidShape(7.5, 0, 0, 8.5, 16, 16);
+    private static final VoxelShape SOUTH_SHAPE = Block.createCuboidShape(0, 0, 0, 16, 16, 1);
+    private static final VoxelShape NORTH_SHAPE = Block.createCuboidShape(0, 0, 15, 16, 16, 16);
+    private static final VoxelShape EAST_SHAPE = Block.createCuboidShape(0, 0, 0, 1, 16, 16);
+    private static final VoxelShape WEST_SHAPE = Block.createCuboidShape(15, 0, 0, 16, 16, 16);
+    private static final VoxelShape UP_SHAPE = Block.createCuboidShape(0, 0, 0, 16, 1, 16);
+    private static final VoxelShape DOWN_SHAPE = Block.createCuboidShape(0, 15, 0, 16, 16, 16);
 
     public ImageFrameBlock(Settings settings) {
         super(settings);
@@ -33,19 +39,27 @@ public final class ImageFrameBlock extends HorizontalFacingBlock implements Bloc
     }
 
     @Override
-    protected MapCodec<? extends HorizontalFacingBlock> getCodec() {
+    protected MapCodec<? extends Block> getCodec() {
         return CODEC;
     }
 
     @Override
     public @Nullable BlockState getPlacementState(ItemPlacementContext context) {
-        return getDefaultState().with(FACING, context.getHorizontalPlayerFacing().getOpposite());
+        // The clicked face becomes the visible side of the image. This makes the frame
+        // sit naturally on walls, floors, and ceilings without needing a support block.
+        return getDefaultState().with(FACING, context.getSide());
     }
 
     @Override
     public VoxelShape getOutlineShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context) {
-        Direction facing = state.get(FACING);
-        return facing == Direction.EAST || facing == Direction.WEST ? EAST_WEST : NORTH_SOUTH;
+        return switch (state.get(FACING)) {
+            case NORTH -> NORTH_SHAPE;
+            case SOUTH -> SOUTH_SHAPE;
+            case EAST -> EAST_SHAPE;
+            case WEST -> WEST_SHAPE;
+            case UP -> UP_SHAPE;
+            case DOWN -> DOWN_SHAPE;
+        };
     }
 
     @Override
