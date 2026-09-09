@@ -5,28 +5,19 @@ import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
 
 public final class NoteData {
-    public static final int MAX_TITLE_LENGTH = 80;
     public static final int MAX_BODY_LENGTH = 8192;
     private static final String ROOT_KEY = "KorimeSceneNote";
-    private static final String TITLE_KEY = "Title";
     private static final String BODY_KEY = "Body";
 
     private NoteData() { }
-
-    public static String getTitle(ItemStack stack) {
-        NbtCompound root = getRoot(stack);
-        return root == null ? "" : root.getString(TITLE_KEY);
-    }
 
     public static String getBody(ItemStack stack) {
         NbtCompound root = getRoot(stack);
         return root == null ? "" : root.getString(BODY_KEY);
     }
 
-    public static void set(ItemStack stack, String title, String body) {
-        NbtCompound root = getOrCreateRoot(stack);
-        root.putString(TITLE_KEY, trim(title, MAX_TITLE_LENGTH));
-        root.putString(BODY_KEY, trim(body, MAX_BODY_LENGTH));
+    public static void setBody(ItemStack stack, String body) {
+        getOrCreateRoot(stack).putString(BODY_KEY, trim(body, MAX_BODY_LENGTH));
     }
 
     private static NbtCompound getRoot(ItemStack stack) {
