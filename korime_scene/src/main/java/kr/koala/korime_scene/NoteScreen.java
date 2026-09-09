@@ -58,12 +58,6 @@ public final class NoteScreen extends Screen {
     }
 
     @Override
-    public void tick() {
-        if (titleField != null) titleField.tick();
-        if (bodyBox != null) bodyBox.tick();
-    }
-
-    @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         renderBackground(context, mouseX, mouseY, delta);
         int panelWidth = Math.min(420, width - 30);
