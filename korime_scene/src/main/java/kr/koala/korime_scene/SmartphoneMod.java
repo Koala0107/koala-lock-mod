@@ -15,9 +15,11 @@ import net.minecraft.registry.Registry;
 import net.minecraft.sound.BlockSoundGroup;
 import net.minecraft.util.Hand;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.math.BlockPos;
 
 public final class SmartphoneMod implements ModInitializer {
     public static final Identifier SAVE_PACKET = new Identifier(KorimeSceneMod.MOD_ID, "smartphone_save");
+    public static final Identifier BREAK_PACKET = new Identifier(KorimeSceneMod.MOD_ID, "smartphone_break");
 
     public static final Block SMARTPHONE_BLOCK = Registry.register(
             Registries.BLOCK,
@@ -57,15 +59,26 @@ public final class SmartphoneMod implements ModInitializer {
 
                     server.execute(() -> {
                         ItemStack stack = player.getStackInHand(hand);
-                        if (!stack.isOf(SMARTPHONE)) {
-                            return;
-                        }
-                        // A finalized phone is immutable, like a signed written book.
-                        if (SmartphoneData.fromStack(stack).finalized()) {
-                            return;
-                        }
+                        if (!stack.isOf(SMARTPHONE)) return;
+                        if (SmartphoneData.fromStack(stack).finalized()) return;
                         data.writeTo(stack);
                         player.currentScreenHandler.sendContentUpdates();
+                    });
+                });
+
+        ServerPlayNetworking.registerGlobalReceiver(BREAK_PACKET,
+                (server, player, handler, buf, responseSender) -> {
+                    final BlockPos pos;
+                    try {
+                        pos = buf.readBlockPos();
+                    } catch (RuntimeException ignored) {
+                        return;
+                    }
+
+                    server.execute(() -> {
+                        if (!player.getWorld().getBlockState(pos).isOf(SMARTPHONE_BLOCK)) return;
+                        if (player.squaredDistanceTo(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5) > 64.0) return;
+                        player.getWorld().breakBlock(pos, true, player);
                     });
                 });
     }
