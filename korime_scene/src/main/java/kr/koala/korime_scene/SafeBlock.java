@@ -8,7 +8,6 @@ import net.minecraft.block.HorizontalFacingBlock;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemPlacementContext;
-import net.minecraft.screen.NamedScreenHandlerFactory;
 import net.minecraft.state.StateManager;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.BlockMirror;
@@ -29,10 +28,7 @@ public final class SafeBlock extends HorizontalFacingBlock implements BlockEntit
         setDefaultState(getStateManager().getDefaultState().with(FACING, Direction.NORTH));
     }
 
-    @Override
-    protected MapCodec<? extends HorizontalFacingBlock> getCodec() {
-        return CODEC;
-    }
+    @Override protected MapCodec<? extends HorizontalFacingBlock> getCodec() { return CODEC; }
 
     @Override
     public @Nullable BlockState getPlacementState(ItemPlacementContext context) {
@@ -41,12 +37,7 @@ public final class SafeBlock extends HorizontalFacingBlock implements BlockEntit
 
     @Override
     public ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockHitResult hit) {
-        if (!world.isClient) {
-            BlockEntity blockEntity = world.getBlockEntity(pos);
-            if (blockEntity instanceof NamedScreenHandlerFactory factory) {
-                player.openHandledScreen(factory);
-            }
-        }
+        // Client opens the setup/dial screen. Inventory is opened only after server-side validation.
         return ActionResult.SUCCESS;
     }
 
@@ -61,23 +52,8 @@ public final class SafeBlock extends HorizontalFacingBlock implements BlockEntit
         }
     }
 
-    @Override
-    public @Nullable BlockEntity createBlockEntity(BlockPos pos, BlockState state) {
-        return new SafeBlockEntity(pos, state);
-    }
-
-    @Override
-    public BlockState rotate(BlockState state, BlockRotation rotation) {
-        return state.with(FACING, rotation.rotate(state.get(FACING)));
-    }
-
-    @Override
-    public BlockState mirror(BlockState state, BlockMirror mirror) {
-        return state.rotate(mirror.getRotation(state.get(FACING)));
-    }
-
-    @Override
-    protected void appendProperties(StateManager.Builder<Block, BlockState> builder) {
-        builder.add(FACING);
-    }
+    @Override public @Nullable BlockEntity createBlockEntity(BlockPos pos, BlockState state) { return new SafeBlockEntity(pos, state); }
+    @Override public BlockState rotate(BlockState state, BlockRotation rotation) { return state.with(FACING, rotation.rotate(state.get(FACING))); }
+    @Override public BlockState mirror(BlockState state, BlockMirror mirror) { return state.rotate(mirror.getRotation(state.get(FACING))); }
+    @Override protected void appendProperties(StateManager.Builder<Block, BlockState> builder) { builder.add(FACING); }
 }
