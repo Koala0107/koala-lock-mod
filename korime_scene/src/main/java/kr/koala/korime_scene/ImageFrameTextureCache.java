@@ -36,7 +36,7 @@ public final class ImageFrameTextureCache {
     }
 
     private static void loadAsync(String url) {
-        Thread.startVirtualThread(() -> {
+        Thread worker = new Thread(() -> {
             try {
                 URI uri = URI.create(url.trim());
                 String scheme = uri.getScheme();
@@ -70,6 +70,8 @@ public final class ImageFrameTextureCache {
             } catch (Throwable ignored) {
             }
             LOADING.remove(url);
-        });
+        }, "korime-scene-image-loader");
+        worker.setDaemon(true);
+        worker.start();
     }
 }
