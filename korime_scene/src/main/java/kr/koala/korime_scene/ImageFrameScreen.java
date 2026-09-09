@@ -66,7 +66,7 @@ public final class ImageFrameScreen extends Screen {
         buf.writeString(urlField.getText(), ImageFrameBlockEntity.MAX_URL_LENGTH);
         buf.writeByte(w);
         buf.writeByte(h);
-        ClientPlayNetworking.send(SceneToolsMod.IMAGE_FRAME_SAVE_PACKET, buf);
+        ClientPlayNetworking.send(ImageFrameMod.SAVE_PACKET, buf);
         close();
     }
 
