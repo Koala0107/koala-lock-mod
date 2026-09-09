@@ -20,17 +20,15 @@ public final class ImageFrameBlockEntityRenderer implements BlockEntityRenderer<
         ImageFrameTextureCache.TextureInfo texture = ImageFrameTextureCache.getInfo(frame.getImageUrl());
         if (texture == null) return;
 
-        Direction facing = frame.getCachedState().get(ImageFrameBlock.FACING);
         float frameWidth = frame.getFrameWidth();
         float frameHeight = frame.getFrameHeight();
         ImageFrameAlignment alignment = frame.getAlignment();
 
         float imageAspect = texture.width() / (float) texture.height();
         float frameAspect = frameWidth / frameHeight;
-
         float drawWidth;
         float drawHeight;
-        if (imageAspect > frameAspect) {
+        if (imageAspect >= frameAspect) {
             drawWidth = frameWidth;
             drawHeight = frameWidth / imageAspect;
         } else {
@@ -38,99 +36,75 @@ public final class ImageFrameBlockEntityRenderer implements BlockEntityRenderer<
             drawWidth = frameHeight * imageAspect;
         }
 
-        float left = (frameWidth - drawWidth) * alignment.getHorizontal();
-        float bottom = (frameHeight - drawHeight) * alignment.getVertical();
+        // Alignment is the anchor point of the entire configured image area around the
+        // one placed block. This makes every direction visibly move the image even when
+        // the image itself perfectly fills the configured width/height ratio.
+        float frameLeft = -frameWidth * alignment.getHorizontal();
+        float frameBottom = -frameHeight * alignment.getVertical();
+        float imageLeft = frameLeft + (frameWidth - drawWidth) * 0.5F;
+        float imageBottom = frameBottom + (frameHeight - drawHeight) * 0.5F;
 
         VertexConsumer vc = vertexConsumers.getBuffer(RenderLayer.getEntityCutoutNoCull(texture.id()));
         MatrixStack.Entry entry = matrices.peek();
-        Matrix4f position = entry.getPositionMatrix();
-        Matrix3f normal = entry.getNormalMatrix();
+        Matrix4f p = entry.getPositionMatrix();
+        Matrix3f n = entry.getNormalMatrix();
+        Direction facing = frame.getCachedState().get(ImageFrameBlock.FACING);
 
         switch (facing) {
-            case SOUTH -> drawWallZ(vc, position, normal, frameWidth, drawWidth, drawHeight,
-                    left, bottom, 0.01F, true, light);
-            case NORTH -> drawWallZ(vc, position, normal, frameWidth, drawWidth, drawHeight,
-                    left, bottom, 0.99F, false, light);
-            case EAST -> drawWallX(vc, position, normal, frameWidth, drawWidth, drawHeight,
-                    left, bottom, 0.01F, true, light);
-            case WEST -> drawWallX(vc, position, normal, frameWidth, drawWidth, drawHeight,
-                    left, bottom, 0.99F, false, light);
-            case UP -> drawFloor(vc, position, normal, frameWidth, frameHeight, drawWidth, drawHeight,
-                    left, bottom, 0.01F, true, light);
-            case DOWN -> drawFloor(vc, position, normal, frameWidth, frameHeight, drawWidth, drawHeight,
-                    left, bottom, 0.99F, false, light);
+            case SOUTH -> drawQuad(vc, p, n,
+                    0.5F, 0.5F, 0.01F,
+                    1, 0, 0, 0, 1, 0, 0, 0, 1,
+                    imageLeft, imageBottom, drawWidth, drawHeight, light);
+            case NORTH -> drawQuad(vc, p, n,
+                    0.5F, 0.5F, 0.99F,
+                    -1, 0, 0, 0, 1, 0, 0, 0, -1,
+                    imageLeft, imageBottom, drawWidth, drawHeight, light);
+            case EAST -> drawQuad(vc, p, n,
+                    0.01F, 0.5F, 0.5F,
+                    0, 0, -1, 0, 1, 0, 1, 0, 0,
+                    imageLeft, imageBottom, drawWidth, drawHeight, light);
+            case WEST -> drawQuad(vc, p, n,
+                    0.99F, 0.5F, 0.5F,
+                    0, 0, 1, 0, 1, 0, -1, 0, 0,
+                    imageLeft, imageBottom, drawWidth, drawHeight, light);
+            case UP -> drawQuad(vc, p, n,
+                    0.5F, 0.01F, 0.5F,
+                    1, 0, 0, 0, 0, -1, 0, 1, 0,
+                    imageLeft, imageBottom, drawWidth, drawHeight, light);
+            case DOWN -> drawQuad(vc, p, n,
+                    0.5F, 0.99F, 0.5F,
+                    1, 0, 0, 0, 0, 1, 0, -1, 0,
+                    imageLeft, imageBottom, drawWidth, drawHeight, light);
         }
     }
 
-    private static void drawWallZ(VertexConsumer vc, Matrix4f p, Matrix3f n,
-                                  float frameWidth, float drawWidth, float drawHeight,
-                                  float left, float bottom,
-                                  float z, boolean south, int light) {
-        float frameX0 = 0.5F - frameWidth * 0.5F;
-        float x0 = frameX0 + left;
-        float x1 = x0 + drawWidth;
-        float y0 = bottom;
-        float y1 = y0 + drawHeight;
-        float nz = south ? 1F : -1F;
-        if (south) {
-            vertex(vc, p, n, x0, y1, z, 0, 0, 0, 0, nz, light);
-            vertex(vc, p, n, x0, y0, z, 0, 1, 0, 0, nz, light);
-            vertex(vc, p, n, x1, y0, z, 1, 1, 0, 0, nz, light);
-            vertex(vc, p, n, x1, y1, z, 1, 0, 0, 0, nz, light);
-        } else {
-            vertex(vc, p, n, x1, y1, z, 0, 0, 0, 0, nz, light);
-            vertex(vc, p, n, x1, y0, z, 0, 1, 0, 0, nz, light);
-            vertex(vc, p, n, x0, y0, z, 1, 1, 0, 0, nz, light);
-            vertex(vc, p, n, x0, y1, z, 1, 0, 0, 0, nz, light);
-        }
-    }
+    private static void drawQuad(VertexConsumer vc, Matrix4f p, Matrix3f n,
+                                 float cx, float cy, float cz,
+                                 float rx, float ry, float rz,
+                                 float ux, float uy, float uz,
+                                 float nx, float ny, float nz,
+                                 float left, float bottom, float width, float height,
+                                 int light) {
+        float right = left + width;
+        float top = bottom + height;
 
-    private static void drawWallX(VertexConsumer vc, Matrix4f p, Matrix3f n,
-                                  float frameWidth, float drawWidth, float drawHeight,
-                                  float left, float bottom,
-                                  float x, boolean east, int light) {
-        float frameZ0 = 0.5F - frameWidth * 0.5F;
-        float z0 = frameZ0 + left;
-        float z1 = z0 + drawWidth;
-        float y0 = bottom;
-        float y1 = y0 + drawHeight;
-        float nx = east ? 1F : -1F;
-        if (east) {
-            vertex(vc, p, n, x, y1, z1, 0, 0, nx, 0, 0, light);
-            vertex(vc, p, n, x, y0, z1, 0, 1, nx, 0, 0, light);
-            vertex(vc, p, n, x, y0, z0, 1, 1, nx, 0, 0, light);
-            vertex(vc, p, n, x, y1, z0, 1, 0, nx, 0, 0, light);
-        } else {
-            vertex(vc, p, n, x, y1, z0, 0, 0, nx, 0, 0, light);
-            vertex(vc, p, n, x, y0, z0, 0, 1, nx, 0, 0, light);
-            vertex(vc, p, n, x, y0, z1, 1, 1, nx, 0, 0, light);
-            vertex(vc, p, n, x, y1, z1, 1, 0, nx, 0, 0, light);
-        }
-    }
+        float tlx = cx + rx * left + ux * top;
+        float tly = cy + ry * left + uy * top;
+        float tlz = cz + rz * left + uz * top;
+        float blx = cx + rx * left + ux * bottom;
+        float bly = cy + ry * left + uy * bottom;
+        float blz = cz + rz * left + uz * bottom;
+        float brx = cx + rx * right + ux * bottom;
+        float bry = cy + ry * right + uy * bottom;
+        float brz = cz + rz * right + uz * bottom;
+        float trx = cx + rx * right + ux * top;
+        float try_ = cy + ry * right + uy * top;
+        float trz = cz + rz * right + uz * top;
 
-    private static void drawFloor(VertexConsumer vc, Matrix4f p, Matrix3f n,
-                                  float frameWidth, float frameDepth,
-                                  float drawWidth, float drawDepth,
-                                  float left, float bottom,
-                                  float y, boolean up, int light) {
-        float frameX0 = 0.5F - frameWidth * 0.5F;
-        float frameZ0 = 0.5F - frameDepth * 0.5F;
-        float x0 = frameX0 + left;
-        float x1 = x0 + drawWidth;
-        float z0 = frameZ0 + bottom;
-        float z1 = z0 + drawDepth;
-        float ny = up ? 1F : -1F;
-        if (up) {
-            vertex(vc, p, n, x0, y, z0, 0, 0, 0, ny, 0, light);
-            vertex(vc, p, n, x0, y, z1, 0, 1, 0, ny, 0, light);
-            vertex(vc, p, n, x1, y, z1, 1, 1, 0, ny, 0, light);
-            vertex(vc, p, n, x1, y, z0, 1, 0, 0, ny, 0, light);
-        } else {
-            vertex(vc, p, n, x0, y, z1, 0, 0, 0, ny, 0, light);
-            vertex(vc, p, n, x0, y, z0, 0, 1, 0, ny, 0, light);
-            vertex(vc, p, n, x1, y, z0, 1, 1, 0, ny, 0, light);
-            vertex(vc, p, n, x1, y, z1, 1, 0, 0, ny, 0, light);
-        }
+        vertex(vc, p, n, tlx, tly, tlz, 0, 0, nx, ny, nz, light);
+        vertex(vc, p, n, blx, bly, blz, 0, 1, nx, ny, nz, light);
+        vertex(vc, p, n, brx, bry, brz, 1, 1, nx, ny, nz, light);
+        vertex(vc, p, n, trx, try_, trz, 1, 0, nx, ny, nz, light);
     }
 
     private static void vertex(VertexConsumer vc, Matrix4f p, Matrix3f n,
