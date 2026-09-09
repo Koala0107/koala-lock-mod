@@ -36,11 +36,11 @@ public final class ImageFrameBlockEntityRenderer implements BlockEntityRenderer<
             drawWidth = frameHeight * imageAspect;
         }
 
-        // Alignment is the anchor point of the entire configured image area around the
-        // one placed block. This makes every direction visibly move the image even when
-        // the image itself perfectly fills the configured width/height ratio.
-        float frameLeft = -frameWidth * alignment.getHorizontal();
-        float frameBottom = -frameHeight * alignment.getVertical();
+        // The selected alignment names describe where the image should sit relative to
+        // the placed anchor block. Keep the coordinates in the same visual direction
+        // as the Korean labels (left really is left, bottom really is bottom).
+        float frameLeft = -frameWidth * (1.0F - alignment.getHorizontal());
+        float frameBottom = -frameHeight * (1.0F - alignment.getVertical());
         float imageLeft = frameLeft + (frameWidth - drawWidth) * 0.5F;
         float imageBottom = frameBottom + (frameHeight - drawHeight) * 0.5F;
 
