@@ -20,6 +20,7 @@ public final class NoteScreen extends Screen {
     private WhiteEditBoxWidget bodyBox;
     private ButtonWidget previousButton;
     private ButtonWidget nextButton;
+    private ButtonWidget removePageButton;
     private ButtonWidget addPageButton;
     private int pageIndex;
 
@@ -47,6 +48,8 @@ public final class NoteScreen extends Screen {
                 .dimensions(x + 12, y + panelHeight - 28, 34, 18).build());
         nextButton = addDrawableChild(ButtonWidget.builder(Text.literal("▶"), b -> changePage(1))
                 .dimensions(x + 50, y + panelHeight - 28, 34, 18).build());
+        removePageButton = addDrawableChild(ButtonWidget.builder(Text.literal("페이지 제거"), b -> removePage())
+                .dimensions(x + 88, y + panelHeight - 28, 72, 18).build());
         addPageButton = addDrawableChild(ButtonWidget.builder(Text.literal("+ 페이지"), b -> addPage())
                 .dimensions(x + panelWidth - 84, y + panelHeight - 28, 72, 18).build());
 
@@ -86,9 +89,27 @@ public final class NoteScreen extends Screen {
         setFocused(bodyBox);
     }
 
+    private void removePage() {
+        if (pages.size() <= 1) return;
+
+        int removedIndex = pageIndex;
+        pages.remove(removedIndex);
+        if (pageIndex >= pages.size()) pageIndex = pages.size() - 1;
+
+        PacketByteBuf buf = PacketByteBufs.create();
+        buf.writeEnumConstant(hand);
+        buf.writeVarInt(removedIndex);
+        ClientPlayNetworking.send(EvidenceCollectionMod.NOTE_REMOVE_PAGE_PACKET, buf);
+
+        bodyBox.setText(pages.get(pageIndex));
+        updateButtons();
+        setFocused(bodyBox);
+    }
+
     private void updateButtons() {
         if (previousButton != null) previousButton.active = pageIndex > 0;
         if (nextButton != null) nextButton.active = pageIndex < pages.size() - 1;
+        if (removePageButton != null) removePageButton.active = pages.size() > 1;
         if (addPageButton != null) addPageButton.active = pages.size() < NoteData.MAX_PAGES;
     }
 
