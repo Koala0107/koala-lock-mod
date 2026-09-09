@@ -11,6 +11,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -18,7 +19,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class ImageFrameTextureCache {
     public record TextureInfo(Identifier id, int width, int height) { }
 
-    private static final int MAX_BYTES = 8 * 1024 * 1024;
+    private static final int MAX_BYTES = 16 * 1024 * 1024;
     private static final HttpClient HTTP = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(7))
             .followRedirects(HttpClient.Redirect.ALWAYS)
@@ -50,33 +51,36 @@ public final class ImageFrameTextureCache {
         return info == null ? null : info.id();
     }
 
-    private static void loadAsync(String url) {
+    private static void loadAsync(String cacheKey) {
         Thread worker = new Thread(() -> {
             NativeImage image = null;
             try {
-                URI uri = URI.create(url);
+                String downloadUrl = normalizeDownloadUrl(cacheKey);
+                URI uri = URI.create(downloadUrl);
                 String scheme = uri.getScheme();
                 if (scheme == null || !(scheme.equalsIgnoreCase("https") || scheme.equalsIgnoreCase("http"))) {
-                    scheduleRetry(url);
+                    scheduleRetry(cacheKey);
                     return;
                 }
 
                 HttpRequest request = HttpRequest.newBuilder(uri)
                         .timeout(Duration.ofSeconds(15))
-                        .header("User-Agent", "Mozilla/5.0 korime_scene-image-frame")
-                        .header("Accept", "image/avif,image/webp,image/apng,image/png,image/jpeg,image/*;q=0.8,*/*;q=0.5")
+                        .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/140 Safari/537.36")
+                        // NativeImage can decode PNG/JPEG but Discord's media proxy may return
+                        // WebP/AVIF, so prefer formats Minecraft can read directly.
+                        .header("Accept", "image/png,image/jpeg,image/*;q=0.8,*/*;q=0.5")
                         .GET()
                         .build();
 
                 HttpResponse<byte[]> response = HTTP.send(request, HttpResponse.BodyHandlers.ofByteArray());
                 if (response.statusCode() < 200 || response.statusCode() >= 300) {
-                    scheduleRetry(url);
+                    scheduleRetry(cacheKey);
                     return;
                 }
 
                 byte[] bytes = response.body();
                 if (bytes == null || bytes.length == 0 || bytes.length > MAX_BYTES) {
-                    scheduleRetry(url);
+                    scheduleRetry(cacheKey);
                     return;
                 }
 
@@ -84,7 +88,7 @@ public final class ImageFrameTextureCache {
                 if (image == null || image.getWidth() <= 0 || image.getHeight() <= 0
                         || image.getWidth() > 4096 || image.getHeight() > 4096) {
                     if (image != null) image.close();
-                    scheduleRetry(url);
+                    scheduleRetry(cacheKey);
                     return;
                 }
 
@@ -97,29 +101,50 @@ public final class ImageFrameTextureCache {
                     try {
                         NativeImageBackedTexture texture = new NativeImageBackedTexture(readyImage);
                         Identifier id = client.getTextureManager().registerDynamicTexture(
-                                "image_frame_" + Integer.toHexString(url.hashCode()), texture);
-                        CACHE.put(url, new TextureInfo(id, imageWidth, imageHeight));
-                        RETRY_AFTER.remove(url);
+                                "image_frame_" + Integer.toHexString(cacheKey.hashCode()), texture);
+                        CACHE.put(cacheKey, new TextureInfo(id, imageWidth, imageHeight));
+                        RETRY_AFTER.remove(cacheKey);
                     } catch (Throwable ignored) {
                         readyImage.close();
-                        scheduleRetry(url);
+                        scheduleRetry(cacheKey);
                     } finally {
-                        LOADING.remove(url);
+                        LOADING.remove(cacheKey);
                     }
                 });
                 return;
             } catch (Throwable ignored) {
                 if (image != null) image.close();
-                scheduleRetry(url);
+                scheduleRetry(cacheKey);
             } finally {
-                if (!CACHE.containsKey(url)) LOADING.remove(url);
+                if (!CACHE.containsKey(cacheKey)) LOADING.remove(cacheKey);
             }
         }, "korime-scene-image-loader");
         worker.setDaemon(true);
         worker.start();
     }
 
+    private static String normalizeDownloadUrl(String value) {
+        String url = value.trim();
+        try {
+            URI uri = URI.create(url);
+            String host = uri.getHost();
+            if (host != null && host.equalsIgnoreCase("media.discordapp.net")) {
+                // Discord media URLs often look like *.png?...&format=webp. The file name says
+                // PNG but the response is actually WebP, which NativeImage cannot decode.
+                // Keep Discord's signed ex/is/hm parameters intact and only request PNG output.
+                String lower = url.toLowerCase(Locale.ROOT);
+                if (lower.matches(".*[?&]format=[^&]*.*")) {
+                    url = url.replaceAll("(?i)([?&])format=[^&]*", "$1format=png");
+                } else {
+                    url += url.contains("?") ? "&format=png" : "?format=png";
+                }
+            }
+        } catch (RuntimeException ignored) {
+        }
+        return url;
+    }
+
     private static void scheduleRetry(String url) {
-        RETRY_AFTER.put(url, System.currentTimeMillis() + 5000L);
+        RETRY_AFTER.put(url, System.currentTimeMillis() + 3000L);
     }
 }
