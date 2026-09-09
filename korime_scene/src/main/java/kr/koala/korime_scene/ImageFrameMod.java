@@ -46,11 +46,13 @@ public final class ImageFrameMod implements ModInitializer {
                     final String url;
                     final int width;
                     final int height;
+                    final int alignmentId;
                     try {
                         pos = buf.readBlockPos();
                         url = buf.readString(ImageFrameBlockEntity.MAX_URL_LENGTH);
                         width = buf.readUnsignedByte();
                         height = buf.readUnsignedByte();
+                        alignmentId = buf.readUnsignedByte();
                     } catch (RuntimeException ignored) {
                         return;
                     }
@@ -62,7 +64,7 @@ public final class ImageFrameMod implements ModInitializer {
                         if (height < 1 || height > ImageFrameBlockEntity.MAX_SIZE) return;
                         if (!isAllowedUrl(url)) return;
                         if (!(player.getWorld().getBlockEntity(pos) instanceof ImageFrameBlockEntity frame)) return;
-                        frame.configure(url, width, height);
+                        frame.configure(url, width, height, ImageFrameAlignment.fromId(alignmentId));
                     });
                 });
     }
