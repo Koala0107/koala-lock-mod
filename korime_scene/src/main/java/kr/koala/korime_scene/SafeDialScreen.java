@@ -60,7 +60,6 @@ public final class SafeDialScreen extends Screen {
         return angle;
     }
 
-    /** Number currently under the fixed gold index at 12 o'clock. */
     private int currentNumber() {
         double turns = wrapAngle(-dialAngle) / TWO_PI;
         return Math.floorMod((int)Math.round(turns * 100.0), 100);
@@ -91,7 +90,9 @@ public final class SafeDialScreen extends Screen {
     private void finishStage() {
         if (stage >= 3 || absoluteDragTravel < MIN_STAGE_TRAVEL) return;
 
-        int actualDirection = signedDragTravel > 0 ? 1 : signedDragTravel < 0 ? -1 : 0;
+        // Minecraft GUI mouse coordinates run downward on Y, so the visual turn direction
+        // is opposite to the raw atan2 delta sign. Convert to what the player actually sees.
+        int actualDirection = signedDragTravel < 0 ? 1 : signedDragTravel > 0 ? -1 : 0;
         if (actualDirection != expectedDirection()) return;
 
         entered[stage] = currentNumber();
@@ -185,7 +186,6 @@ public final class SafeDialScreen extends Screen {
         fillCircle(context, centerX, centerY, outer - 5, 0xFF4A5057);
         fillCircle(context, centerX, centerY, inner, 0xFF171A1E);
 
-        // Clockwise visual order: 0, 10, 20 ... 90.
         for (int n = 0; n < 100; n++) {
             double a = n / 100.0 * TWO_PI - Math.PI / 2.0 + dialAngle;
             int len = n % 10 == 0 ? 12 : (n % 5 == 0 ? 9 : 5);
@@ -204,7 +204,6 @@ public final class SafeDialScreen extends Screen {
             context.drawText(textRenderer, Text.literal(s), tx - textRenderer.getWidth(s) / 2, ty - 4, 0xFFDFE2E5, false);
         }
 
-        // Fixed reading index.
         context.fill(centerX - 2, centerY - outer - 8, centerX + 3, centerY - outer + 8, 0xFFE5C04D);
         context.fill(centerX - 5, centerY - outer - 8, centerX + 6, centerY - outer - 5, 0xFFE5C04D);
 
