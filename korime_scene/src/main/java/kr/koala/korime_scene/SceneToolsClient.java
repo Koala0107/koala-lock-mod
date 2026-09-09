@@ -16,13 +16,24 @@ public final class SceneToolsClient implements ClientModInitializer {
 
         AttackBlockCallback.EVENT.register((player, world, hand, pos, direction) -> {
             if (!world.isClient) return ActionResult.PASS;
-            if (!world.getBlockState(pos).isOf(SceneToolsMod.EVIDENCE_MAGNIFIER)) return ActionResult.PASS;
 
             MinecraftClient client = MinecraftClient.getInstance();
-            if (client.currentScreen == null) {
+            if (client.currentScreen != null) return ActionResult.FAIL;
+
+            if (world.getBlockState(pos).isOf(SceneToolsMod.EVIDENCE_MAGNIFIER)) {
                 client.setScreen(new EvidenceBreakConfirmScreen(pos));
+                return ActionResult.FAIL;
             }
-            return ActionResult.FAIL;
+
+            if (world.getBlockState(pos).isOf(SceneToolsMod.CCTV)) {
+                client.setScreen(new StoredDataBreakConfirmScreen(
+                        pos,
+                        SceneToolsMod.CCTV_BREAK_PACKET,
+                        "저장된 CCTV 기록이 사라집니다."));
+                return ActionResult.FAIL;
+            }
+
+            return ActionResult.PASS;
         });
 
         UseBlockCallback.EVENT.register((player, world, hand, hit) -> {
@@ -32,11 +43,8 @@ public final class SceneToolsClient implements ClientModInitializer {
             if (client.currentScreen != null) return ActionResult.PASS;
 
             if (world.getBlockEntity(hit.getBlockPos()) instanceof SafeBlockEntity safe) {
-                if (safe.isCombinationSet()) {
-                    client.setScreen(new SafeDialScreen(hit.getBlockPos()));
-                } else {
-                    client.setScreen(new SafeSetupScreen(hit.getBlockPos()));
-                }
+                if (safe.isCombinationSet()) client.setScreen(new SafeDialScreen(hit.getBlockPos()));
+                else client.setScreen(new SafeSetupScreen(hit.getBlockPos()));
                 return ActionResult.SUCCESS;
             }
 
@@ -49,11 +57,8 @@ public final class SceneToolsClient implements ClientModInitializer {
             }
 
             if (world.getBlockEntity(hit.getBlockPos()) instanceof CctvBlockEntity cctv) {
-                if (cctv.isFinalized()) {
-                    client.setScreen(new CctvScreen(cctv.getRecords()));
-                } else {
-                    client.setScreen(new CctvEditorScreen(hit.getBlockPos(), cctv.getRecords()));
-                }
+                if (cctv.isFinalized()) client.setScreen(new CctvScreen(cctv.getRecords()));
+                else client.setScreen(new CctvEditorScreen(hit.getBlockPos(), cctv.getRecords()));
                 return ActionResult.SUCCESS;
             }
 
