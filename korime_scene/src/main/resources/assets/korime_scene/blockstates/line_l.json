@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=north": { "model": "korime_scene:block/line_l" },
+    "facing=east": { "model": "korime_scene:block/line_l", "y": 90 },
+    "facing=south": { "model": "korime_scene:block/line_l", "y": 180 },
+    "facing=west": { "model": "korime_scene:block/line_l", "y": 270 }
+  }
+}
