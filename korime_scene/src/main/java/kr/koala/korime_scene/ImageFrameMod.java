@@ -44,17 +44,19 @@ public final class ImageFrameMod implements ModInitializer {
                 (server, player, handler, buf, responseSender) -> {
                     final BlockPos pos;
                     final String url;
-                    final int width;
-                    final int height;
+                    final float width;
+                    final float height;
                     final int alignmentId;
                     final boolean flipHorizontal;
+                    final float rotationDegrees;
                     try {
                         pos = buf.readBlockPos();
                         url = buf.readString(ImageFrameBlockEntity.MAX_URL_LENGTH);
-                        width = buf.readUnsignedByte();
-                        height = buf.readUnsignedByte();
+                        width = buf.readFloat();
+                        height = buf.readFloat();
                         alignmentId = buf.readUnsignedByte();
                         flipHorizontal = buf.readBoolean();
+                        rotationDegrees = buf.readFloat();
                     } catch (RuntimeException ignored) {
                         return;
                     }
@@ -62,11 +64,12 @@ public final class ImageFrameMod implements ModInitializer {
                     server.execute(() -> {
                         if (!player.getWorld().getBlockState(pos).isOf(IMAGE_FRAME)) return;
                         if (player.squaredDistanceTo(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5) > 64.0) return;
-                        if (width < 1 || width > ImageFrameBlockEntity.MAX_SIZE) return;
-                        if (height < 1 || height > ImageFrameBlockEntity.MAX_SIZE) return;
+                        if (!Float.isFinite(width) || width < ImageFrameBlockEntity.MIN_SIZE || width > ImageFrameBlockEntity.MAX_SIZE) return;
+                        if (!Float.isFinite(height) || height < ImageFrameBlockEntity.MIN_SIZE || height > ImageFrameBlockEntity.MAX_SIZE) return;
+                        if (!Float.isFinite(rotationDegrees)) return;
                         if (!isAllowedUrl(url)) return;
                         if (!(player.getWorld().getBlockEntity(pos) instanceof ImageFrameBlockEntity frame)) return;
-                        frame.configure(url, width, height, ImageFrameAlignment.fromId(alignmentId), flipHorizontal);
+                        frame.configure(url, width, height, ImageFrameAlignment.fromId(alignmentId), flipHorizontal, rotationDegrees);
                     });
                 });
     }
