@@ -36,13 +36,13 @@ public final class ImageFrameBlockEntityRenderer implements BlockEntityRenderer<
             drawWidth = frameHeight * imageAspect;
         }
 
-        // The selected alignment names describe where the image should sit relative to
-        // the placed anchor block. Keep the coordinates in the same visual direction
-        // as the Korean labels (left really is left, bottom really is bottom).
         float frameLeft = -frameWidth * (1.0F - alignment.getHorizontal());
         float frameBottom = -frameHeight * (1.0F - alignment.getVertical());
         float imageLeft = frameLeft + (frameWidth - drawWidth) * 0.5F;
         float imageBottom = frameBottom + (frameHeight - drawHeight) * 0.5F;
+
+        float uLeft = frame.isFlipHorizontal() ? 1.0F : 0.0F;
+        float uRight = frame.isFlipHorizontal() ? 0.0F : 1.0F;
 
         VertexConsumer vc = vertexConsumers.getBuffer(RenderLayer.getEntityCutoutNoCull(texture.id()));
         MatrixStack.Entry entry = matrices.peek();
@@ -54,27 +54,27 @@ public final class ImageFrameBlockEntityRenderer implements BlockEntityRenderer<
             case SOUTH -> drawQuad(vc, p, n,
                     0.5F, 0.5F, 0.01F,
                     1, 0, 0, 0, 1, 0, 0, 0, 1,
-                    imageLeft, imageBottom, drawWidth, drawHeight, light);
+                    imageLeft, imageBottom, drawWidth, drawHeight, uLeft, uRight, light);
             case NORTH -> drawQuad(vc, p, n,
                     0.5F, 0.5F, 0.99F,
                     -1, 0, 0, 0, 1, 0, 0, 0, -1,
-                    imageLeft, imageBottom, drawWidth, drawHeight, light);
+                    imageLeft, imageBottom, drawWidth, drawHeight, uLeft, uRight, light);
             case EAST -> drawQuad(vc, p, n,
                     0.01F, 0.5F, 0.5F,
                     0, 0, -1, 0, 1, 0, 1, 0, 0,
-                    imageLeft, imageBottom, drawWidth, drawHeight, light);
+                    imageLeft, imageBottom, drawWidth, drawHeight, uLeft, uRight, light);
             case WEST -> drawQuad(vc, p, n,
                     0.99F, 0.5F, 0.5F,
                     0, 0, 1, 0, 1, 0, -1, 0, 0,
-                    imageLeft, imageBottom, drawWidth, drawHeight, light);
+                    imageLeft, imageBottom, drawWidth, drawHeight, uLeft, uRight, light);
             case UP -> drawQuad(vc, p, n,
                     0.5F, 0.01F, 0.5F,
                     1, 0, 0, 0, 0, -1, 0, 1, 0,
-                    imageLeft, imageBottom, drawWidth, drawHeight, light);
+                    imageLeft, imageBottom, drawWidth, drawHeight, uLeft, uRight, light);
             case DOWN -> drawQuad(vc, p, n,
                     0.5F, 0.99F, 0.5F,
                     1, 0, 0, 0, 0, 1, 0, -1, 0,
-                    imageLeft, imageBottom, drawWidth, drawHeight, light);
+                    imageLeft, imageBottom, drawWidth, drawHeight, uLeft, uRight, light);
         }
     }
 
@@ -84,7 +84,7 @@ public final class ImageFrameBlockEntityRenderer implements BlockEntityRenderer<
                                  float ux, float uy, float uz,
                                  float nx, float ny, float nz,
                                  float left, float bottom, float width, float height,
-                                 int light) {
+                                 float uLeft, float uRight, int light) {
         float right = left + width;
         float top = bottom + height;
 
@@ -101,10 +101,10 @@ public final class ImageFrameBlockEntityRenderer implements BlockEntityRenderer<
         float try_ = cy + ry * right + uy * top;
         float trz = cz + rz * right + uz * top;
 
-        vertex(vc, p, n, tlx, tly, tlz, 0, 0, nx, ny, nz, light);
-        vertex(vc, p, n, blx, bly, blz, 0, 1, nx, ny, nz, light);
-        vertex(vc, p, n, brx, bry, brz, 1, 1, nx, ny, nz, light);
-        vertex(vc, p, n, trx, try_, trz, 1, 0, nx, ny, nz, light);
+        vertex(vc, p, n, tlx, tly, tlz, uLeft, 0, nx, ny, nz, light);
+        vertex(vc, p, n, blx, bly, blz, uLeft, 1, nx, ny, nz, light);
+        vertex(vc, p, n, brx, bry, brz, uRight, 1, nx, ny, nz, light);
+        vertex(vc, p, n, trx, try_, trz, uRight, 0, nx, ny, nz, light);
     }
 
     private static void vertex(VertexConsumer vc, Matrix4f p, Matrix3f n,
