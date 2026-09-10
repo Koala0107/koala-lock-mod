@@ -43,6 +43,7 @@ public final class ImageFrameBlockEntityRenderer implements BlockEntityRenderer<
 
         float uLeft = frame.isFlipHorizontal() ? 1.0F : 0.0F;
         float uRight = frame.isFlipHorizontal() ? 0.0F : 1.0F;
+        float rotation = frame.getRotationDegrees();
 
         VertexConsumer vc = vertexConsumers.getBuffer(RenderLayer.getEntityCutoutNoCull(texture.id()));
         MatrixStack.Entry entry = matrices.peek();
@@ -54,27 +55,27 @@ public final class ImageFrameBlockEntityRenderer implements BlockEntityRenderer<
             case SOUTH -> drawQuad(vc, p, n,
                     0.5F, 0.5F, 0.01F,
                     1, 0, 0, 0, 1, 0, 0, 0, 1,
-                    imageLeft, imageBottom, drawWidth, drawHeight, uLeft, uRight, light);
+                    imageLeft, imageBottom, drawWidth, drawHeight, uLeft, uRight, rotation, light);
             case NORTH -> drawQuad(vc, p, n,
                     0.5F, 0.5F, 0.99F,
                     -1, 0, 0, 0, 1, 0, 0, 0, -1,
-                    imageLeft, imageBottom, drawWidth, drawHeight, uLeft, uRight, light);
+                    imageLeft, imageBottom, drawWidth, drawHeight, uLeft, uRight, rotation, light);
             case EAST -> drawQuad(vc, p, n,
                     0.01F, 0.5F, 0.5F,
                     0, 0, -1, 0, 1, 0, 1, 0, 0,
-                    imageLeft, imageBottom, drawWidth, drawHeight, uLeft, uRight, light);
+                    imageLeft, imageBottom, drawWidth, drawHeight, uLeft, uRight, rotation, light);
             case WEST -> drawQuad(vc, p, n,
                     0.99F, 0.5F, 0.5F,
                     0, 0, 1, 0, 1, 0, -1, 0, 0,
-                    imageLeft, imageBottom, drawWidth, drawHeight, uLeft, uRight, light);
+                    imageLeft, imageBottom, drawWidth, drawHeight, uLeft, uRight, rotation, light);
             case UP -> drawQuad(vc, p, n,
                     0.5F, 0.01F, 0.5F,
                     1, 0, 0, 0, 0, -1, 0, 1, 0,
-                    imageLeft, imageBottom, drawWidth, drawHeight, uLeft, uRight, light);
+                    imageLeft, imageBottom, drawWidth, drawHeight, uLeft, uRight, rotation, light);
             case DOWN -> drawQuad(vc, p, n,
                     0.5F, 0.99F, 0.5F,
                     1, 0, 0, 0, 0, 1, 0, -1, 0,
-                    imageLeft, imageBottom, drawWidth, drawHeight, uLeft, uRight, light);
+                    imageLeft, imageBottom, drawWidth, drawHeight, uLeft, uRight, rotation, light);
         }
     }
 
@@ -84,27 +85,42 @@ public final class ImageFrameBlockEntityRenderer implements BlockEntityRenderer<
                                  float ux, float uy, float uz,
                                  float nx, float ny, float nz,
                                  float left, float bottom, float width, float height,
-                                 float uLeft, float uRight, int light) {
+                                 float uLeft, float uRight, float rotationDegrees, int light) {
         float right = left + width;
         float top = bottom + height;
+        float centerX = left + width * 0.5F;
+        float centerY = bottom + height * 0.5F;
 
-        float tlx = cx + rx * left + ux * top;
-        float tly = cy + ry * left + uy * top;
-        float tlz = cz + rz * left + uz * top;
-        float blx = cx + rx * left + ux * bottom;
-        float bly = cy + ry * left + uy * bottom;
-        float blz = cz + rz * left + uz * bottom;
-        float brx = cx + rx * right + ux * bottom;
-        float bry = cy + ry * right + uy * bottom;
-        float brz = cz + rz * right + uz * bottom;
-        float trx = cx + rx * right + ux * top;
-        float try_ = cy + ry * right + uy * top;
-        float trz = cz + rz * right + uz * top;
+        double radians = Math.toRadians(rotationDegrees);
+        float cos = (float) Math.cos(radians);
+        float sin = (float) Math.sin(radians);
 
-        vertex(vc, p, n, tlx, tly, tlz, uLeft, 0, nx, ny, nz, light);
-        vertex(vc, p, n, blx, bly, blz, uLeft, 1, nx, ny, nz, light);
-        vertex(vc, p, n, brx, bry, brz, uRight, 1, nx, ny, nz, light);
-        vertex(vc, p, n, trx, try_, trz, uRight, 0, nx, ny, nz, light);
+        float[] tl = rotate(left, top, centerX, centerY, cos, sin);
+        float[] bl = rotate(left, bottom, centerX, centerY, cos, sin);
+        float[] br = rotate(right, bottom, centerX, centerY, cos, sin);
+        float[] tr = rotate(right, top, centerX, centerY, cos, sin);
+
+        vertex(vc, p, n,
+                cx + rx * tl[0] + ux * tl[1], cy + ry * tl[0] + uy * tl[1], cz + rz * tl[0] + uz * tl[1],
+                uLeft, 0, nx, ny, nz, light);
+        vertex(vc, p, n,
+                cx + rx * bl[0] + ux * bl[1], cy + ry * bl[0] + uy * bl[1], cz + rz * bl[0] + uz * bl[1],
+                uLeft, 1, nx, ny, nz, light);
+        vertex(vc, p, n,
+                cx + rx * br[0] + ux * br[1], cy + ry * br[0] + uy * br[1], cz + rz * br[0] + uz * br[1],
+                uRight, 1, nx, ny, nz, light);
+        vertex(vc, p, n,
+                cx + rx * tr[0] + ux * tr[1], cy + ry * tr[0] + uy * tr[1], cz + rz * tr[0] + uz * tr[1],
+                uRight, 0, nx, ny, nz, light);
+    }
+
+    private static float[] rotate(float x, float y, float cx, float cy, float cos, float sin) {
+        float dx = x - cx;
+        float dy = y - cy;
+        return new float[] {
+                cx + dx * cos - dy * sin,
+                cy + dx * sin + dy * cos
+        };
     }
 
     private static void vertex(VertexConsumer vc, Matrix4f p, Matrix3f n,
