@@ -27,7 +27,8 @@ public final class ImageFrameClient implements ClientModInitializer {
                     frame.getFrameWidth(),
                     frame.getFrameHeight(),
                     frame.getAlignment(),
-                    frame.isFlipHorizontal()));
+                    frame.isFlipHorizontal(),
+                    frame.getRotationDegrees()));
             return ActionResult.SUCCESS;
         });
     }
