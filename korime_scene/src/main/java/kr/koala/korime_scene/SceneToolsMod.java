@@ -194,11 +194,15 @@ public final class SceneToolsMod implements ModInitializer {
                 (server, player, handler, buf, responseSender) -> {
                     final BlockPos editorPos;
                     final String name;
-                    final String description;
+                    final String firstLine;
+                    final String secondLine;
+                    final String thirdLine;
                     try {
                         editorPos = buf.readBlockPos();
                         name = buf.readString(128);
-                        description = buf.readString(512);
+                        firstLine = buf.readString(512);
+                        secondLine = buf.readString(512);
+                        thirdLine = buf.readString(512);
                     } catch (RuntimeException ignored) { return; }
                     server.execute(() -> {
                         if (!player.getWorld().getBlockState(editorPos).isOf(ITEM_EDITOR)) return;
@@ -206,23 +210,30 @@ public final class SceneToolsMod implements ModInitializer {
                         ItemStack stack = player.getMainHandStack();
                         if (stack.isEmpty()) return;
                         String cleanName = name.trim();
-                        String cleanDescription = description.trim();
                         if (cleanName.isEmpty()) stack.removeCustomName();
                         else stack.setCustomName(net.minecraft.text.Text.literal(cleanName));
+
                         NbtCompound root = stack.getOrCreateNbt();
                         NbtCompound display = root.contains("display", 10) ? root.getCompound("display") : new NbtCompound();
-                        if (cleanDescription.isEmpty()) display.remove("Lore");
-                        else {
-                            NbtList lore = new NbtList();
-                            String json = "{\"text\":\"" + escapeJson(cleanDescription) + "\",\"color\":\"light_purple\",\"italic\":false}";
-                            lore.add(NbtString.of(json));
-                            display.put("Lore", lore);
-                        }
+                        NbtList lore = new NbtList();
+                        addLoreLine(lore, firstLine);
+                        addLoreLine(lore, secondLine);
+                        addLoreLine(lore, thirdLine);
+                        if (lore.isEmpty()) display.remove("Lore");
+                        else display.put("Lore", lore);
+
                         if (display.isEmpty()) root.remove("display");
                         else root.put("display", display);
                         player.currentScreenHandler.sendContentUpdates();
                     });
                 });
+    }
+
+    private static void addLoreLine(NbtList lore, String value) {
+        String clean = value == null ? "" : value.trim();
+        if (clean.isEmpty()) return;
+        String json = "{\"text\":\"" + escapeJson(clean) + "\",\"color\":\"light_purple\",\"italic\":false}";
+        lore.add(NbtString.of(json));
     }
 
     private static void breakValidated(net.minecraft.server.network.ServerPlayerEntity player, BlockPos pos, Block block) {
