@@ -23,6 +23,11 @@ public final class BoundaryLineMod implements ModInitializer {
             "하얀선 모서리",
             new BoundaryCornerBlock(settings())
     );
+    public static final Block L_CORNER = register(
+            "line_l",
+            "하얀선(L자)",
+            new BoundaryCornerBlock(settings())
+    );
 
     private static Block register(String id, String displayName) {
         return register(id, displayName, new BoundaryLineBlock(settings()));
@@ -58,6 +63,7 @@ public final class BoundaryLineMod implements ModInitializer {
             entries.add(HORIZONTAL);
             entries.add(VERTICAL);
             entries.add(CORNER);
+            entries.add(L_CORNER);
         });
     }
 
