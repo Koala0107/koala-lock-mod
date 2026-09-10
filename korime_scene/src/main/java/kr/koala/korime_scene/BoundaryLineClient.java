@@ -11,7 +11,8 @@ public final class BoundaryLineClient implements ClientModInitializer {
                 RenderLayer.getCutout(),
                 BoundaryLineMod.HORIZONTAL,
                 BoundaryLineMod.VERTICAL,
-                BoundaryLineMod.CORNER
+                BoundaryLineMod.CORNER,
+                BoundaryLineMod.L_CORNER
         );
     }
 }
