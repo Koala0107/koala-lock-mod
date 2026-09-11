@@ -20,6 +20,7 @@ public final class KorimeSceneItemGroup implements ModInitializer {
                         entries.add(KorimeSceneMod.LOCK_KEY);
                         entries.add(KorimeSceneMod.KEYPAD);
                         entries.add(SmartphoneMod.SMARTPHONE);
+                        entries.add(BicycleMod.BICYCLE_ITEM);
                         for (var item : EvidenceMarkerMod.ITEMS) entries.add(item);
                         entries.add(DetectiveItemsMod.DETECTIVE_HELMET);
                         entries.add(DetectiveItemsMod.DETECTIVE_CHESTPLATE);
