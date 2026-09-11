@@ -23,6 +23,7 @@
       "kr.koala.korime_scene.ImageFrameMod",
       "kr.koala.korime_scene.EvidenceCollectionMod",
       "kr.koala.korime_scene.MapBlockMod",
+      "kr.koala.korime_scene.BicycleMod",
       "kr.koala.korime_scene.KorimeSceneItemGroup"
     ],
     "client": [
@@ -32,7 +33,8 @@
       "kr.koala.korime_scene.BoundaryLineClient",
       "kr.koala.korime_scene.SceneToolsClient",
       "kr.koala.korime_scene.ImageFrameClient",
-      "kr.koala.korime_scene.EvidenceCollectionClient"
+      "kr.koala.korime_scene.EvidenceCollectionClient",
+      "kr.koala.korime_scene.BicycleClient"
     ]
   },
   "mixins": [
