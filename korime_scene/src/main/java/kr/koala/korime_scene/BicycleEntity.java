@@ -23,6 +23,11 @@ public final class BicycleEntity extends SkeletonHorseEntity {
     }
 
     @Override
+    protected void initGoals() {
+        // No animal AI: parked bicycles stay where the player leaves them.
+    }
+
+    @Override
     public boolean isSaddled() {
         return true;
     }
