@@ -1,0 +1,35 @@
+{
+  "ambientocclusion": false,
+  "gui_light": "front",
+  "textures": {
+    "white": "minecraft:block/white_concrete",
+    "black": "minecraft:block/black_concrete",
+    "gray": "minecraft:block/gray_concrete",
+    "particle": "minecraft:block/white_concrete"
+  },
+  "display": {
+    "gui": {"rotation": [20, 145, 0], "translation": [0, -1, 0], "scale": [0.72, 0.72, 0.72]},
+    "ground": {"rotation": [90, 0, 0], "translation": [0, 2, 0], "scale": [0.36, 0.36, 0.36]},
+    "fixed": {"rotation": [0, 0, 0], "translation": [0, 0, 0], "scale": [1, 1, 1]},
+    "thirdperson_righthand": {"rotation": [0, 90, 0], "translation": [0, 2, 1], "scale": [0.34, 0.34, 0.34]},
+    "firstperson_righthand": {"rotation": [0, 90, 0], "translation": [0, 2, 1], "scale": [0.34, 0.34, 0.34]}
+  },
+  "elements": [
+    {"from":[0.5,0.5,7.15],"to":[4.7,4.7,8.85],"faces":{"north":{"texture":"#black"},"south":{"texture":"#black"},"east":{"texture":"#black"},"west":{"texture":"#black"},"up":{"texture":"#black"},"down":{"texture":"#black"}}},
+    {"from":[1.35,1.35,7.0],"to":[3.85,3.85,9.0],"faces":{"north":{"texture":"#white"},"south":{"texture":"#white"},"east":{"texture":"#white"},"west":{"texture":"#white"},"up":{"texture":"#white"},"down":{"texture":"#white"}}},
+    {"from":[11.3,0.5,7.15],"to":[15.5,4.7,8.85],"faces":{"north":{"texture":"#black"},"south":{"texture":"#black"},"east":{"texture":"#black"},"west":{"texture":"#black"},"up":{"texture":"#black"},"down":{"texture":"#black"}}},
+    {"from":[12.15,1.35,7.0],"to":[14.65,3.85,9.0],"faces":{"north":{"texture":"#white"},"south":{"texture":"#white"},"east":{"texture":"#white"},"west":{"texture":"#white"},"up":{"texture":"#white"},"down":{"texture":"#white"}}},
+
+    {"from":[2.8,2.45,7.45],"to":[8.5,3.05,8.05],"rotation":{"origin":[2.8,2.75,7.75],"axis":"z","angle":22.5},"faces":{"north":{"texture":"#white"},"south":{"texture":"#white"},"east":{"texture":"#white"},"west":{"texture":"#white"},"up":{"texture":"#white"},"down":{"texture":"#white"}}},
+    {"from":[7.4,2.45,7.45],"to":[13.2,3.05,8.05],"rotation":{"origin":[13.2,2.75,7.75],"axis":"z","angle":-22.5},"faces":{"north":{"texture":"#white"},"south":{"texture":"#white"},"east":{"texture":"#white"},"west":{"texture":"#white"},"up":{"texture":"#white"},"down":{"texture":"#white"}}},
+    {"from":[5.4,4.45,7.45],"to":[10.8,5.05,8.05],"faces":{"north":{"texture":"#white"},"south":{"texture":"#white"},"east":{"texture":"#white"},"west":{"texture":"#white"},"up":{"texture":"#white"},"down":{"texture":"#white"}}},
+    {"from":[5.45,2.65,7.45],"to":[6.05,6.65,8.05],"rotation":{"origin":[5.75,2.8,7.75],"axis":"z","angle":-22.5},"faces":{"north":{"texture":"#white"},"south":{"texture":"#white"},"east":{"texture":"#white"},"west":{"texture":"#white"},"up":{"texture":"#white"},"down":{"texture":"#white"}}},
+    {"from":[10.0,2.75,7.45],"to":[10.6,7.25,8.05],"rotation":{"origin":[10.3,2.9,7.75],"axis":"z","angle":22.5},"faces":{"north":{"texture":"#white"},"south":{"texture":"#white"},"east":{"texture":"#white"},"west":{"texture":"#white"},"up":{"texture":"#white"},"down":{"texture":"#white"}}},
+    {"from":[12.75,2.8,7.45],"to":[13.35,7.85,8.05],"rotation":{"origin":[13.05,3.0,7.75],"axis":"z","angle":22.5},"faces":{"north":{"texture":"#white"},"south":{"texture":"#white"},"east":{"texture":"#white"},"west":{"texture":"#white"},"up":{"texture":"#white"},"down":{"texture":"#white"}}},
+
+    {"from":[11.5,7.25,7.25],"to":[14.55,7.8,8.25],"faces":{"north":{"texture":"#white"},"south":{"texture":"#white"},"east":{"texture":"#white"},"west":{"texture":"#white"},"up":{"texture":"#white"},"down":{"texture":"#white"}}},
+    {"from":[5.0,6.25,7.05],"to":[7.35,6.85,8.45],"faces":{"north":{"texture":"#gray"},"south":{"texture":"#gray"},"east":{"texture":"#gray"},"west":{"texture":"#gray"},"up":{"texture":"#gray"},"down":{"texture":"#gray"}}},
+    {"from":[7.45,2.15,6.9],"to":[8.65,3.35,8.6],"faces":{"north":{"texture":"#gray"},"south":{"texture":"#gray"},"east":{"texture":"#gray"},"west":{"texture":"#gray"},"up":{"texture":"#gray"},"down":{"texture":"#gray"}}},
+    {"from":[6.1,2.55,7.6],"to":[10.0,3.0,7.9],"rotation":{"origin":[8.05,2.8,7.75],"axis":"z","angle":-22.5},"faces":{"north":{"texture":"#white"},"south":{"texture":"#white"},"east":{"texture":"#white"},"west":{"texture":"#white"},"up":{"texture":"#white"},"down":{"texture":"#white"}}}
+  ]
+}
