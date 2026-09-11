@@ -19,16 +19,18 @@ public final class BicycleRenderer extends EntityRenderer<BicycleEntity> {
     public BicycleRenderer(EntityRendererFactory.Context context) {
         super(context);
         this.itemRenderer = context.getItemRenderer();
-        this.shadowRadius = 0.9F;
+        this.shadowRadius = 0.85F;
     }
 
     @Override
     public void render(BicycleEntity entity, float yaw, float tickDelta, MatrixStack matrices,
                        VertexConsumerProvider vertexConsumers, int light) {
         matrices.push();
-        matrices.translate(0.0D, 0.48D, 0.0D);
-        matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(180.0F - yaw));
-        matrices.scale(2.75F, 2.75F, 2.75F);
+        matrices.translate(0.0D, 0.72D, 0.0D);
+        // The item model is authored left-to-right on its X axis. Rotate it 90°
+        // so the bicycle's long axis matches the horse entity's forward axis.
+        matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(90.0F - yaw));
+        matrices.scale(3.0F, 3.0F, 3.0F);
         itemRenderer.renderItem(stack, ModelTransformationMode.FIXED, light, OverlayTexture.DEFAULT_UV,
                 matrices, vertexConsumers, entity.getWorld(), entity.getId());
         matrices.pop();
