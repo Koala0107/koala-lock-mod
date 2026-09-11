@@ -31,6 +31,6 @@ public final class BicycleMod implements ModInitializer {
 
     @Override
     public void onInitialize() {
-        ItemGroupEvents.modifyEntriesEvent(ItemGroups.TRANSPORTATION).register(entries -> entries.add(BICYCLE_ITEM));
+        ItemGroupEvents.modifyEntriesEvent(ItemGroups.TOOLS).register(entries -> entries.add(BICYCLE_ITEM));
     }
 }
