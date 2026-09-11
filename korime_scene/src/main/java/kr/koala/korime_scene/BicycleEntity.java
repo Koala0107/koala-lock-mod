@@ -10,7 +10,7 @@ import net.minecraft.util.Hand;
 import net.minecraft.world.World;
 
 public final class BicycleEntity extends SkeletonHorseEntity {
-    private static final double BICYCLE_SPEED = 0.42D;
+    private static final double BICYCLE_SPEED = 0.20D;
 
     public BicycleEntity(EntityType<? extends SkeletonHorseEntity> type, World world) {
         super(type, world);
