@@ -10,12 +10,20 @@ import net.minecraft.entity.SpawnGroup;
 import net.minecraft.entity.attribute.EntityAttributes;
 import net.minecraft.entity.mob.SkeletonHorseEntity;
 import net.minecraft.item.Item;
+import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemGroups;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
+import net.minecraft.registry.RegistryKey;
+import net.minecraft.registry.RegistryKeys;
 import net.minecraft.util.Identifier;
 
 public final class BicycleMod implements ModInitializer {
+    private static final RegistryKey<ItemGroup> KORIME_SCENE_GROUP = RegistryKey.of(
+            RegistryKeys.ITEM_GROUP,
+            new Identifier("korime_scene", "korime_scene")
+    );
+
     public static final EntityType<BicycleEntity> BICYCLE = Registry.register(
             Registries.ENTITY_TYPE,
             new Identifier("korime_scene", "bicycle"),
@@ -37,9 +45,12 @@ public final class BicycleMod implements ModInitializer {
         FabricDefaultAttributeRegistry.register(
                 BICYCLE,
                 SkeletonHorseEntity.createSkeletonHorseAttributes()
-                        .add(EntityAttributes.GENERIC_MOVEMENT_SPEED, 0.42D)
+                        .add(EntityAttributes.GENERIC_MOVEMENT_SPEED, 0.20D)
                         .add(EntityAttributes.GENERIC_MAX_HEALTH, 20.0D)
         );
+
+        ItemGroupEvents.modifyEntriesEvent(KORIME_SCENE_GROUP)
+                .register(entries -> entries.add(BICYCLE_ITEM));
         ItemGroupEvents.modifyEntriesEvent(ItemGroups.TOOLS)
                 .register(entries -> entries.add(BICYCLE_ITEM));
     }
