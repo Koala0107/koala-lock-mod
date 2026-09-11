@@ -18,6 +18,12 @@ public final class BicycleItem extends Item {
         BlockPos pos = context.getBlockPos().offset(context.getSide());
         PlayerEntity player = context.getPlayer();
 
+        // A bicycle is a land vehicle. Refuse placement inside water/lava so it
+        // cannot immediately enter BoatEntity's water physics state.
+        if (!world.getFluidState(pos).isEmpty()) {
+            return ActionResult.FAIL;
+        }
+
         BicycleEntity bicycle = new BicycleEntity(BicycleMod.BICYCLE, world);
         float yaw = player == null ? 0.0F : player.getYaw();
         bicycle.refreshPositionAndAngles(pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D, yaw, 0.0F);
@@ -27,7 +33,10 @@ public final class BicycleItem extends Item {
         }
 
         if (!world.isClient) {
-            world.spawnEntity(bicycle);
+            // Only consume the item after the server has accepted the spawn.
+            if (!world.spawnEntity(bicycle)) {
+                return ActionResult.FAIL;
+            }
             if (player == null || !player.getAbilities().creativeMode) {
                 context.getStack().decrement(1);
             }
