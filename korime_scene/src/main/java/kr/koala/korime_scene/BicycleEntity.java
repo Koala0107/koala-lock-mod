@@ -5,7 +5,6 @@ import net.minecraft.entity.attribute.EntityAttributes;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.mob.SkeletonHorseEntity;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.world.World;
@@ -54,11 +53,6 @@ public final class BicycleEntity extends SkeletonHorseEntity {
     @Override
     protected void dropXp() {
         // A bicycle is not an animal for gameplay purposes.
-    }
-
-    @Override
-    public Item asItem() {
-        return BicycleMod.BICYCLE_ITEM;
     }
 
     @Override
